@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./results:/app/results
+      - ./targets:/app/targets
+      - ./prompts:/app/prompts
+    env_file: .env
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: packages/dashboard/Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+  runner:
+    build:
+      context: .
+      dockerfile: packages/runner/Dockerfile
+    volumes:
+      - ./results:/app/results
+      - ./targets:/app/targets
+      - ./prompts:/app/prompts
+    env_file: .env
+    profiles: ["run"]

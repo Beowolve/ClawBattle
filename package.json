@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "scripts": {
+    "sync": "node --env-file=.env scripts/sync-targets.js",
+    "test": "node --test packages/**/*.test.js"
+  }
+}

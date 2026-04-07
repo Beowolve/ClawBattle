@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file=../../.env server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
+

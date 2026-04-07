@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "scripts": {
+    "test:target": "node --env-file=../../.env cli.js --model mistralai/mistral-small-3.1-24b-instruct --target-id 1 --attempts 3"
+  },
+  "dependencies": {}
+}

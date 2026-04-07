@@ -1,0 +1,1018 @@
+/* ─── Design tokens ────────────────────────────────────────────── */
+:root {
+  --primary-color: #2f5fb8;
+  --secondary-color: #4f6287;
+  --font-color: #273043;
+  --bg-color: #f5f8ff;
+  --surface-color: #ffffff;
+  --border-color: #d7dfea;
+  --heading-color: #273043;
+  --muted-color: #6a7895;
+  --error-color: #c96179;
+  --chart-primary: #2f5fb8;
+  --chart-secondary: #23897d;
+  --chart-accent: #9c5fe0;
+  --chart-accent-soft: rgba(156, 95, 224, 0.2);
+  --perfect-color: #23897d;
+}
+
+[data-theme="dark"] {
+  --primary-color: #8ab4ff;
+  --secondary-color: #a7b5d6;
+  --font-color: #e6edf8;
+  --bg-color: #151a24;
+  --surface-color: #1e2532;
+  --border-color: #334159;
+  --heading-color: #e6edf8;
+  --muted-color: #b3c0dc;
+  --error-color: #cc7b93;
+  --chart-primary: #8ab4ff;
+  --chart-secondary: #70dfd1;
+  --chart-accent: #cca2ff;
+  --chart-accent-soft: rgba(204, 162, 255, 0.2);
+  --perfect-color: #70dfd1;
+}
+
+/* ─── Reset & base ─────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--font-color);
+  font-size: 0.95rem;
+}
+
+/* ─── Layout ───────────────────────────────────────────────────── */
+.appRoot {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.topBand {
+  height: 10px;
+  background: linear-gradient(90deg, #aa1e22 0%, #ffcccc 50%, #1a0000 100%);
+  flex-shrink: 0;
+}
+
+.appHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-color);
+  flex-shrink: 0;
+}
+
+.appContent {
+  flex: 1;
+  padding: 16px 18px;
+  max-width: min(1400px, 100%);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.appFooter {
+  padding: 10px 18px;
+  border-top: 1px solid var(--border-color);
+  color: var(--muted-color);
+  font-size: 0.82rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ─── Header ───────────────────────────────────────────────────── */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brandLogo {
+  height: 40px;
+  width: 40px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.brandText {
+  color: var(--heading-color);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.brandSub {
+  color: var(--muted-color);
+  font-size: 0.82rem;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Theme switcher ───────────────────────────────────────────── */
+.themeButton {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--font-color);
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  height: 32px;
+}
+
+.themeButton:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* ─── Tabs ─────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 16px;
+}
+
+.tabButton {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted-color);
+  cursor: pointer;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tabButton:hover {
+  color: var(--font-color);
+}
+
+.tabButton.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* ─── KPI cards ────────────────────────────────────────────────── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.kpiCard {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.kpiCard h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 6px;
+}
+
+.kpiValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--heading-color);
+  line-height: 1;
+}
+
+.kpiSub {
+  font-size: 0.8rem;
+  color: var(--muted-color);
+  margin-top: 4px;
+}
+
+/* ─── Panels ───────────────────────────────────────────────────── */
+.panel {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.panelHeader h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--heading-color);
+  margin: 0;
+}
+
+.panelHeader span {
+  font-size: 0.82rem;
+  color: var(--muted-color);
+}
+
+/* ─── Tables ───────────────────────────────────────────────────── */
+.tableWrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+thead th {
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted-color);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  user-select: none;
+}
+
+thead th.sortable {
+  cursor: pointer;
+}
+
+thead th.sortable:hover {
+  color: var(--font-color);
+}
+
+thead th.sorted {
+  color: var(--primary-color);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.1s;
+}
+
+tbody tr:last-child {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: var(--bg-color);
+}
+
+tbody td {
+  padding: 8px 12px;
+  color: var(--font-color);
+  white-space: nowrap;
+}
+
+td.rank {
+  color: var(--muted-color);
+  font-size: 0.82rem;
+  width: 36px;
+}
+
+td.modelName {
+  font-weight: 600;
+  color: var(--heading-color);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+td.perfect {
+  color: var(--perfect-color);
+  font-weight: 600;
+}
+
+td.numeric, th.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+td.muted {
+  color: var(--muted-color);
+}
+
+/* ─── Filters bar ──────────────────────────────────────────────── */
+.filtersBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filterSelect {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--font-color);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  height: 32px;
+  cursor: pointer;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.filterInput {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--font-color);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  height: 32px;
+  min-width: 180px;
+}
+
+.filterInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.filterLabel {
+  font-size: 0.85rem;
+  color: var(--muted-color);
+}
+
+/* ─── Grid layouts ─────────────────────────────────────────────── */
+.panelGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.panelGrid.single {
+  grid-template-columns: 1fr;
+}
+
+/* ─── Target grid ──────────────────────────────────────────────── */
+.targetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.targetCard {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.targetCard:hover {
+  border-color: var(--primary-color);
+}
+
+.targetImage {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  background: var(--bg-color);
+}
+
+.targetCardBody {
+  padding: 8px 10px;
+}
+
+.targetCardName {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--heading-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.targetCardMeta {
+  font-size: 0.8rem;
+  color: var(--muted-color);
+  margin-top: 2px;
+}
+
+.targetCardBest {
+  font-size: 0.82rem;
+  color: var(--primary-color);
+  margin-top: 4px;
+}
+
+/* ─── Run history ──────────────────────────────────────────────── */
+.runRow td.runId {
+  color: var(--muted-color);
+  font-size: 0.82rem;
+}
+
+/* ─── Badges ───────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.badgeBattle {
+  background: rgba(47, 95, 184, 0.12);
+  color: var(--primary-color);
+}
+
+.badgeDaily {
+  background: rgba(35, 137, 125, 0.12);
+  color: var(--chart-secondary);
+}
+
+/* ─── Delete button ────────────────────────────────────────────── */
+.deleteButton {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--error-color);
+  cursor: pointer;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: inherit;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background: var(--error-color);
+  color: var(--surface-color);
+  border-color: var(--error-color);
+}
+
+.deleteButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ─── Empty/loading states ─────────────────────────────────────── */
+.stateBox {
+  padding: 32px;
+  text-align: center;
+  color: var(--muted-color);
+  font-size: 0.9rem;
+}
+
+/* ─── Target grid clickable ─────────────────────────────────────── */
+.targetCardClickable {
+  cursor: pointer;
+}
+
+.targetCardClickable:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+/* ─── Target detail ────────────────────────────────────────────── */
+.targetDetailWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.targetDetailSticky {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+}
+
+.targetDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.backButton {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--font-color);
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  height: 32px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.backButton:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.navButton {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--muted-color);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  height: 32px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.navButton:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.navButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.targetDetailThumb {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.targetDetailName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--heading-color);
+}
+
+.targetDetailLink {
+  text-decoration: none;
+  color: var(--heading-color);
+}
+
+.targetDetailLink:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.targetDetailMeta {
+  font-size: 0.82rem;
+  color: var(--muted-color);
+  margin-top: 2px;
+}
+
+.targetDetailSelected {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.targetDetailSelectedModel {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--heading-color);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.targetDetailSelectedMeta {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted-color);
+  margin-top: 2px;
+}
+
+.targetDetailPreviewRow {
+  display: grid;
+  grid-template-columns: 1fr 400px 400px;
+  align-items: stretch;
+  border-top: 1px solid var(--border-color);
+}
+
+.targetDetailCode {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--font-color);
+  background: var(--bg-color);
+  overflow: auto;
+  height: 300px;
+  border-right: 1px solid var(--border-color);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.targetDetailFrame {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+}
+
+.targetDetailFrame:last-child {
+  border-right: none;
+}
+
+.targetDetailFrameLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-color);
+}
+
+.targetDetailFrameEmpty {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-color);
+}
+
+.solutionIframe {
+  width: 400px;
+  height: 300px;
+  border: none;
+  display: block;
+  background: #fff;
+  overflow: hidden;
+}
+
+.solutionTargetImg {
+  width: 400px;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+}
+
+/* ─── Solution table rows ───────────────────────────────────────── */
+.solutionRow {
+  cursor: pointer;
+}
+
+.solutionRowActive {
+  background: rgba(47, 95, 184, 0.07) !important;
+}
+
+/* ─── Run indicator dot ────────────────────────────────────────── */
+.runDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ─── Start Run ───────────────────────────────────────────────── */
+.startRunForm {
+  padding: 14px;
+}
+
+.startRunRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.modelInput {
+  flex: 1;
+  min-width: 200px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--font-color);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  height: 32px;
+}
+
+.modelInput::placeholder {
+  color: var(--muted-color);
+}
+
+.modelInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.modelInput:disabled {
+  opacity: 0.6;
+}
+
+.targetRangeWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.targetRangeInput {
+  width: 64px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  color: var(--font-color);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  height: 32px;
+  text-align: center;
+}
+
+.targetRangeInput::placeholder {
+  color: var(--muted-color);
+}
+
+.targetRangeInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.targetRangeInput:disabled {
+  opacity: 0.6;
+}
+
+.targetRangeSep {
+  color: var(--muted-color);
+  font-size: 0.9rem;
+}
+
+.runButton {
+  background: var(--primary-color);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px 20px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  font-weight: 600;
+  height: 32px;
+  white-space: nowrap;
+}
+
+.runButton:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.runButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.runStatus {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.runStatus--running {
+  background: rgba(47, 95, 184, 0.12);
+  color: var(--primary-color);
+}
+
+.runStatus--done {
+  background: rgba(35, 137, 125, 0.12);
+  color: var(--perfect-color);
+}
+
+.runStatus--cancelled {
+  background: rgba(106, 120, 149, 0.12);
+  color: var(--muted-color);
+}
+
+.runStatus--error {
+  background: rgba(201, 97, 121, 0.12);
+  color: var(--error-color);
+}
+
+.cancelButton {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--error-color);
+  cursor: pointer;
+  padding: 4px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  height: 32px;
+}
+
+.cancelButton:hover {
+  background: var(--error-color);
+  color: var(--surface-color);
+  border-color: var(--error-color);
+}
+
+.runLog {
+  margin-top: 14px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  max-height: 360px;
+  overflow-y: auto;
+  font-size: 0.84rem;
+}
+
+.logLine {
+  padding: 1px 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.logLine--start {
+  color: var(--muted-color);
+  margin-bottom: 4px;
+}
+
+.logLine--target {
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.logLine--attempt {
+  color: var(--font-color);
+}
+
+.logLine--attempt_error {
+  color: var(--error-color);
+}
+
+.logLine--done {
+  color: var(--perfect-color);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.logLine--cancelled {
+  color: var(--muted-color);
+  font-weight: 600;
+}
+
+.logLine--fatal_error {
+  color: var(--error-color);
+  font-weight: 600;
+}
+
+/* ─── Target-Grid Progress View ───────────────────────────────── */
+.runTargetCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.runDot--card {
+  flex-shrink: 0;
+  margin-left: 4px;
+  width: 6px;
+  height: 6px;
+}
+
+.runProgressGrid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.runTargetCard {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 56px;
+}
+
+.runTargetCard--pending  { opacity: 0.35; }
+.runTargetCard--running  { border-color: var(--primary-color); }
+.runTargetCard--done     { border-color: var(--perfect-color); }
+.runTargetCard--error    { border-color: var(--error-color); }
+.runTargetCard--skipped  { opacity: 0.5; }
+
+.runTargetCardName {
+  font-weight: 600;
+  color: var(--heading-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.runTargetCardScore { color: var(--perfect-color); font-variant-numeric: tabular-nums; }
+.runTargetCardRetry { color: var(--primary-color); font-size: 0.72rem; }
+
+/* ─── Collapsible log ──────────────────────────────────────────── */
+.runLogDetails {
+  margin-top: 12px;
+}
+.runLogDetails > summary {
+  cursor: pointer;
+  color: var(--muted-color);
+  font-size: 0.8rem;
+  user-select: none;
+  margin-bottom: 4px;
+}
+
+/* ─── Resume banner ────────────────────────────────────────────── */
+.resumeBanner {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--font-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.resumeBanner code {
+  background: var(--border-color);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: var(--font-mono, monospace);
+}
+
+/* ─── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .panelGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .appHeader {
+    padding: 10px 12px;
+  }
+  .appContent {
+    padding: 12px;
+  }
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .brandSub {
+    display: none;
+  }
+}

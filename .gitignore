@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Runtime data
+results/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build output
+.cache/
+packages/dashboard/dist/
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+*.local

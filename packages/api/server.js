@@ -1,0 +1,122 @@
+// ClawBattle API – serves results and targets to the dashboard
+import express from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import crypto from 'node:crypto';
+import { getResults, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel } from '../db/index.js';
+import { runBenchmark } from '../runner/benchmark.js';
+import { createJob, getJob, cancelJob, pushEvent, subscribe, unsubscribe } from './jobs.js';
+
+const app = express();
+const PORT = process.env.PORT ?? 3000;
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const TARGETS_DIR = path.join(ROOT, 'targets');
+
+app.use(express.json());
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+app.get('/api/config', (req, res) => {
+  const promptsDir = path.join(ROOT, 'prompts');
+  const available = fs.readdirSync(promptsDir)
+    .filter(d => fs.statSync(path.join(promptsDir, d)).isDirectory())
+    .sort();
+  res.json({
+    promptVersion: process.env.PROMPT_VERSION ?? 'v1',
+    availablePromptVersions: available,
+  });
+});
+
+app.get('/api/targets/battle', (req, res) => {
+  res.json(getBattleTargets());
+});
+
+app.get('/api/targets/daily', (req, res) => {
+  res.json(getDailyTargets());
+});
+
+app.get('/api/targets/battle/:id/image', (req, res) => {
+  res.sendFile(path.join(TARGETS_DIR, 'images', 'battle', `${req.params.id}.png`));
+});
+
+app.get('/api/targets/daily/:key/image', (req, res) => {
+  res.sendFile(path.join(TARGETS_DIR, 'images', 'daily', `${req.params.key}.png`));
+});
+
+app.get('/api/results', (req, res) => {
+  res.json(getResults());
+});
+
+app.get('/api/runs', (req, res) => {
+  res.json(getRunMeta());
+});
+
+app.delete('/api/runs', (req, res) => {
+  const model = req.query.model;
+  if (!model) return res.status(400).json({ error: 'model query param required' });
+  res.json(deleteRunsByModel(model));
+});
+
+app.post('/api/runs/start', (req, res) => {
+  const {
+    model, provider = 'openrouter', attempts = 3, promptVersion = process.env.PROMPT_VERSION ?? 'v1',
+    targetFrom, targetTo,
+    concurrency = 1,
+    retries = 0,
+    resumeRunId,
+  } = req.body ?? {};
+  if (!model) return res.status(400).json({ error: 'model required' });
+
+  const runId = crypto.randomUUID();
+  const signal = createJob(runId, model);
+
+  if (resumeRunId) {
+    console.log(`[API] Resume requested — resumeRunId: ${resumeRunId}`);
+  }
+
+  runBenchmark({
+    runId, model, provider, targetType: 'battle', attempts, promptVersion, signal,
+    concurrency: Number(concurrency),
+    retries: Number(retries),
+    resumeRunId: resumeRunId ?? undefined,
+    targetFrom: targetFrom != null ? Number(targetFrom) : undefined,
+    targetTo: targetTo != null ? Number(targetTo) : undefined,
+    onProgress: (event) => pushEvent(runId, event),
+  }).catch((err) => {
+    if (err.name === 'AbortError') {
+      pushEvent(runId, { type: 'cancelled' });
+    } else {
+      pushEvent(runId, { type: 'fatal_error', message: err.message });
+    }
+  });
+
+  res.json({ runId });
+});
+
+app.delete('/api/runs/:runId', (req, res) => {
+  const { runId } = req.params;
+  if (!getJob(runId)) return res.status(404).json({ error: 'run not found' });
+  const cancelled = cancelJob(runId);
+  res.json({ cancelled });
+});
+
+app.get('/api/runs/:runId/progress', (req, res) => {
+  const { runId } = req.params;
+  if (!getJob(runId)) return res.status(404).json({ error: 'run not found' });
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  subscribe(runId, res);
+  req.on('close', () => unsubscribe(runId, res));
+});
+
+app.listen(PORT, () => console.log(`ClawBattle API running on :${PORT}`));
