@@ -50,6 +50,13 @@ export default function App() {
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [resumeTarget, setResumeTarget] = useState(null);
   const [promptFilter, setPromptFilter] = useState('all');
+  const [modelFilter, setModelFilter] = useState(null);
+
+  function handleModelSelect(model) {
+    setModelFilter(model);
+    setTargetView('table');
+    setTab('targets');
+  }
 
   function handleResume(meta) {
     setResumeTarget(meta);
@@ -65,8 +72,6 @@ export default function App() {
   const runMeta = runsQ.data ?? [];
   const battleTargets = battleQ.data ?? [];
   const dailyTargets = dailyQ.data ?? [];
-
-  const kpis = useMemo(() => computeKpis(runs, battleTargets), [runs, battleTargets]);
 
   const runPromptVersion = useMemo(
     () => Object.fromEntries(runMeta.map(m => [m.run_id, m.prompt_version])),
@@ -84,6 +89,8 @@ export default function App() {
       : runs.filter(r => runPromptVersion[r.run_id] === promptFilter),
     [runs, promptFilter, runPromptVersion],
   );
+
+  const kpis = useMemo(() => computeKpis(filteredRuns, battleTargets), [filteredRuns, battleTargets]);
 
   const sortedTargets = useMemo(() => {
     const list = targetType === 'battle' ? battleTargets : dailyTargets;
@@ -139,7 +146,7 @@ export default function App() {
             </div>
             {isLoading
               ? <div className="stateBox">Loading...</div>
-              : <Leaderboard runs={filteredRuns} />
+              : <Leaderboard runs={filteredRuns} onModelSelect={handleModelSelect} />
             }
           </div>
         )}
@@ -175,6 +182,12 @@ export default function App() {
                   >
                     Daily ({dailyTargets.length})
                   </button>
+                  {modelFilter && (
+                    <span className="modelFilterBadge">
+                      {modelFilter}
+                      <button className="modelFilterClear" onClick={() => setModelFilter(null)}>✕</button>
+                    </span>
+                  )}
                   <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                     <button
                       className={`tabButton ${targetView === 'grid' ? 'active' : ''}`}
@@ -201,6 +214,7 @@ export default function App() {
                           targets={sortedTargets}
                           type={targetType}
                           runs={runs}
+                          modelFilter={modelFilter}
                           onSelect={setSelectedTarget}
                         />
                       : <TargetGrid

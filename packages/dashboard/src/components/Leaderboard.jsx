@@ -59,7 +59,7 @@ const COLS = [
   { key: 'actions', label: '' },
 ];
 
-export default function Leaderboard({ runs }) {
+export default function Leaderboard({ runs, onModelSelect }) {
   const [sortKey, setSortKey] = useState('avgScore');
   const [sortDir, setSortDir] = useState('desc');
   const [filterProvider, setFilterProvider] = useState('');
@@ -143,7 +143,9 @@ export default function Leaderboard({ runs }) {
             {sorted.map((row, i) => (
               <tr key={row.model}>
                 <td className="rank">{i + 1}</td>
-                <td className="modelName" title={row.model}>{row.model}</td>
+                <td className="modelName" title={row.model}>
+                  <button className="modelLink" onClick={() => onModelSelect?.(row.model)}>{row.model}</button>
+                </td>
                 <td className="numeric">{row.targets}</td>
                 <td className={`numeric ${row.avgScore >= 990 ? 'perfect' : ''}`}>
                   {row.avgScore != null ? row.avgScore.toFixed(2) : '-'}

@@ -309,6 +309,67 @@ td.modelName {
   text-overflow: ellipsis;
 }
 
+.modelLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--heading-color);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modelLink:hover {
+  color: #aa1e22;
+  text-decoration: underline;
+}
+
+.modelFilterBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 12px;
+  background: #aa1e2220;
+  border: 1px solid #aa1e2260;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #aa1e22;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modelFilterClear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #aa1e22;
+  font-size: 0.9rem;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.modelFilterClear:hover {
+  opacity: 0.6;
+}
+
+[data-theme="dark"] .modelLink:hover {
+  color: #e05555;
+}
+[data-theme="dark"] .modelFilterBadge {
+  background: #aa1e2240;
+  border-color: #e05555;
+  color: #e05555;
+}
+[data-theme="dark"] .modelFilterClear {
+  color: #e05555;
+}
+
 td.perfect {
   color: var(--perfect-color);
   font-weight: 600;

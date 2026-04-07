@@ -9,7 +9,7 @@ const COLS = [
   { key: 'attempts',  label: 'Attempts', numeric: true },
 ];
 
-export default function TargetTable({ targets, type, runs, onSelect }) {
+export default function TargetTable({ targets, type, runs, modelFilter, onSelect }) {
   const [sortKey, setSortKey] = useState('num');
   const [sortDir, setSortDir] = useState('asc');
 
@@ -19,9 +19,12 @@ export default function TargetTable({ targets, type, runs, onSelect }) {
       const targetRuns = runs.filter(r =>
         Number(r.target_id) === Number(targetId) && r.target_type === type,
       );
+      const filteredRuns = modelFilter
+        ? targetRuns.filter(r => r.model === modelFilter)
+        : targetRuns;
 
       let best = null;
-      for (const r of targetRuns) {
+      for (const r of filteredRuns) {
         if (!best || (r.score ?? -Infinity) > (best.score ?? -Infinity)) best = r;
       }
 
@@ -29,13 +32,13 @@ export default function TargetTable({ targets, type, runs, onSelect }) {
         target: t,
         num: t.target_number ?? t.id ?? 0,
         name: t.name ?? t.key ?? '',
-        bestModel: best?.model ?? null,
+        bestModel: modelFilter ? null : (best?.model ?? null),
         bestScore: best?.score ?? null,
         bestMatch: best?.match ?? null,
-        attempts: targetRuns.length,
+        attempts: filteredRuns.length,
       };
     });
-  }, [targets, type, runs]);
+  }, [targets, type, runs, modelFilter]);
 
   const sorted = useMemo(() => {
     return [...rows].sort((a, b) => {
