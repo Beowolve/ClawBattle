@@ -10,7 +10,7 @@ if (adapter === 'supabase') {
 }
 
 export const {
-  saveAttempt, saveRunMeta, getResults, getRunMeta,
+  saveAttempt, saveRunStart, saveRunEnd, getResults, getRunMeta,
   getBattleTargets, getDailyTargets,
   upsertBattleTarget, upsertDailyTarget,
   deleteRunsByModel, getCompletedTargetIds,

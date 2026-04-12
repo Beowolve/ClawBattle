@@ -1,12 +1,18 @@
 // In-memory store for active benchmark jobs and their SSE subscribers.
 // Jobs are kept in memory only — no persistence needed for live progress.
 
-const jobs = new Map(); // runId → { status, model, events, subscribers, controller }
+const jobs = new Map(); // runId → { status, model, provider, promptVersion, reasoningEffort, events, subscribers, controller }
 
-export function createJob(runId, model) {
+export function createJob(runId, { model, provider, promptVersion, reasoningEffort } = {}) {
   const controller = new AbortController();
-  jobs.set(runId, { status: 'running', model, events: [], subscribers: new Set(), controller });
+  jobs.set(runId, { status: 'running', model, provider, promptVersion, reasoningEffort, events: [], subscribers: new Set(), controller });
   return controller.signal;
+}
+
+export function listActiveJobs() {
+  return [...jobs.entries()]
+    .filter(([, j]) => j.status === 'running')
+    .map(([runId, j]) => ({ runId, model: j.model, provider: j.provider, status: j.status }));
 }
 
 export function cancelJob(runId) {

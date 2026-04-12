@@ -78,4 +78,46 @@ if (!hasRunMeta) {
   console.log('Dropped run_meta table\n');
 }
 
+// --- 5. Create run_state table (if not present) ---
+db.exec(`
+  CREATE TABLE IF NOT EXISTS run_state (
+    run_id           TEXT PRIMARY KEY,
+    model            TEXT NOT NULL,
+    provider         TEXT NOT NULL,
+    prompt_version   TEXT,
+    reasoning_effort TEXT,
+    started_at       TEXT NOT NULL,
+    finished_at      TEXT,
+    status           TEXT NOT NULL DEFAULT 'running'
+  )
+`);
+console.log('run_state table ready\n');
+
+// --- 6. Backfill run_state from runs ---
+const existingRunState = new Set(
+  db.prepare('SELECT run_id FROM run_state').all().map(r => r.run_id)
+);
+
+const runGroups = db.prepare(`
+  SELECT run_id, model, provider, prompt_version, reasoning_effort,
+         MIN(created_at) AS started_at,
+         MAX(finished_at) AS finished_at
+  FROM runs
+  GROUP BY run_id
+`).all();
+
+const insert = db.prepare(`
+  INSERT OR IGNORE INTO run_state (run_id, model, provider, prompt_version, reasoning_effort, started_at, finished_at, status)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+let inserted = 0;
+for (const r of runGroups) {
+  if (existingRunState.has(r.run_id)) continue;
+  const status = r.finished_at ? 'done' : 'running';
+  insert.run(r.run_id, r.model, r.provider, r.prompt_version, r.reasoning_effort, r.started_at, r.finished_at, status);
+  inserted++;
+}
+console.log(`Backfilled ${inserted} row(s) into run_state\n`);
+
 console.log('Migration complete.');

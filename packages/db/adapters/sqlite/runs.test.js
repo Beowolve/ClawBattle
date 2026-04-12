@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openDb } from './connection.js';
-import { saveAttempt, getResults, getRunMeta, saveRunMeta } from './runs.js';
+import { saveAttempt, getResults, getRunMeta, saveRunStart, saveRunEnd } from './runs.js';
 
 function makeDb() {
   return openDb(':memory:');
@@ -75,29 +75,32 @@ test('saveAttempt stores optional fields as null when omitted', () => {
   assert.equal(row.score, null);
 });
 
-test('getRunMeta aggregates one row per run_id', () => {
+test('getRunMeta returns rows from run_state', () => {
   const db = makeDb();
-  saveAttempt(db, { ...baseAttempt, attempt: 1 });
-  saveAttempt(db, { ...baseAttempt, attempt: 2 });
-  saveAttempt(db, { ...baseAttempt, runId: 'run-2', attempt: 1 });
+  saveRunStart(db, { runId: 'run-1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T00:00:00Z' });
+  saveRunStart(db, { runId: 'run-2', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T01:00:00Z' });
   const meta = getRunMeta(db);
   assert.equal(meta.length, 2);
   assert.equal(meta.find(r => r.run_id === 'run-1').model, 'gpt-4o');
 });
 
-test('saveRunMeta sets finished_at on all rows for a run', () => {
+test('saveRunEnd sets finished_at and status on run_state and runs', () => {
   const db = makeDb();
+  saveRunStart(db, { runId: 'run-1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T00:00:00Z' });
   saveAttempt(db, { ...baseAttempt, attempt: 1 });
-  saveAttempt(db, { ...baseAttempt, attempt: 2 });
-  saveRunMeta(db, { runId: 'run-1', finishedAt: '2024-01-01T01:00:00Z' });
-  const meta = getRunMeta(db);
-  assert.equal(meta[0].finished_at, '2024-01-01T01:00:00Z');
+  saveRunEnd(db, { runId: 'run-1', finishedAt: '2024-01-01T01:00:00Z', status: 'done' });
+  const [meta] = getRunMeta(db);
+  assert.equal(meta.finished_at, '2024-01-01T01:00:00Z');
+  assert.equal(meta.status, 'done');
+  const [row] = getResults(db);
+  assert.equal(row.finished_at, '2024-01-01T01:00:00Z');
 });
 
-test('saveRunMeta is a no-op when finishedAt is null', () => {
+test('saveRunEnd is a no-op when finishedAt is null', () => {
   const db = makeDb();
-  saveAttempt(db, baseAttempt);
-  saveRunMeta(db, { runId: 'run-1', finishedAt: null });
-  const [row] = getResults(db);
+  saveRunStart(db, { runId: 'run-1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T00:00:00Z' });
+  saveRunEnd(db, { runId: 'run-1', finishedAt: null });
+  const [row] = getRunMeta(db);
   assert.equal(row.finished_at, null);
+  assert.equal(row.status, 'running');
 });

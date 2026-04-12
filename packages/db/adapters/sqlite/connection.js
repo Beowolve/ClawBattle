@@ -36,6 +36,17 @@ function initSchema(db) {
       created_at TEXT DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS run_state (
+      run_id           TEXT PRIMARY KEY,
+      model            TEXT NOT NULL,
+      provider         TEXT NOT NULL,
+      prompt_version   TEXT,
+      reasoning_effort TEXT,
+      started_at       TEXT NOT NULL,
+      finished_at      TEXT,
+      status           TEXT NOT NULL DEFAULT 'running'
+    );
+
     CREATE TABLE IF NOT EXISTS battle_targets (
       id INTEGER PRIMARY KEY,
       name TEXT NOT NULL,

@@ -21,19 +21,37 @@ export function getResults(db) {
   return db.prepare('SELECT * FROM runs ORDER BY created_at DESC').all();
 }
 
-export function getRunMeta(db) {
-  return db.prepare(`
-    SELECT run_id, model, provider, prompt_version, temperature,
-           attempts_per_target, started_at, MAX(finished_at) as finished_at
-    FROM runs
-    GROUP BY run_id
-    ORDER BY started_at DESC
-  `).all();
+export function saveRunStart(db, data) {
+  db.prepare(`
+    INSERT OR IGNORE INTO run_state (run_id, model, provider, prompt_version, reasoning_effort, started_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(
+    data.runId, data.model, data.provider,
+    data.promptVersion ?? null, data.reasoningEffort ?? null,
+    data.startedAt,
+  );
 }
 
-export function saveRunMeta(db, data) {
+export function saveRunEnd(db, data) {
   if (!data.finishedAt) return;
-  db.prepare('UPDATE runs SET finished_at = ? WHERE run_id = ?').run(data.finishedAt, data.runId);
+  const finishedAt = data.finishedAt;
+  const status = data.status ?? 'done';
+  db.prepare(
+    'UPDATE run_state SET finished_at = ?, status = ? WHERE run_id = ?'
+  ).run(finishedAt, status, data.runId);
+  // Also stamp finished_at on all attempt rows so started_at→finished_at spans the full run
+  db.prepare(
+    'UPDATE runs SET finished_at = ? WHERE run_id = ?'
+  ).run(finishedAt, data.runId);
+}
+
+export function getRunMeta(db) {
+  return db.prepare(`
+    SELECT run_id, model, provider, prompt_version, reasoning_effort,
+           started_at, finished_at, status
+    FROM run_state
+    ORDER BY started_at DESC
+  `).all();
 }
 
 export function getCompletedTargetIds(db, runId) {
@@ -50,7 +68,7 @@ export function deleteRunsByModel(db, model) {
   db.prepare('DELETE FROM runs WHERE model = ?').run(model);
   if (runIds.length) {
     const placeholders = runIds.map(() => '?').join(',');
-    db.prepare(`DELETE FROM run_meta WHERE run_id IN (${placeholders})`).run(...runIds);
+    db.prepare(`DELETE FROM run_state WHERE run_id IN (${placeholders})`).run(...runIds);
   }
   return { deleted: runIds.length };
 }

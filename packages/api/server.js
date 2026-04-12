@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { getResults, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel } from '../db/index.js';
 import { runBenchmark } from '../runner/benchmark.js';
-import { createJob, getJob, cancelJob, pushEvent, subscribe, unsubscribe } from './jobs.js';
+import { createJob, getJob, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -75,7 +75,7 @@ app.post('/api/runs/start', (req, res) => {
   if (!model) return res.status(400).json({ error: 'model required' });
 
   const runId = crypto.randomUUID();
-  const signal = createJob(runId, model);
+  const signal = createJob(runId, { model, provider, promptVersion: promptVersion ?? null, reasoningEffort: reasoningEffort ?? null });
 
   if (resumeRunId) {
     console.log(`[API] Resume requested — resumeRunId: ${resumeRunId}`);
@@ -99,6 +99,10 @@ app.post('/api/runs/start', (req, res) => {
   });
 
   res.json({ runId });
+});
+
+app.get('/api/runs/active', (req, res) => {
+  res.json(listActiveJobs());
 });
 
 app.delete('/api/runs/:runId', (req, res) => {

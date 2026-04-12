@@ -68,6 +68,26 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
     if (config?.promptVersion && !promptVersion) setPromptVersion(config.promptVersion);
   }, [config]);
 
+  // On mount: reconnect to an active run if one was in progress before page refresh
+  useEffect(() => {
+    const saved = localStorage.getItem('clawbattle.activeRunId');
+    if (!saved) return;
+    fetch('/api/runs/active')
+      .then(r => r.json())
+      .then(active => {
+        const found = active.find(j => j.runId === saved);
+        if (found) {
+          setRunId(saved);
+          setModel(found.model ?? '');
+          setProvider(found.provider ?? 'openrouter');
+          updateStatus('running');
+        } else {
+          localStorage.removeItem('clawbattle.activeRunId');
+        }
+      })
+      .catch(() => localStorage.removeItem('clawbattle.activeRunId'));
+  }, []);
+
   // Pre-fill form when resume is triggered from RunHistory
   useEffect(() => {
     if (resumeTarget) {
@@ -112,6 +132,7 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
       const { runId: id } = await res.json();
       onResumeConsumed?.();
       setResumeRunId(null);
+      localStorage.setItem('clawbattle.activeRunId', id);
       setRunId(id);
     } catch (err) {
       setLogLines([`Error: ${err.message}`]);
@@ -170,6 +191,7 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
 
         case 'done':
           addLog(`Done — avg: ${event.summary.avgScore.toFixed(1)}%  perfect rate: ${(event.summary.perfectRate * 100).toFixed(1)}%`);
+          localStorage.removeItem('clawbattle.activeRunId');
           updateStatus('done');
           es.close();
           queryClient.invalidateQueries({ queryKey: ['results'] });
@@ -178,12 +200,14 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
 
         case 'cancelled':
           addLog('Run cancelled.');
+          localStorage.removeItem('clawbattle.activeRunId');
           updateStatus('cancelled');
           es.close();
           break;
 
         case 'fatal_error':
           addLog(`Error: ${event.message}`);
+          localStorage.removeItem('clawbattle.activeRunId');
           updateStatus('error');
           es.close();
           break;

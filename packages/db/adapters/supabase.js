@@ -54,14 +54,9 @@ export async function saveAttempt(data) {
   await sbFetch('runs', { method: 'POST', body: toRunRow(data), prefer: 'return=minimal' });
 }
 
-export async function saveRunMeta(data) {
-  if (!data.finishedAt) return;
-  await sbFetch(`runs?run_id=eq.${encodeURIComponent(data.runId)}`, {
-    method: 'PATCH',
-    body: { finished_at: data.finishedAt },
-    prefer: 'return=minimal',
-  });
-}
+// run_state lifecycle tracking is local-only; Supabase is used for result uploads only.
+export async function saveRunStart(_data) {}
+export async function saveRunEnd(_data) {}
 
 export async function getResults() {
   const PAGE_SIZE = 1000;
@@ -77,25 +72,7 @@ export async function getResults() {
 }
 
 export async function getRunMeta() {
-  const PAGE_SIZE = 1000;
-  const rows = [];
-  let offset = 0;
-  while (true) {
-    const page = await sbFetch(
-      `runs?select=run_id,model,provider,prompt_version,temperature,attempts_per_target,started_at,finished_at` +
-      `&order=started_at.desc&limit=${PAGE_SIZE}&offset=${offset}`
-    );
-    rows.push(...page);
-    if (page.length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
-  }
-  // Deduplicate by run_id — first occurrence per run has the latest started_at ordering
-  const seen = new Set();
-  return rows.filter(r => {
-    if (seen.has(r.run_id)) return false;
-    seen.add(r.run_id);
-    return true;
-  });
+  return sbFetch('run_state?select=*&order=started_at.desc');
 }
 
 export async function getBattleTargets() {

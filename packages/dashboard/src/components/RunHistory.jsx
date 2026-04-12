@@ -68,22 +68,30 @@ export default function RunHistory({ runs, runMeta, onResume }) {
           {runIds.map(id => {
             const meta = metaById[id];
             const label = meta ? `${meta.model} – ${meta.started_at?.slice(0, 16) ?? id}` : id;
-            return <option key={id} value={id}>{label}</option>;
+            const prefix = meta?.status === 'running' ? '⏳ ' : meta?.status === 'incomplete' ? '⚠️ ' : '';
+            return <option key={id} value={id}>{prefix}{label}</option>;
           })}
         </select>
         {onResume && (
-          <button
-            className="deleteButton"
-            style={{ color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}
-            disabled={!selectedRun}
-            onClick={() => {
-              const meta = metaById[selectedRun];
-              console.log('[RunHistory] Resume clicked — runId:', selectedRun, 'meta:', meta);
-              onResume({ runId: selectedRun, model: meta?.model ?? '', provider: meta?.provider ?? 'openrouter' });
-            }}
-          >
-            Resume
-          </button>
+          <>
+            {selectedRun && metaById[selectedRun]?.status === 'incomplete' && (
+              <span style={{ color: 'var(--warning-color, #e6a817)', fontSize: '0.82em', display: 'flex', alignItems: 'center', gap: 4 }}>
+                ⚠️ Incomplete — some targets had all attempts fail
+              </span>
+            )}
+            <button
+              className="deleteButton"
+              style={{ color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}
+              disabled={!selectedRun}
+              onClick={() => {
+                const meta = metaById[selectedRun];
+                console.log('[RunHistory] Resume clicked — runId:', selectedRun, 'meta:', meta);
+                onResume({ runId: selectedRun, model: meta?.model ?? '', provider: meta?.provider ?? 'openrouter' });
+              }}
+            >
+              Resume
+            </button>
+          </>
         )}
         {pageCount > 1 && (
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>

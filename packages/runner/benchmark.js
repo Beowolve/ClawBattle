@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 import { render, closeBrowser, getChromeVersion } from '../core/renderer.js';
 import { score, computeScore, normalizeCode, PROXY_PERFECT_MATCH_THRESHOLD } from '../core/scorer.js';
-import { saveAttempt, saveRunMeta, getBattleTargets, getDailyTargets, getCompletedTargetIds } from '../db/index.js';
+import { saveAttempt, saveRunStart, saveRunEnd, getBattleTargets, getDailyTargets, getCompletedTargetIds } from '../db/index.js';
 
 const BENCHMARK_VERSION = '1.0';
 const TARGET_WIDTH = 400;
@@ -54,6 +54,8 @@ export async function runBenchmark({
   }
 
   const runMeta = { promptVersion, temperature: null, attemptsPerTarget: attempts, startedAt, reasoningEffort: reasoningEffort ?? null };
+
+  saveRunStart({ runId, model, provider, promptVersion: promptVersion ?? null, reasoningEffort: reasoningEffort ?? null, startedAt });
 
   onProgress?.({
     type: 'start', runId, model, targetCount: definitions.length,
@@ -139,7 +141,7 @@ export async function runBenchmark({
         continue;
       }
 
-      results.push({ targetId: def.id, bestScore: bestMatch, scores, perfect });
+      results.push({ targetId: def.id, bestScore: bestMatch, scores, perfect, allErrors });
       break;
     }
   }
@@ -155,16 +157,22 @@ export async function runBenchmark({
     }
   );
 
+  let finalStatus = 'done';
+  let workerError;
   try {
     await Promise.all(workers);
+    if (results.some(r => r.allErrors)) finalStatus = 'incomplete';
+  } catch (err) {
+    finalStatus = err.name === 'AbortError' ? 'cancelled' : 'error';
+    workerError = err;
   } finally {
-    await closeBrowser();
+    try { await closeBrowser(); } catch { /* ignore browser-close errors */ }
+    saveRunEnd({ runId, finishedAt: new Date().toISOString(), status: finalStatus });
   }
+  if (workerError) throw workerError;
 
   const summary = buildSummary(results);
   const finishedAt = new Date().toISOString();
-
-  saveRunMeta({ runId, finishedAt });
 
   console.log(`\nDone`);
   console.log(`  Avg Best Score (per target): ${summary.avgScore.toFixed(1)}%`);

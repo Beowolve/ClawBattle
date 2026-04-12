@@ -150,7 +150,7 @@ function DifficultyTooltip({ active, payload }) {
 export default function Insights({ runs, battleTargets, dailyTargets, onSelectTarget }) {
   const [distModel, setDistModel] = useState('');
 
-  const models = useMemo(() => [...new Set(runs.map(r => r.model))], [runs]);
+  const models = useMemo(() => [...new Set(runs.map(r => r.model))].sort(), [runs]);
   const difficulty = useMemo(
     () => computeTargetDifficulty(runs, battleTargets, dailyTargets),
     [runs, battleTargets, dailyTargets],

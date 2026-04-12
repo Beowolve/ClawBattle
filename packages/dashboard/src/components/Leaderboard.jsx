@@ -148,7 +148,7 @@ export default function Leaderboard({ runs, onModelSelect }) {
           </thead>
           <tbody>
             {sorted.map((row, i) => (
-              <tr key={row.model}>
+              <tr key={`${row.model}__${row.reasoningEffort ?? ''}`}>
                 <td className="rank">{i + 1}</td>
                 <td className="modelName" title={row.model}>
                   <button className="modelLink" onClick={() => onModelSelect?.(row.model)}>
