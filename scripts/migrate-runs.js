@@ -78,7 +78,14 @@ if (!hasRunMeta) {
   console.log('Dropped run_meta table\n');
 }
 
-// --- 5. Create run_state table (if not present) ---
+// --- 5. Add unique index on runs(run_id, target_id, attempt) ---
+db.exec(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_unique
+  ON runs(run_id, target_id, attempt)
+`);
+console.log('Unique index on runs(run_id, target_id, attempt) ready\n');
+
+// --- 6. Create run_state table (if not present) ---
 db.exec(`
   CREATE TABLE IF NOT EXISTS run_state (
     run_id           TEXT PRIMARY KEY,

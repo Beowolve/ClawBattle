@@ -4,6 +4,7 @@
     "sync": "node --env-file=.env scripts/sync-targets.js",
     "migrate": "node --env-file=.env scripts/migrate-runs.js",
     "upload": "node --env-file=.env scripts/upload-results.js",
+    "download": "node --env-file=.env scripts/download-results.js",
     "test": "node --test packages/**/*.test.js"
   }
 }

@@ -1052,6 +1052,73 @@ td.muted {
   font-family: var(--font-mono, monospace);
 }
 
+/* ─── Sync panel ───────────────────────────────────────────────── */
+.syncStatus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82em;
+  color: var(--muted-color);
+}
+
+.syncStatusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.syncStatusDot--ok  { background: var(--perfect-color); }
+.syncStatusDot--err { background: var(--error-color); }
+
+.syncBody {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 0;
+}
+
+.syncSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 14px;
+}
+
+.syncDivider {
+  background: var(--border-color);
+  align-self: stretch;
+}
+
+.syncSectionTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--heading-color);
+}
+
+.syncSectionDesc {
+  font-size: 0.85rem;
+  color: var(--muted-color);
+  line-height: 1.5;
+}
+
+.syncResult {
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.syncResult--success { color: var(--perfect-color); }
+.syncResult--error   { color: var(--error-color); }
+
+@media (max-width: 640px) {
+  .syncBody {
+    grid-template-columns: 1fr;
+  }
+  .syncDivider {
+    height: 1px;
+    width: auto;
+  }
+}
+
 /* ─── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 1100px) {
   .kpiGrid {

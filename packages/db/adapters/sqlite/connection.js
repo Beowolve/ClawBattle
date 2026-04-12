@@ -47,6 +47,9 @@ function initSchema(db) {
       status           TEXT NOT NULL DEFAULT 'running'
     );
 
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_unique
+      ON runs(run_id, target_id, attempt);
+
     CREATE TABLE IF NOT EXISTS battle_targets (
       id INTEGER PRIMARY KEY,
       name TEXT NOT NULL,

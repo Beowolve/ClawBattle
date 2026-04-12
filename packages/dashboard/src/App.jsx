@@ -9,6 +9,7 @@ import RunHistory from './components/RunHistory.jsx';
 import StartRun from './components/StartRun.jsx';
 import TargetDetail from './components/TargetDetail.jsx';
 import Insights from './components/Insights.jsx';
+import Sync from './components/Sync.jsx';
 
 const TABS = [
   { id: 'leaderboard', label: 'Leaderboard' },
@@ -16,6 +17,7 @@ const TABS = [
   { id: 'insights', label: 'Insights' },
   { id: 'runs', label: 'Run History' },
   { id: 'run', label: '+ Run' },
+  { id: 'sync', label: '⇅ Sync' },
 ];
 
 function computeKpis(runs, battleTargets) {
@@ -250,6 +252,8 @@ export default function App() {
             }
           </div>
         )}
+
+        {tab === 'sync' && <Sync />}
 
         <div style={{ display: tab === 'run' ? '' : 'none' }}>
           <StartRun

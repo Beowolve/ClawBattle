@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
-import { getResults, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel } from '../db/index.js';
+import { getResults, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel, upsertRuns, upsertRunStates } from '../db/index.js';
+import { uploadToSupabase, downloadFromSupabase } from '../db/sync.js';
 import { runBenchmark } from '../runner/benchmark.js';
 import { createJob, getJob, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
 
@@ -123,6 +124,36 @@ app.get('/api/runs/:runId/progress', (req, res) => {
 
   subscribe(runId, res);
   req.on('close', () => unsubscribe(runId, res));
+});
+
+app.get('/api/sync/config', (req, res) => {
+  res.json({ configured: !!(process.env.SUPABASE_RESULTS_URL && process.env.SUPABASE_RESULTS_KEY) });
+});
+
+app.post('/api/sync/upload', async (req, res) => {
+  const url = process.env.SUPABASE_RESULTS_URL;
+  const key = process.env.SUPABASE_RESULTS_KEY;
+  if (!url || !key) return res.status(400).json({ error: 'Supabase not configured in .env' });
+  try {
+    const runs = getResults();
+    const runState = getRunMeta();
+    const result = await uploadToSupabase({ url, key, runs, runState });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/sync/download', async (req, res) => {
+  const url = process.env.SUPABASE_RESULTS_URL;
+  const key = process.env.SUPABASE_RESULTS_KEY;
+  if (!url || !key) return res.status(400).json({ error: 'Supabase not configured in .env' });
+  try {
+    const result = await downloadFromSupabase({ url, key, upsertRuns, upsertRunStates });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.listen(PORT, () => console.log(`ClawBattle API running on :${PORT}`));

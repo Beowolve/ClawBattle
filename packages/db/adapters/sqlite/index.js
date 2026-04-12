@@ -2,7 +2,7 @@
 // External code imports from here; tests import the modules directly.
 
 import { getDb } from './connection.js';
-import { saveAttempt as _saveAttempt, getResults as _getResults, deleteRunsByModel as _deleteRunsByModel, getCompletedTargetIds as _getCompletedTargetIds, saveRunStart as _saveRunStart, saveRunEnd as _saveRunEnd, getRunMeta as _getRunMeta } from './runs.js';
+import { saveAttempt as _saveAttempt, getResults as _getResults, deleteRunsByModel as _deleteRunsByModel, getCompletedTargetIds as _getCompletedTargetIds, saveRunStart as _saveRunStart, saveRunEnd as _saveRunEnd, getRunMeta as _getRunMeta, upsertRuns as _upsertRuns, upsertRunStates as _upsertRunStates } from './runs.js';
 import {
   upsertBattleTarget as _upsertBattleTarget,
   upsertDailyTarget as _upsertDailyTarget,
@@ -16,6 +16,8 @@ export const getResults              = ()         => _getResults(getDb());
 export const deleteRunsByModel       = (model)   => _deleteRunsByModel(getDb(), model);
 export const saveRunStart            = (data)    => _saveRunStart(getDb(), data);
 export const saveRunEnd              = (data)    => _saveRunEnd(getDb(), data);
+export const upsertRuns              = (rows)    => _upsertRuns(getDb(), rows);
+export const upsertRunStates         = (rows)    => _upsertRunStates(getDb(), rows);
 export const getRunMeta              = ()        => _getRunMeta(getDb());
 export const upsertBattleTarget      = (t)       => _upsertBattleTarget(getDb(), t);
 export const upsertDailyTarget       = (t)       => _upsertDailyTarget(getDb(), t);

@@ -112,3 +112,7 @@ export async function deleteRunsByModel(model) {
   await sbFetch(`runs?model=eq.${encodeURIComponent(model)}`, { method: 'DELETE', prefer: 'return=minimal' });
   return { deleted: count };
 }
+
+// Local-only operations — not applicable for Supabase adapter
+export async function upsertRuns(_rows) { return 0; }
+export async function upsertRunStates(_rows) { return 0; }

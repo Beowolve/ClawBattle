@@ -63,6 +63,51 @@ export function getCompletedTargetIds(db, runId) {
   return new Set(rows.map(r => String(Math.round(Number(r.target_id)))));
 }
 
+// Upsert rows downloaded from Supabase — skips rows already present locally.
+export function upsertRuns(db, rows) {
+  const stmt = db.prepare(`
+    INSERT OR IGNORE INTO runs
+      (run_id, benchmark_version, model, provider,
+       prompt_version, temperature, attempts_per_target, started_at, finished_at,
+       target_id, target_type, attempt, match, score,
+       tokens_used, code, code_length, cost, duration_ms, reasoning_effort, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+  `);
+  let inserted = 0;
+  for (const r of rows) {
+    const { changes } = stmt.run(
+      r.run_id, r.benchmark_version, r.model, r.provider,
+      r.prompt_version ?? null, r.temperature ?? null, r.attempts_per_target ?? null,
+      r.started_at ?? null, r.finished_at ?? null,
+      r.target_id, r.target_type, r.attempt,
+      r.match ?? null, r.score ?? null,
+      r.tokens_used ?? null, r.code ?? null, r.code_length ?? null,
+      r.cost ?? null, r.duration_ms ?? null, r.reasoning_effort ?? null,
+      r.created_at ?? null,
+    );
+    inserted += changes;
+  }
+  return inserted;
+}
+
+export function upsertRunStates(db, rows) {
+  const stmt = db.prepare(`
+    INSERT OR IGNORE INTO run_state
+      (run_id, model, provider, prompt_version, reasoning_effort, started_at, finished_at, status)
+    VALUES (?,?,?,?,?,?,?,?)
+  `);
+  let inserted = 0;
+  for (const r of rows) {
+    const { changes } = stmt.run(
+      r.run_id, r.model, r.provider,
+      r.prompt_version ?? null, r.reasoning_effort ?? null,
+      r.started_at, r.finished_at ?? null, r.status ?? 'done',
+    );
+    inserted += changes;
+  }
+  return inserted;
+}
+
 export function deleteRunsByModel(db, model) {
   const runIds = db.prepare('SELECT DISTINCT run_id FROM runs WHERE model = ?').all(model).map(r => r.run_id);
   db.prepare('DELETE FROM runs WHERE model = ?').run(model);
