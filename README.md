@@ -25,14 +25,17 @@ docker compose run runner node cli.js \
   --attempts 3 \
   --prompt v2
 
-# Or start a run directly from the dashboard (+ Run tab)
+# Or start a run directly from the dashboard (Run tab)
 ```
 
 Options:
 - `--provider` — `openrouter` | `openai` | `ollama`
 - `--targets` — `battle` | `daily`
 - `--attempts` — attempts per target (best score counts)
-- `--prompt` — prompt version (`v1`, `v2`)
+- `--prompt` — prompt version (`v1`, `v2`, …)
+- `--concurrency` — run N targets in parallel (default: `1`)
+- `--retries` — retry a target from scratch if all attempts error (default: `0`)
+- `--reasoning` — reasoning effort for o-series models: `low` | `medium` | `high` | `xhigh`
 - `--target-from` / `--target-to` — limit to a target range (e.g. 1–25)
 
 ## Structure
@@ -43,6 +46,7 @@ packages/
   runner/      CLI benchmark orchestrator
   api/         Express REST API + SSE progress stream
   dashboard/   React + Vite dashboard
+  db/          Database adapters (SQLite built-in; Supabase for upload)
 targets/
   images/      PNG reference images (battle + daily)
   definitions/ Target metadata (colors, dimensions)
@@ -52,8 +56,10 @@ prompts/
   v1/          Original benchmark prompt
   v2/          Improved color accuracy rules
 scripts/
+  migrate-runs.js         Migrate DB schema to latest version (run once after update)
+  upload-results.js       Upload local SQLite results to Supabase
+  sync-targets.js         Sync target definitions/images from remote source
   recalculate-scores.js   Recompute match% + scores for all stored runs
-  backfill-run-meta.js    Backfill missing run_meta summary rows
 ```
 
 ## Scoring
