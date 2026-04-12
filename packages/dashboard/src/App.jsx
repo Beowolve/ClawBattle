@@ -10,11 +10,13 @@ import StartRun from './components/StartRun.jsx';
 import TargetDetail from './components/TargetDetail.jsx';
 import Insights from './components/Insights.jsx';
 import Sync from './components/Sync.jsx';
+import About from './components/About.jsx';
 
 const TABS = [
   { id: 'leaderboard', label: 'Leaderboard' },
   { id: 'targets', label: 'Targets' },
   { id: 'insights', label: 'Insights' },
+  { id: 'about', label: 'About' },
   ...(!IS_PUBLIC ? [
     { id: 'runs', label: 'Run History' },
     { id: 'run', label: '+ Run' },
@@ -241,6 +243,8 @@ export default function App() {
             }
           </div>
         )}
+
+        {tab === 'about' && <About />}
 
         {tab === 'runs' && (
           <div className="panel">
