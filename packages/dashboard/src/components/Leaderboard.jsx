@@ -2,18 +2,19 @@ import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 function buildLeaderboard(runs) {
-  // Total cost + attempt count = sum of ALL attempts per model
+  // Total cost + attempt count = sum of ALL attempts per model+reasoning
   const costByModel = {};
   const attemptsByModel = {};
   for (const r of runs) {
-    attemptsByModel[r.model] = (attemptsByModel[r.model] ?? 0) + 1;
-    if (r.cost != null) costByModel[r.model] = (costByModel[r.model] ?? 0) + r.cost;
+    const k = `${r.model}__${r.reasoning_effort ?? ''}`;
+    attemptsByModel[k] = (attemptsByModel[k] ?? 0) + 1;
+    if (r.cost != null) costByModel[k] = (costByModel[k] ?? 0) + r.cost;
   }
 
-  // Scores/match/duration = best attempt per model+target
+  // Scores/match/duration = best attempt per model+reasoning+target
   const byModelTarget = {};
   for (const r of runs) {
-    const key = `${r.model}__${r.target_id}__${r.target_type}`;
+    const key = `${r.model}__${r.reasoning_effort ?? ''}__${r.target_id}__${r.target_type}`;
     if (!byModelTarget[key] || r.score > byModelTarget[key].score) {
       byModelTarget[key] = r;
     }
@@ -21,23 +22,27 @@ function buildLeaderboard(runs) {
 
   const byModel = {};
   for (const r of Object.values(byModelTarget)) {
-    if (!byModel[r.model]) {
-      byModel[r.model] = { model: r.model, provider: r.provider, scores: [], matches: [], durations: [], perfectCount: 0 };
+    const modelKey = `${r.model}__${r.reasoning_effort ?? ''}`;
+    if (!byModel[modelKey]) {
+      byModel[modelKey] = { model: r.model, reasoningEffort: r.reasoning_effort ?? null, provider: r.provider, scores: [], matches: [], durations: [], perfectCount: 0, promptVersions: new Set() };
     }
-    const m = byModel[r.model];
+    const m = byModel[modelKey];
     if (r.score != null) m.scores.push(r.score);
     if (r.match != null) m.matches.push(r.match);
     if (r.duration_ms != null) m.durations.push(r.duration_ms);
     if (r.match >= 100) m.perfectCount++;
+    if (r.prompt_version) m.promptVersions.add(r.prompt_version);
   }
 
   return Object.values(byModel).map(m => ({
     model: m.model,
+    reasoningEffort: m.reasoningEffort,
     provider: m.provider,
+    promptVersions: [...m.promptVersions].sort(),
     avgScore: m.scores.length ? m.scores.reduce((a, b) => a + b, 0) / m.scores.length : null,
     avgMatch: m.matches.length ? m.matches.reduce((a, b) => a + b, 0) / m.matches.length : null,
-    totalCost: costByModel[m.model] ?? null,
-    avgCost: costByModel[m.model] != null ? costByModel[m.model] / attemptsByModel[m.model] : null,
+    totalCost: costByModel[`${m.model}__${m.reasoningEffort ?? ''}`] ?? null,
+    avgCost: costByModel[`${m.model}__${m.reasoningEffort ?? ''}`] != null ? costByModel[`${m.model}__${m.reasoningEffort ?? ''}`] / attemptsByModel[`${m.model}__${m.reasoningEffort ?? ''}`] : null,
     avgDuration: m.durations.length ? m.durations.reduce((a, b) => a + b, 0) / m.durations.length : null,
     targets: m.scores.length,
     perfectCount: m.perfectCount,
@@ -48,6 +53,8 @@ function buildLeaderboard(runs) {
 const COLS = [
   { key: 'rank', label: '#' },
   { key: 'model', label: 'Model' },
+  { key: 'promptVersions', label: 'Prompt' },
+  { key: 'reasoningEffort', label: 'Reasoning' },
   { key: 'targets', label: 'Targets', numeric: true },
   { key: 'avgScore', label: 'Avg Score', numeric: true },
   { key: 'avgMatch', label: 'Avg Match', numeric: true },
@@ -144,8 +151,12 @@ export default function Leaderboard({ runs, onModelSelect }) {
               <tr key={row.model}>
                 <td className="rank">{i + 1}</td>
                 <td className="modelName" title={row.model}>
-                  <button className="modelLink" onClick={() => onModelSelect?.(row.model)}>{row.model}</button>
+                  <button className="modelLink" onClick={() => onModelSelect?.(row.model)}>
+                    {row.model}{row.reasoningEffort ? ` [${row.reasoningEffort}]` : ''}
+                  </button>
                 </td>
+                <td className="muted">{row.promptVersions.length ? row.promptVersions.join(', ') : '-'}</td>
+                <td className="muted">{row.reasoningEffort ?? '-'}</td>
                 <td className="numeric">{row.targets}</td>
                 <td className={`numeric ${row.avgScore >= 990 ? 'perfect' : ''}`}>
                   {row.avgScore != null ? row.avgScore.toFixed(2) : '-'}

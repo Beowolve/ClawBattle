@@ -2,6 +2,8 @@
   "type": "module",
   "scripts": {
     "sync": "node --env-file=.env scripts/sync-targets.js",
+    "migrate": "node --env-file=.env scripts/migrate-runs.js",
+    "upload": "node --env-file=.env scripts/upload-results.js",
     "test": "node --test packages/**/*.test.js"
   }
 }

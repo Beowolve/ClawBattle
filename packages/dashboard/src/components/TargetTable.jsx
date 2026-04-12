@@ -1,30 +1,29 @@
 import { useMemo, useState } from 'react';
 
 const COLS = [
-  { key: 'num',       label: '#',          numeric: true },
-  { key: 'name',      label: 'Name',       numeric: false },
-  { key: 'bestModel', label: 'Best Model', numeric: false },
-  { key: 'bestScore', label: 'Score',    numeric: true },
-  { key: 'bestMatch', label: 'Match',    numeric: true },
-  { key: 'attempts',  label: 'Attempts', numeric: true },
+  { key: 'num',           label: '#',          numeric: true },
+  { key: 'name',          label: 'Name',       numeric: false },
+  { key: 'bestModel',     label: 'Best Model', numeric: false },
+  { key: 'bestPrompt',    label: 'Prompt',     numeric: false },
+  { key: 'bestReasoning', label: 'Reasoning',  numeric: false },
+  { key: 'bestScore',     label: 'Score',      numeric: true },
+  { key: 'bestMatch',     label: 'Match',      numeric: true },
+  { key: 'attempts',      label: 'Attempts',   numeric: true },
 ];
 
 export default function TargetTable({ targets, type, runs, modelFilter, onSelect }) {
   const [sortKey, setSortKey] = useState('num');
   const [sortDir, setSortDir] = useState('asc');
-
   const rows = useMemo(() => {
     return targets.map(t => {
       const targetId = type === 'battle' ? t.id : t.key;
-      const targetRuns = runs.filter(r =>
+      let targetRuns = runs.filter(r =>
         Number(r.target_id) === Number(targetId) && r.target_type === type,
       );
-      const filteredRuns = modelFilter
-        ? targetRuns.filter(r => r.model === modelFilter)
-        : targetRuns;
+      if (modelFilter) targetRuns = targetRuns.filter(r => r.model === modelFilter);
 
       let best = null;
-      for (const r of filteredRuns) {
+      for (const r of targetRuns) {
         if (!best || (r.score ?? -Infinity) > (best.score ?? -Infinity)) best = r;
       }
 
@@ -33,9 +32,11 @@ export default function TargetTable({ targets, type, runs, modelFilter, onSelect
         num: t.target_number ?? t.id ?? 0,
         name: t.name ?? t.key ?? '',
         bestModel: modelFilter ? null : (best?.model ?? null),
+        bestPrompt: best?.prompt_version ?? null,
+        bestReasoning: best?.reasoning_effort ?? null,
         bestScore: best?.score ?? null,
         bestMatch: best?.match ?? null,
-        attempts: filteredRuns.length,
+        attempts: targetRuns.length,
       };
     });
   }, [targets, type, runs, modelFilter]);
@@ -89,6 +90,8 @@ export default function TargetTable({ targets, type, runs, modelFilter, onSelect
               <td className="numeric">{row.num}</td>
               <td>{row.name}</td>
               <td className="modelName" title={row.bestModel ?? ''}>{row.bestModel ?? '—'}</td>
+              <td className="muted">{row.bestPrompt ?? '—'}</td>
+              <td className="muted">{row.bestReasoning ?? '—'}</td>
               <td className={`numeric ${row.bestScore >= 990 ? 'perfect' : ''}`}>
                 {row.bestScore != null ? row.bestScore.toFixed(2) : '—'}
               </td>

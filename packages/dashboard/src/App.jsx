@@ -49,7 +49,13 @@ export default function App() {
   const [runStatus, setRunStatus] = useState('idle');
   const [selectedTarget, setSelectedTarget] = useState(null);
   const [resumeTarget, setResumeTarget] = useState(null);
-  const [promptFilter, setPromptFilter] = useState('all');
+  const [promptFilter, setPromptFilter] = useState(
+    () => localStorage.getItem('clawbattle.promptFilter') ?? 'all',
+  );
+  function handlePromptFilter(v) {
+    setPromptFilter(v);
+    localStorage.setItem('clawbattle.promptFilter', v);
+  }
   const [modelFilter, setModelFilter] = useState(null);
 
   function handleModelSelect(model) {
@@ -73,21 +79,14 @@ export default function App() {
   const battleTargets = battleQ.data ?? [];
   const dailyTargets = dailyQ.data ?? [];
 
-  const runPromptVersion = useMemo(
-    () => Object.fromEntries(runMeta.map(m => [m.run_id, m.prompt_version])),
-    [runMeta],
-  );
-
   const promptVersions = useMemo(
-    () => [...new Set(runMeta.map(m => m.prompt_version).filter(Boolean))].sort(),
-    [runMeta],
+    () => [...new Set(runs.map(r => r.prompt_version).filter(Boolean))].sort(),
+    [runs],
   );
 
   const filteredRuns = useMemo(
-    () => promptFilter === 'all'
-      ? runs
-      : runs.filter(r => runPromptVersion[r.run_id] === promptFilter),
-    [runs, promptFilter, runPromptVersion],
+    () => promptFilter === 'all' ? runs : runs.filter(r => r.prompt_version === promptFilter),
+    [runs, promptFilter],
   );
 
   const kpis = useMemo(() => computeKpis(filteredRuns, battleTargets), [filteredRuns, battleTargets]);
@@ -102,7 +101,7 @@ export default function App() {
   return (
     <div className="appRoot">
       <div className="topBand" />
-      <Header />
+      <Header promptVersions={promptVersions} promptFilter={promptFilter} onPromptChange={handlePromptFilter} />
       <main className="appContent">
         <div className="kpiGrid">
           <KpiCard title="Total Runs" value={kpis.totalRuns} />
@@ -130,19 +129,7 @@ export default function App() {
           <div className="panel">
             <div className="panelHeader">
               <h2>Leaderboard</h2>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {promptVersions.length > 1 && (
-                  <select
-                    className="filterSelect"
-                    value={promptFilter}
-                    onChange={e => setPromptFilter(e.target.value)}
-                  >
-                    <option value="all">all prompts</option>
-                    {promptVersions.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                )}
-                <span>{filteredRuns.length} run{filteredRuns.length !== 1 ? 's' : ''}</span>
-              </span>
+              <span>{filteredRuns.length} run{filteredRuns.length !== 1 ? 's' : ''}</span>
             </div>
             {isLoading
               ? <div className="stateBox">Loading...</div>
@@ -161,7 +148,7 @@ export default function App() {
                 <TargetDetail
                   target={selectedTarget}
                   type={targetType}
-                  runs={runs}
+                  runs={filteredRuns}
                   onBack={() => setSelectedTarget(null)}
                   onPrev={selectedIdx > 0 ? () => setSelectedTarget(sortedTargets[selectedIdx - 1]) : null}
                   onNext={selectedIdx < sortedTargets.length - 1 ? () => setSelectedTarget(sortedTargets[selectedIdx + 1]) : null}
@@ -213,7 +200,7 @@ export default function App() {
                       ? <TargetTable
                           targets={sortedTargets}
                           type={targetType}
-                          runs={runs}
+                          runs={filteredRuns}
                           modelFilter={modelFilter}
                           onSelect={setSelectedTarget}
                         />

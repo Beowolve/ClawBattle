@@ -25,6 +25,7 @@ export async function runBenchmark({
   retries = 0,
   resumeRunId,
   promptVersion,
+  reasoningEffort,
   runId: providedRunId, onProgress, signal,
 }) {
   const runId = providedRunId ?? crypto.randomUUID();
@@ -52,9 +53,7 @@ export async function runBenchmark({
     console.log(`  Completed target IDs found: [${[...completedIds].join(', ')}] (${completedIds.size} total)`);
   }
 
-  // Write initial run_meta so the run is always represented, even if cancelled
-  const runMetaBase = { runId, model, provider, promptVersion, temperature: null, attemptsPerTarget: attempts, startedAt };
-  saveRunMeta({ ...runMetaBase, finishedAt: null, summary: { avgScore: 0, perfectRate: 0, targetCount: 0 } });
+  const runMeta = { promptVersion, temperature: null, attemptsPerTarget: attempts, startedAt, reasoningEffort: reasoningEffort ?? null };
 
   onProgress?.({
     type: 'start', runId, model, targetCount: definitions.length,
@@ -100,7 +99,7 @@ export async function runBenchmark({
 
         try {
           const t0 = Date.now();
-          const { code: rawCode, tokensUsed, cost } = await adapter.generate({ model, prompt, images, signal });
+          const { code: rawCode, tokensUsed, cost } = await adapter.generate({ model, prompt, images, reasoningEffort, signal });
           const durationMs = Date.now() - t0;
           const code = normalizeCode(rawCode);
           const rendered = await render(code);
@@ -114,6 +113,7 @@ export async function runBenchmark({
           allErrors = false;
           saveAttempt({
             runId, benchmarkVersion: BENCHMARK_VERSION, model, provider,
+            ...runMeta,
             targetId: def.id, targetType, attempt,
             match: matchPercent, score: cssBattleScore,
             tokensUsed, cost, durationMs, code, codeLength,
@@ -139,9 +139,7 @@ export async function runBenchmark({
         continue;
       }
 
-      // Finalize this target
       results.push({ targetId: def.id, bestScore: bestMatch, scores, perfect });
-      saveRunMeta({ ...runMetaBase, finishedAt: null, summary: buildSummary(results) });
       break;
     }
   }
@@ -166,7 +164,7 @@ export async function runBenchmark({
   const summary = buildSummary(results);
   const finishedAt = new Date().toISOString();
 
-  saveRunMeta({ ...runMetaBase, finishedAt, summary });
+  saveRunMeta({ runId, finishedAt });
 
   console.log(`\nDone`);
   console.log(`  Avg Best Score (per target): ${summary.avgScore.toFixed(1)}%`);

@@ -1,8 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+
+const PAGE_SIZE = 100;
 
 const COLS = [
-  { key: 'run_id',      label: 'Run ID' },
-  { key: 'model',       label: 'Model' },
+  { key: 'run_id',        label: 'Run ID' },
+  { key: 'model',            label: 'Model' },
+  { key: 'prompt_version',   label: 'Prompt' },
+  { key: 'reasoning_effort', label: 'Reasoning' },
   { key: 'target_id',   label: 'Target',   numeric: true },
   { key: 'target_type', label: 'Type' },
   { key: 'attempt',     label: 'Attempt',  numeric: true },
@@ -18,6 +22,7 @@ export default function RunHistory({ runs, runMeta, onResume }) {
   const [selectedRun, setSelectedRun] = useState('');
   const [sortKey, setSortKey] = useState('created_at');
   const [sortDir, setSortDir] = useState('desc');
+  const [page, setPage] = useState(0);
 
   const metaById = useMemo(() => {
     const m = {};
@@ -37,6 +42,11 @@ export default function RunHistory({ runs, runMeta, onResume }) {
       return 0;
     });
   }, [runs, selectedRun, sortKey, sortDir]);
+
+  useEffect(() => { setPage(0); }, [selectedRun, sortKey, sortDir]);
+
+  const pageCount = Math.ceil(sorted.length / PAGE_SIZE);
+  const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   function handleSort(key) {
     if (key === sortKey) {
@@ -75,6 +85,15 @@ export default function RunHistory({ runs, runMeta, onResume }) {
             Resume
           </button>
         )}
+        {pageCount > 1 && (
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className="muted" style={{ fontSize: '0.85em' }}>
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, sorted.length)} of {sorted.length}
+            </span>
+            <button className="deleteButton" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Prev</button>
+            <button className="deleteButton" disabled={page >= pageCount - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+          </div>
+        )}
       </div>
       <div className="tableWrap">
         <table>
@@ -92,10 +111,14 @@ export default function RunHistory({ runs, runMeta, onResume }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map(r => (
+            {paginated.map(r => (
               <tr key={r.id} className="runRow">
                 <td className="runId muted">{r.run_id?.slice(0, 8)}</td>
-                <td className="modelName" title={r.model}>{r.model}</td>
+                <td className="modelName" title={r.model}>
+                  {r.model}{r.reasoning_effort ? ` [${r.reasoning_effort}]` : ''}
+                </td>
+                <td className="muted">{r.prompt_version ?? '-'}</td>
+                <td className="muted">{r.reasoning_effort ?? '-'}</td>
                 <td className="numeric">{r.target_type === 'battle' ? parseInt(r.target_id) : r.target_id}</td>
                 <td>
                   <span className={r.target_type === 'battle' ? 'badge badgeBattle' : 'badge badgeDaily'}>

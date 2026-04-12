@@ -2,8 +2,7 @@
 // External code imports from here; tests import the modules directly.
 
 import { getDb } from './connection.js';
-import { saveAttempt as _saveAttempt, getResults as _getResults, deleteRunsByModel as _deleteRunsByModel, getCompletedTargetIds as _getCompletedTargetIds } from './runs.js';
-import { saveRunMeta as _saveRunMeta, getRunMeta as _getRunMeta } from './run-meta.js';
+import { saveAttempt as _saveAttempt, getResults as _getResults, deleteRunsByModel as _deleteRunsByModel, getCompletedTargetIds as _getCompletedTargetIds, saveRunMeta as _saveRunMeta, getRunMeta as _getRunMeta } from './runs.js';
 import {
   upsertBattleTarget as _upsertBattleTarget,
   upsertDailyTarget as _upsertDailyTarget,

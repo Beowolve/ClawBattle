@@ -70,6 +70,7 @@ app.post('/api/runs/start', (req, res) => {
     concurrency = 1,
     retries = 0,
     resumeRunId,
+    reasoningEffort,
   } = req.body ?? {};
   if (!model) return res.status(400).json({ error: 'model required' });
 
@@ -87,6 +88,7 @@ app.post('/api/runs/start', (req, res) => {
     resumeRunId: resumeRunId ?? undefined,
     targetFrom: targetFrom != null ? Number(targetFrom) : undefined,
     targetTo: targetTo != null ? Number(targetTo) : undefined,
+    reasoningEffort: reasoningEffort ?? undefined,
     onProgress: (event) => pushEvent(runId, event),
   }).catch((err) => {
     if (err.name === 'AbortError') {

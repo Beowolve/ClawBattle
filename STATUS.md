@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-05
+Last updated: 2026-04-12
 
 ## What's Done
 
@@ -49,6 +49,10 @@ Last updated: 2026-04-05
 ### Scripts
 - [x] `scripts/recalculate-scores.js` — re-renders all stored runs with current scorer
 - [x] `scripts/backfill-run-meta.js` — fills missing run_meta rows
+- [x] Unified `runs` table — meta fields (prompt_version, temperature, etc.) denormalized into runs; `run_meta` table removed
+- [x] Supabase DB adapter — `packages/db/adapters/supabase.js` fully implemented (results: runs table)
+- [x] `scripts/migrate-runs.js` — migrates existing SQLite DB to unified schema
+- [x] `scripts/upload-results.js` — batch-uploads local SQLite runs to Supabase
 
 ### Baselines
 - [x] `baselines/human.json` — top1 scores for battle targets 1–12
@@ -61,7 +65,6 @@ Last updated: 2026-04-05
 
 ## Ideas / Backlog
 
-- **Supabase DB adapter** — `packages/db/supabase.js` is a stub; implement when needed for shared/hosted results.
 - **Richer baselines** — scrape top 100 scores per target (top10avg, min, max, percentile bands) for more meaningful model comparison.
 - **Daily targets** — code paths exist but untested end-to-end.
 - **Linting + CI** — no ESLint or GitHub Actions yet.

@@ -1,4 +1,33 @@
-﻿create table public.battle_targets (
+﻿create table public.runs (
+  id bigserial primary key,
+  run_id text not null,
+  benchmark_version text not null,
+  model text not null,
+  provider text not null,
+  prompt_version text,
+  temperature real,
+  attempts_per_target integer,
+  started_at timestamp with time zone,
+  finished_at timestamp with time zone,
+  target_id text not null,
+  target_type text not null,
+  attempt integer not null,
+  match real,
+  score real,
+  tokens_used integer,
+  code text,
+  code_length integer,
+  cost real,
+  duration_ms integer,
+  reasoning_effort text,
+  created_at timestamp with time zone default now()
+);
+
+create index if not exists idx_runs_run_id on public.runs (run_id);
+create index if not exists idx_runs_model   on public.runs (model);
+
+
+create table public.battle_targets (
                                        id integer not null,
                                        name text not null,
                                        image_url text not null,

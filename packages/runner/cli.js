@@ -12,9 +12,10 @@ const { values } = parseArgs({
     targets:    { type: 'string', default: 'battle' },
     'target-id': { type: 'string' },
     attempts:     { type: 'string', default: '3' },
-    prompt:       { type: 'string', default: process.env.PROMPT_VERSION ?? 'v1' },
-    concurrency:  { type: 'string', default: '1' },
-    retries:      { type: 'string', default: '0' },
+    prompt:     { type: 'string', default: process.env.PROMPT_VERSION ?? 'v1' },
+    concurrency: { type: 'string', default: '1' },
+    retries:     { type: 'string', default: '0' },
+    reasoning:   { type: 'string' },   // low | medium | high
   }
 });
 
@@ -25,12 +26,13 @@ if (!values.model) {
 }
 
 await runBenchmark({
-  model:         values.model,
-  provider:      values.provider,
-  targetType:    values.targets,
-  targetId:      values['target-id'],
-  attempts:      parseInt(values.attempts),
-  promptVersion: values.prompt,
-  concurrency:   parseInt(values.concurrency),
-  retries:       parseInt(values.retries),
+  model:           values.model,
+  provider:        values.provider,
+  targetType:      values.targets,
+  targetId:        values['target-id'],
+  attempts:        parseInt(values.attempts),
+  promptVersion:   values.prompt,
+  concurrency:     parseInt(values.concurrency),
+  retries:         parseInt(values.retries),
+  reasoningEffort: values.reasoning ?? undefined,
 });

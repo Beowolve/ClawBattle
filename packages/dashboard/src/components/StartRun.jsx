@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useConfig } from '../hooks/useData.js';
 
 const PROVIDERS = ['openrouter', 'openai', 'ollama'];
+const REASONING_OPTIONS = ['', 'low', 'medium', 'high', 'xhigh'];
 const ATTEMPT_OPTIONS = [1, 2, 3, 5];
 const CONCURRENCY_OPTIONS = [1, 2, 3, 4, 5, 8, 10];
 const RETRY_OPTIONS = [0, 1, 2, 3];
@@ -42,6 +43,7 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
   const [attempts, setAttempts] = useState(3);
   const [concurrency, setConcurrency] = useState(1);
   const [retries, setRetries] = useState(0);
+  const [reasoningEffort, setReasoningEffort] = useState('');
   const [targetFrom, setTargetFrom] = useState('1');
   const [targetTo, setTargetTo] = useState('25');
   const [resumeRunId, setResumeRunId] = useState(null);
@@ -90,6 +92,7 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
         model: model.trim(), provider, attempts,
         promptVersion: promptVersion || undefined,
         concurrency, retries,
+        reasoningEffort: reasoningEffort || undefined,
         targetFrom: targetFrom !== '' ? Number(targetFrom) : undefined,
         targetTo: targetTo !== '' ? Number(targetTo) : undefined,
         ...(resumeRunId ? { resumeRunId } : {}),
@@ -249,6 +252,17 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
             disabled={status === 'running'}
           >
             {PROVIDERS.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select
+            className="filterSelect"
+            value={reasoningEffort}
+            onChange={(e) => setReasoningEffort(e.target.value)}
+            disabled={status === 'running'}
+            title="Reasoning effort (for o-series / reasoning models)"
+          >
+            {REASONING_OPTIONS.map(v => (
+              <option key={v} value={v}>{v === '' ? 'default' : v}</option>
+            ))}
           </select>
           <select
             className="filterSelect"

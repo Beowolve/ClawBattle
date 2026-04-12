@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openDb } from './connection.js';
-import { saveAttempt, getResults } from './runs.js';
+import { saveAttempt, getResults, getRunMeta, saveRunMeta } from './runs.js';
 
 function makeDb() {
   return openDb(':memory:');
@@ -12,6 +12,10 @@ const baseAttempt = {
   benchmarkVersion: '1.0',
   model: 'gpt-4o',
   provider: 'openrouter',
+  promptVersion: 'v1',
+  temperature: null,
+  attemptsPerTarget: 3,
+  startedAt: '2024-01-01T00:00:00Z',
   targetId: 'battle-001',
   targetType: 'battle',
   attempt: 1,
@@ -30,6 +34,16 @@ test('saveAttempt persists a run row', () => {
   assert.equal(rows[0].run_id, 'run-1');
   assert.equal(rows[0].match, 87.5);
   assert.equal(rows[0].score, 634.21);
+});
+
+test('saveAttempt stores meta fields', () => {
+  const db = makeDb();
+  saveAttempt(db, baseAttempt);
+  const [row] = getResults(db);
+  assert.equal(row.prompt_version, 'v1');
+  assert.equal(row.attempts_per_target, 3);
+  assert.equal(row.started_at, '2024-01-01T00:00:00Z');
+  assert.equal(row.finished_at, null);
 });
 
 test('saveAttempt stores code and code_length', () => {
@@ -59,4 +73,31 @@ test('saveAttempt stores optional fields as null when omitted', () => {
   assert.equal(row.code, null);
   assert.equal(row.code_length, null);
   assert.equal(row.score, null);
+});
+
+test('getRunMeta aggregates one row per run_id', () => {
+  const db = makeDb();
+  saveAttempt(db, { ...baseAttempt, attempt: 1 });
+  saveAttempt(db, { ...baseAttempt, attempt: 2 });
+  saveAttempt(db, { ...baseAttempt, runId: 'run-2', attempt: 1 });
+  const meta = getRunMeta(db);
+  assert.equal(meta.length, 2);
+  assert.equal(meta.find(r => r.run_id === 'run-1').model, 'gpt-4o');
+});
+
+test('saveRunMeta sets finished_at on all rows for a run', () => {
+  const db = makeDb();
+  saveAttempt(db, { ...baseAttempt, attempt: 1 });
+  saveAttempt(db, { ...baseAttempt, attempt: 2 });
+  saveRunMeta(db, { runId: 'run-1', finishedAt: '2024-01-01T01:00:00Z' });
+  const meta = getRunMeta(db);
+  assert.equal(meta[0].finished_at, '2024-01-01T01:00:00Z');
+});
+
+test('saveRunMeta is a no-op when finishedAt is null', () => {
+  const db = makeDb();
+  saveAttempt(db, baseAttempt);
+  saveRunMeta(db, { runId: 'run-1', finishedAt: null });
+  const [row] = getResults(db);
+  assert.equal(row.finished_at, null);
 });

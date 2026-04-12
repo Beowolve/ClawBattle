@@ -17,6 +17,11 @@ function initSchema(db) {
       benchmark_version TEXT NOT NULL,
       model TEXT NOT NULL,
       provider TEXT NOT NULL,
+      prompt_version TEXT,
+      temperature REAL,
+      attempts_per_target INTEGER,
+      started_at TEXT,
+      finished_at TEXT,
       target_id TEXT NOT NULL,
       target_type TEXT NOT NULL,
       attempt INTEGER NOT NULL,
@@ -27,19 +32,8 @@ function initSchema(db) {
       code_length INTEGER,
       cost REAL,
       duration_ms INTEGER,
+      reasoning_effort TEXT,
       created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS run_meta (
-      run_id TEXT PRIMARY KEY,
-      model TEXT NOT NULL,
-      provider TEXT NOT NULL,
-      prompt_version TEXT NOT NULL,
-      temperature REAL,
-      attempts_per_target INTEGER,
-      started_at TEXT,
-      finished_at TEXT,
-      summary TEXT
     );
 
     CREATE TABLE IF NOT EXISTS battle_targets (

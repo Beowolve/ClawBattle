@@ -2,7 +2,12 @@
 import { extractCode } from './extract-code.js';
 import { buildUserMessage } from './build-message.js';
 
-export async function generate({ model, prompt, images, signal }) {
+export async function generate({ model, prompt, images, reasoningEffort, signal }) {
+  const body = {
+    model,
+    messages: [{ role: 'user', content: buildUserMessage(prompt, images) }],
+    ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
+  };
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     signal,
@@ -12,10 +17,7 @@ export async function generate({ model, prompt, images, signal }) {
       'HTTP-Referer': 'https://github.com/clawbattle',
       'X-Title': 'ClawBattle',
     },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: buildUserMessage(prompt, images) }],
-    }),
+    body: JSON.stringify(body),
   });
 
   const data = await response.json();

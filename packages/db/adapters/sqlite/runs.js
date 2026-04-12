@@ -1,19 +1,39 @@
 export function saveAttempt(db, data) {
   db.prepare(`
     INSERT INTO runs
-      (run_id, benchmark_version, model, provider, target_id, target_type, attempt, match, score, tokens_used, code, code_length, cost, duration_ms)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (run_id, benchmark_version, model, provider,
+       prompt_version, temperature, attempts_per_target, started_at,
+       target_id, target_type, attempt, match, score, tokens_used, code, code_length, cost, duration_ms, reasoning_effort)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     data.runId, data.benchmarkVersion, data.model, data.provider,
+    data.promptVersion ?? null, data.temperature ?? null,
+    data.attemptsPerTarget ?? null, data.startedAt ?? null,
     data.targetId, data.targetType, data.attempt,
     data.match ?? null, data.score ?? null,
     data.tokensUsed ?? null, data.code ?? null, data.codeLength ?? null,
     data.cost ?? null, data.durationMs ?? null,
+    data.reasoningEffort ?? null,
   );
 }
 
 export function getResults(db) {
   return db.prepare('SELECT * FROM runs ORDER BY created_at DESC').all();
+}
+
+export function getRunMeta(db) {
+  return db.prepare(`
+    SELECT run_id, model, provider, prompt_version, temperature,
+           attempts_per_target, started_at, MAX(finished_at) as finished_at
+    FROM runs
+    GROUP BY run_id
+    ORDER BY started_at DESC
+  `).all();
+}
+
+export function saveRunMeta(db, data) {
+  if (!data.finishedAt) return;
+  db.prepare('UPDATE runs SET finished_at = ? WHERE run_id = ?').run(data.finishedAt, data.runId);
 }
 
 export function getCompletedTargetIds(db, runId) {
