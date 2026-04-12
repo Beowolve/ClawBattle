@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useResults, useRuns, useBattleTargets, useDailyTargets } from './hooks/useData.js';
+import { useResults, useRuns, useBattleTargets, useDailyTargets, IS_PUBLIC } from './hooks/useData.js';
 import Header from './components/Header.jsx';
 import KpiCard from './components/KpiCard.jsx';
 import Leaderboard from './components/Leaderboard.jsx';
@@ -15,9 +15,11 @@ const TABS = [
   { id: 'leaderboard', label: 'Leaderboard' },
   { id: 'targets', label: 'Targets' },
   { id: 'insights', label: 'Insights' },
-  { id: 'runs', label: 'Run History' },
-  { id: 'run', label: '+ Run' },
-  { id: 'sync', label: '⇅ Sync' },
+  ...(!IS_PUBLIC ? [
+    { id: 'runs', label: 'Run History' },
+    { id: 'run', label: '+ Run' },
+    { id: 'sync', label: '⇅ Sync' },
+  ] : []),
 ];
 
 function computeKpis(runs, battleTargets) {

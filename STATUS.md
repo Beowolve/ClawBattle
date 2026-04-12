@@ -53,6 +53,15 @@ Last updated: 2026-04-12
 - [x] Supabase DB adapter — `packages/db/adapters/supabase.js` fully implemented (results: runs table)
 - [x] `scripts/migrate-runs.js` — migrates existing SQLite DB to unified schema
 - [x] `scripts/upload-results.js` — batch-uploads local SQLite runs to Supabase
+- [x] `scripts/download-results.js` — downloads runs from Supabase into local SQLite
+- [x] `scripts/upload-targets.js` — seeds battle_targets / daily_targets in Supabase
+- [x] `scripts/sync-targets.js` — syncs targets + images from Supabase into local SQLite
+- [x] Supabase schema (`packages/db/schema.sql`) — idempotent, RLS, run_state table
+- [x] Bidirectional sync UI (Sync tab) — Upload Targets, Upload Results, Download from Supabase
+- [x] Run lifecycle tracking — `run_state` table, `saveRunStart` / `saveRunEnd`; run visible in history immediately after start
+- [x] Run statuses: `running` | `done` | `incomplete` | `cancelled` | `error`; ⏳/⚠️ indicators in Run History
+- [x] localStorage persistence for active runId + mount reconnect via `GET /api/runs/active`
+- [x] Public dashboard mode — `VITE_PUBLIC_MODE=true` builds a read-only variant (Leaderboard/Targets/Insights only, no delete buttons, data fetched from Supabase via anon key)
 
 ### Baselines
 - [x] `baselines/human.json` — top1 scores for battle targets 1–12

@@ -4,12 +4,25 @@ import { useQueryClient } from '@tanstack/react-query';
 export default function Sync() {
   const queryClient = useQueryClient();
   const [configured, setConfigured] = useState(null);
-  const [uploadState, setUploadState] = useState(null);   // null | 'loading' | { result } | { error }
+  const [uploadState, setUploadState] = useState(null);
+  const [uploadTargetsState, setUploadTargetsState] = useState(null);
   const [downloadState, setDownloadState] = useState(null);
 
   useEffect(() => {
     fetch('/api/sync/config').then(r => r.json()).then(d => setConfigured(d.configured));
   }, []);
+
+  async function handleUploadTargets() {
+    setUploadTargetsState('loading');
+    try {
+      const res = await fetch('/api/sync/upload-targets', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setUploadTargetsState({ result: data });
+    } catch (err) {
+      setUploadTargetsState({ error: err.message });
+    }
+  }
 
   async function handleUpload() {
     setUploadState('loading');
@@ -49,6 +62,31 @@ export default function Sync() {
               : 'Not configured — add SUPABASE_RESULTS_URL + SUPABASE_RESULTS_KEY to .env'}
           </span>
         )}
+      </div>
+
+      <div className="syncBody syncBody--single">
+        <div className="syncSection">
+          <div className="syncSectionTitle">⊞ Upload Targets to Supabase</div>
+          <div className="syncSectionDesc">
+            Push local battle_targets and daily_targets to Supabase. Run this once to seed the DB for others.
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              className="runButton"
+              onClick={handleUploadTargets}
+              disabled={!configured || uploadTargetsState === 'loading'}
+            >
+              {uploadTargetsState === 'loading' ? 'Uploading…' : 'Upload Targets'}
+            </button>
+            {uploadTargetsState && uploadTargetsState !== 'loading' && (
+              <div className={`syncResult syncResult--${uploadTargetsState.error ? 'error' : 'success'}`}>
+                {uploadTargetsState.error
+                  ? `Error: ${uploadTargetsState.error}`
+                  : `✓ ${uploadTargetsState.result.uploadedBattle} battle, ${uploadTargetsState.result.uploadedDaily} daily targets uploaded`}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="syncBody">

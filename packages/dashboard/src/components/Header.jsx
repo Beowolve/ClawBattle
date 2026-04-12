@@ -9,7 +9,7 @@ export default function Header({ promptVersions, promptFilter, onPromptChange })
   return (
     <header className="appHeader">
       <div className="brand">
-        <img src="/clawbattle.svg" alt="ClawBattle Logo" className="brandLogo" />
+        <img src="./clawbattle.svg" alt="ClawBattle Logo" className="brandLogo" />
         <div>
           <div className="brandText">ClawBattle</div>
         </div>

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { getResults, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel, upsertRuns, upsertRunStates } from '../db/index.js';
-import { uploadToSupabase, downloadFromSupabase } from '../db/sync.js';
+import { uploadToSupabase, uploadTargetsToSupabase, downloadFromSupabase } from '../db/sync.js';
 import { runBenchmark } from '../runner/benchmark.js';
 import { createJob, getJob, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
 
@@ -138,6 +138,20 @@ app.post('/api/sync/upload', async (req, res) => {
     const runs = getResults();
     const runState = getRunMeta();
     const result = await uploadToSupabase({ url, key, runs, runState });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/sync/upload-targets', async (req, res) => {
+  const url = process.env.SUPABASE_RESULTS_URL;
+  const key = process.env.SUPABASE_RESULTS_KEY;
+  if (!url || !key) return res.status(400).json({ error: 'Supabase not configured in .env' });
+  try {
+    const battleTargets = getBattleTargets();
+    const dailyTargets = getDailyTargets();
+    const result = await uploadTargetsToSupabase({ url, key, battleTargets, dailyTargets });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

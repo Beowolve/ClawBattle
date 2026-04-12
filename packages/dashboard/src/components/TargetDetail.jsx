@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
+import { IS_PUBLIC } from '../hooks/useData.js';
 
 export default function TargetDetail({ target, type, runs, onBack, onPrev, onNext }) {
   const [selected, setSelected] = useState(null);
@@ -14,9 +15,11 @@ export default function TargetDetail({ target, type, runs, onBack, onPrev, onNex
   }, [selected]);
 
   const targetId = type === 'battle' ? target.id : target.key;
-  const imageUrl = type === 'battle'
-    ? `/api/targets/battle/${target.id}/image`
-    : `/api/targets/daily/${target.key}/image`;
+  const imageUrl = IS_PUBLIC
+    ? (target.image_url ?? null)
+    : type === 'battle'
+      ? `/api/targets/battle/${target.id}/image`
+      : `/api/targets/daily/${target.key}/image`;
 
   const solutions = useMemo(() => {
     const filtered = runs.filter(r =>
@@ -39,7 +42,7 @@ export default function TargetDetail({ target, type, runs, onBack, onPrev, onNex
           <button className="backButton" onClick={onBack}>← Back</button>
           <button className="navButton" onClick={onPrev} disabled={!onPrev}>‹ Prev</button>
           <button className="navButton" onClick={onNext} disabled={!onNext}>Next ›</button>
-          <img className="targetDetailThumb" src={imageUrl} alt={target.name ?? target.key} />
+          {imageUrl && <img className="targetDetailThumb" src={imageUrl} alt={target.name ?? target.key} />}
           <div>
             {type === 'battle' ? (
               <a
@@ -79,10 +82,12 @@ export default function TargetDetail({ target, type, runs, onBack, onPrev, onNex
           </div>
 
           {/* Right: target image */}
-          <div className="targetDetailFrame">
-            <div className="targetDetailFrameLabel">Target</div>
-            <img className="solutionTargetImg" src={imageUrl} alt="target" />
-          </div>
+          {imageUrl && (
+            <div className="targetDetailFrame">
+              <div className="targetDetailFrameLabel">Target</div>
+              <img className="solutionTargetImg" src={imageUrl} alt="target" />
+            </div>
+          )}
         </div>
       </div>
 

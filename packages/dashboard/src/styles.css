@@ -468,6 +468,10 @@ td.muted {
   background: var(--bg-color);
 }
 
+.targetImagePlaceholder {
+  background: var(--border-color);
+}
+
 .targetCardBody {
   padding: 8px 10px;
 }
@@ -1075,6 +1079,11 @@ td.muted {
   display: grid;
   grid-template-columns: 1fr 1px 1fr;
   gap: 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.syncBody--single {
+  grid-template-columns: 1fr;
 }
 
 .syncSection {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { IS_PUBLIC } from '../hooks/useData.js';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
 } from 'recharts';
@@ -57,7 +58,9 @@ function computeTargetDifficulty(runs, battleTargets, dailyTargets) {
         avgMatch: +avg.toFixed(1),
         targetObj: objMap[key] ?? null,
         targetType: type,
-        imgUrl: `/api/targets/${type}/${rawId}/image`,
+        imgUrl: IS_PUBLIC
+          ? (objMap[key]?.image_url ?? null)
+          : `/api/targets/${type}/${rawId}/image`,
       };
     })
     .filter(Boolean)
@@ -134,11 +137,13 @@ function DifficultyTooltip({ active, payload }) {
       fontSize: '0.82rem',
       pointerEvents: 'none',
     }}>
-      <img
-        src={d.imgUrl}
-        alt={d.name}
-        style={{ display: 'block', width: 120, height: 90, objectFit: 'cover', borderRadius: 4, marginBottom: 6 }}
-      />
+      {d.imgUrl && (
+        <img
+          src={d.imgUrl}
+          alt={d.name}
+          style={{ display: 'block', width: 120, height: 90, objectFit: 'cover', borderRadius: 4, marginBottom: 6 }}
+        />
+      )}
       <div style={{ fontWeight: 600, color: 'var(--heading-color)', marginBottom: 2 }}>{d.name}</div>
       <div style={{ color: 'var(--muted-color)' }}>Avg Match: <span style={{ color: 'var(--font-color)' }}>{d.avgMatch}%</span></div>
     </div>

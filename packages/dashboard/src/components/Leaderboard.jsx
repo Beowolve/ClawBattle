@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { IS_PUBLIC } from '../hooks/useData.js';
 
 function buildLeaderboard(runs) {
   // Total cost + attempt count = sum of ALL attempts per model+reasoning
@@ -63,7 +64,7 @@ const COLS = [
   { key: 'totalCost', label: 'Total Cost', numeric: true },
   { key: 'avgCost', label: 'Avg Cost', numeric: true },
   { key: 'avgDuration', label: 'Avg Time', numeric: true },
-  { key: 'actions', label: '' },
+  ...(!IS_PUBLIC ? [{ key: 'actions', label: '' }] : []),
 ];
 
 export default function Leaderboard({ runs, onModelSelect }) {
@@ -167,15 +168,17 @@ export default function Leaderboard({ runs, onModelSelect }) {
                 <td className="numeric muted">{row.totalCost != null ? '$' + row.totalCost.toFixed(4) : '-'}</td>
                 <td className="numeric muted">{row.avgCost != null ? '$' + row.avgCost.toFixed(4) : '-'}</td>
                 <td className="numeric muted">{row.avgDuration != null ? (row.avgDuration / 1000).toFixed(1) + 's' : '-'}</td>
-                <td>
-                  <button
-                    className="deleteButton"
-                    disabled={deleting === row.model}
-                    onClick={() => handleDelete(row.model)}
-                  >
-                    {deleting === row.model ? '...' : 'Delete'}
-                  </button>
-                </td>
+                {!IS_PUBLIC && (
+                  <td>
+                    <button
+                      className="deleteButton"
+                      disabled={deleting === row.model}
+                      onClick={() => handleDelete(row.model)}
+                    >
+                      {deleting === row.model ? '...' : 'Delete'}
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

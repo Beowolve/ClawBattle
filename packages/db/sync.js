@@ -39,6 +39,16 @@ async function sbFetchAll(url, key, table) {
   return rows;
 }
 
+export async function uploadTargetsToSupabase({ url, key, battleTargets, dailyTargets }) {
+  for (let i = 0; i < battleTargets.length; i += BATCH_SIZE) {
+    await sbPost(url, key, 'battle_targets', battleTargets.slice(i, i + BATCH_SIZE));
+  }
+  for (let i = 0; i < dailyTargets.length; i += BATCH_SIZE) {
+    await sbPost(url, key, 'daily_targets', dailyTargets.slice(i, i + BATCH_SIZE));
+  }
+  return { uploadedBattle: battleTargets.length, uploadedDaily: dailyTargets.length };
+}
+
 export async function uploadToSupabase({ url, key, runs, runState }) {
   for (let i = 0; i < runs.length; i += BATCH_SIZE) {
     await sbPost(url, key, 'runs', runs.slice(i, i + BATCH_SIZE));

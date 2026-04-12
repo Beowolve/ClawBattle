@@ -12,6 +12,7 @@ results/
 # Build output
 .cache/
 packages/dashboard/dist/
+packages/dashboard/dist-public/
 
 # IDEs
 .idea/
