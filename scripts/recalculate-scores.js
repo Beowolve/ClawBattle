@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
 import { render, closeBrowser } from '../packages/core/renderer.js';
-import { score, computeScore } from '../packages/core/scorer.js';
+import { computeMatch, computeScore } from '../packages/core/scorer.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TARGETS_DIR = path.join(ROOT, 'targets', 'images');
@@ -40,7 +40,7 @@ for (const run of runs) {
   try {
     const targetBuffer = fs.readFileSync(imagePath);
     const rendered = await render(run.code);
-    const { match, matchPercent } = score(rendered, targetBuffer);
+    const { match, matchPercent } = computeMatch(rendered, targetBuffer);
     const newScore = computeScore(run.code_length ?? run.code?.length ?? 0, match);
 
     updateRun.run(matchPercent, newScore, run.id);

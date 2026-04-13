@@ -8,7 +8,8 @@ import crypto from 'node:crypto';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 import { render, closeBrowser, getChromeVersion } from '../core/renderer.js';
-import { score, computeScore, normalizeCode, PROXY_PERFECT_MATCH_THRESHOLD } from '../core/scorer.js';
+import { computeMatch, computeScore, PROXY_PERFECT_MATCH_THRESHOLD } from '../core/scorer.js';
+import { sanitizeCode } from '../core/utils/code.js';
 import { saveAttempt, saveRunStart, saveRunEnd, getBattleTargets, getDailyTargets, getCompletedTargetIds } from '../db/index.js';
 
 const BENCHMARK_VERSION = '1.0';
@@ -103,9 +104,9 @@ export async function runBenchmark({
           const t0 = Date.now();
           const { code: rawCode, tokensUsed, cost } = await adapter.generate({ model, prompt, images, reasoningEffort, signal });
           const durationMs = Date.now() - t0;
-          const code = normalizeCode(rawCode);
+          const code = sanitizeCode(rawCode);
           const rendered = await render(code);
-          const { match, matchPercent, isProxyPerfect } = score(rendered, targetBuffer);
+          const { match, matchPercent, isProxyPerfect } = computeMatch(rendered, targetBuffer);
           const codeLength = code.length;
           const cssBattleScore = computeScore(codeLength, match);
 
@@ -124,9 +125,20 @@ export async function runBenchmark({
           console.log(`  [${def.id}] Attempt ${attempt}: ${matchPercent.toFixed(1)}%${isProxyPerfect ? ' (perfect)' : ''}`);
           onProgress?.({ type: 'attempt', targetId: def.id, attempt, matchPercent, perfect: isProxyPerfect });
         } catch (err) {
-          console.error(`  [${def.id}] Attempt ${attempt} failed: ${err.message}`);
+          const isPolicyViolation = err?.name === 'PolicyViolationError';
+          if (isPolicyViolation) {
+            console.warn(`  [${def.id}] Attempt ${attempt} rejected by policy: ${err.message}`);
+          } else {
+            console.error(`  [${def.id}] Attempt ${attempt} failed: ${err.message}`);
+          }
           scores.push(0);
-          onProgress?.({ type: 'attempt_error', targetId: def.id, attempt, message: err.message });
+          onProgress?.({
+            type: 'attempt_error',
+            targetId: def.id,
+            attempt,
+            errorType: isPolicyViolation ? 'policy_violation' : 'runtime_error',
+            message: err.message,
+          });
         }
       }
 

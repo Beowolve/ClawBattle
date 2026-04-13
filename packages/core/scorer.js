@@ -1,5 +1,4 @@
-// Core scorer – wraps pixelmatch
-// Returns match (0-100), score (cssbattle formula, 0-1000), and isProxyPerfect.
+// Core scorer: pixel matching + CSS Battle score computation.
 
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
@@ -13,19 +12,13 @@ const IMPERFECT_SCORE_CAP = 599.99;
 
 export const PROXY_PERFECT_MATCH_THRESHOLD = 0.9998;
 
-export function normalizeCode(code) {
-  return String(code ?? '')
-    .replace(/^\uFEFF/, '')   // strip BOM
-    .replace(/\r\n?/g, '\n'); // normalize line endings
-}
-
 export function computeScore(codeLength, match) {
   const baseScore = Math.round((SCORE_FORMULA_FACTOR * Math.pow(SCORE_FORMULA_BASE, codeLength) + SCORE_FORMULA_OFFSET) * 100) / 100;
   if (match >= PROXY_PERFECT_MATCH_THRESHOLD) return baseScore;
   return Math.min(IMPERFECT_SCORE_CAP, Math.round(baseScore * Math.pow(match, SCORE_EXPONENT) * 100) / 100);
 }
 
-export function score(renderedBuffer, targetBuffer) {
+export function computeMatch(renderedBuffer, targetBuffer) {
   const img1 = PNG.sync.read(targetBuffer);
   const img2 = PNG.sync.read(renderedBuffer);
 

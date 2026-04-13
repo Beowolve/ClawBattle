@@ -186,7 +186,11 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
 
         case 'attempt_error':
           updateCard(event.targetId, { currentAttempt: event.attempt });
-          addLog(`[${event.targetId}] attempt ${event.attempt} failed: ${event.message}`);
+          addLog(
+            event.errorType === 'policy_violation'
+              ? `[${event.targetId}] attempt ${event.attempt} rejected by policy: ${event.message}`
+              : `[${event.targetId}] attempt ${event.attempt} failed: ${event.message}`,
+          );
           break;
 
         case 'done':

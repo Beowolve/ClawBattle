@@ -11,6 +11,9 @@ Last updated: 2026-04-13
 - [x] SQLite adapter (`packages/db/`) — runs, run_meta tables
 - [x] LLM adapters — OpenRouter, OpenAI, Ollama (with AbortSignal support)
 - [x] LLM error handling — API-level errors detected even on HTTP 200, empty response guard
+- [x] Code safety guard — generated HTML/CSS is sanitized; JS, SVG, and external resources are rejected before render/score
+- [x] Scorer API naming cleanup — `score()` renamed to `computeMatch()`; score math remains in `computeScore()`
+- [x] Sanitizer blocks disallowed URL schemes (`data|blob|file|ftp`) across `src`/`href`, `srcset`, `url(...)`, and `@import`
 
 ### Parallelization & Resume
 - [x] `--concurrency <n>` — run N targets in parallel (attempts per target stay sequential)
@@ -44,6 +47,7 @@ Last updated: 2026-04-13
 - [x] About box "Prompt" now shows both the selected base prompt (attempt 1) and the shared follow-up appendix (attempts 2-3)
 - [x] Scoring wording now consistently uses "code length" (About + README) instead of "brevity"
 - [x] About intro now explicitly states the benchmark also aims for short solutions
+- [x] Start Run log now shows policy violations as "attempt rejected by policy" with structured error typing
 
 ### Prompts
 - [x] v1 — original prompt
