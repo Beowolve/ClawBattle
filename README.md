@@ -64,7 +64,7 @@ For imperfect matches the score is multiplied by `match³`:
 | 80 %  | 0.512× |
 | 50 %  | 0.125× |
 
-Color accuracy matters far more than code brevity. Only 100 % pixel matches count as perfect.
+Color accuracy matters far more than code length. Only 100 % pixel matches count as perfect.
 
 ## Project Structure
 

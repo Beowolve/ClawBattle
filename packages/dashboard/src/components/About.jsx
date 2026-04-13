@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import promptV1 from '../../../../prompts/v1/prompt.md?raw';
 import promptV2 from '../../../../prompts/v2/prompt.md?raw';
+import followupPrompt from '../../../../prompts/followup.md?raw';
 
 const PROMPTS = [
   { key: 'v2', label: 'v2 (current)', content: promptV2 },
@@ -20,7 +21,7 @@ export default function About() {
           <p>
             ClawBattle is an open-source benchmark that measures how accurately LLMs can reproduce
             pixel-perfect CSS designs. Each model is given a target image and asked to write
-            HTML/CSS that matches it as closely as possible.
+            HTML/CSS that matches it as closely as possible while staying as short as possible.
           </p>
           <p>
             Targets are sourced from{' '}
@@ -58,13 +59,17 @@ export default function About() {
             Each target gets <strong>3 attempts</strong> per run. The best attempt per target counts
             towards the leaderboard.
           </p>
+          <p>
+            For <strong>attempts 2 and 3</strong>, the model also receives the previously rendered
+            image and its previously submitted code as extra follow-up context.
+          </p>
         </div>
       </div>
 
       <div className="panel">
         <div className="panelHeader"><h2>Scoring</h2></div>
         <div className="aboutSection">
-          <p>Scoring follows the CSS Battle formula — rewarding both accuracy and brevity:</p>
+          <p>Scoring follows the CSS Battle formula — rewarding both accuracy and code length:</p>
           <pre className="aboutFormula">score = 399.99725 × (0.9905144 ^ charCount) + 599.9987</pre>
           <p>
             For imperfect pixel matches the base score is multiplied by <code>match³</code>,
@@ -130,7 +135,16 @@ export default function About() {
             ))}
           </div>
         </div>
-        <pre className="aboutPrompt">{current.content}</pre>
+        <div className="aboutPromptBlocks">
+          <div className="aboutPromptBlock">
+            <div className="aboutPromptTitle">Base prompt (attempt 1)</div>
+            <pre className="aboutPrompt">{current.content}</pre>
+          </div>
+          <div className="aboutPromptBlock">
+            <div className="aboutPromptTitle">Follow-up appendix (attempts 2-3)</div>
+            <pre className="aboutPrompt">{followupPrompt}</pre>
+          </div>
+        </div>
       </div>
 
     </div>

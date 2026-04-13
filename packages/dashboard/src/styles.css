@@ -1208,6 +1208,26 @@ td.muted {
   word-break: break-word;
 }
 
+.aboutPromptBlocks {
+  display: flex;
+  flex-direction: column;
+}
+
+.aboutPromptTitle {
+  padding: 10px 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted-color);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--surface-color);
+  border-top: 1px solid var(--border-color);
+}
+
+.aboutPromptBlock:first-child .aboutPromptTitle {
+  border-top: none;
+}
+
 /* ─── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 1100px) {
   .kpiGrid {

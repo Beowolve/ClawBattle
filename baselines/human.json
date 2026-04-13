@@ -1,7 +1,7 @@
 {
   "_note": "Human expert scores – used as reference baseline in dashboard. Source: CSSBattle.dev leaderboard top scores (CSS-only submissions).",
   "_future": "Scrape top 100 per target to compute top10avg, min, max, percentile ranges for richer comparison.",
-  "battle": {
+  "target": {
     "1":  { "top1Score": 839.08, "top1CharCount": 54  },
     "2":  { "top1Score": 788.39, "top1CharCount": 79  },
     "3":  { "top1Score": 742.90, "top1CharCount": 108 },

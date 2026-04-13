@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-12
+Last updated: 2026-04-13
 
 ## What's Done
 
@@ -40,6 +40,10 @@ Last updated: 2026-04-12
   - Log lines prefixed with [targetId] for readable parallel output
 - [x] Active run indicator (pulsing dot on tab)
 - [x] Resume banner with Clear button
+- [x] About box "How it works" now states that attempts 2-3 include previous render + previous code as follow-up context
+- [x] About box "Prompt" now shows both the selected base prompt (attempt 1) and the shared follow-up appendix (attempts 2-3)
+- [x] Scoring wording now consistently uses "code length" (About + README) instead of "brevity"
+- [x] About intro now explicitly states the benchmark also aims for short solutions
 
 ### Prompts
 - [x] v1 — original prompt
@@ -68,9 +72,10 @@ Last updated: 2026-04-12
 
 ## Next TODOs
 
-- [ ] First git commit + push to remote  ← in progress
-- [ ] Run benchmarks with v2 prompt, compare results vs v1
+- [x] First git commit + push to remote
+- [x] Run benchmarks with v2 prompt, compare results vs v1
 - [ ] Expand baselines/human.json beyond target 12
+- [ ] Compare benchmark results against the human baseline (`baselines/human.json`)
 
 ## Ideas / Backlog
 
