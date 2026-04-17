@@ -4,7 +4,7 @@ import { IS_PUBLIC } from '../hooks/useData.js';
 
 const COLS = [
   { key: 'rank', label: '#' },
-  { key: 'model', label: 'Model' },
+  { key: 'model', label: 'Model', style: { width: '100%' } },
   { key: 'promptVersions', label: 'Prompt' },
   { key: 'reasoningEffort', label: 'Reasoning' },
   { key: 'targets', label: 'Targets', numeric: true },
@@ -90,6 +90,7 @@ export default function Leaderboard({ rows, onModelSelect }) {
                   <th
                     key={col.key}
                     className={`${sortable ? 'sortable' : ''} ${sortKey === col.key ? 'sorted' : ''}`}
+                    style={col.style}
                     onClick={sortable ? () => handleSort(col.key) : undefined}
                   >
                     {col.label}{sortKey === col.key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''}

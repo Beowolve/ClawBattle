@@ -89,6 +89,11 @@ export default function App() {
     [runs, promptFilter],
   );
 
+  const models = useMemo(
+    () => [...new Set(leaderboardQ.data?.rows?.map(r => r.model) ?? [])].sort(),
+    [leaderboardQ.data],
+  );
+
   // KPIs derived from leaderboard aggregation — available without loading raw runs
   const kpis = computeKpisFromLeaderboard(leaderboardQ.data);
 
@@ -155,6 +160,9 @@ export default function App() {
                   target={selectedTarget}
                   type={targetType}
                   runs={filteredRuns}
+                  modelFilter={modelFilter}
+                  models={models}
+                  onModelFilterChange={setModelFilter}
                   onBack={() => setSelectedTarget(null)}
                   onPrev={selectedIdx > 0 ? () => setSelectedTarget(sortedTargets[selectedIdx - 1]) : null}
                   onNext={selectedIdx < sortedTargets.length - 1 ? () => setSelectedTarget(sortedTargets[selectedIdx + 1]) : null}
@@ -163,17 +171,17 @@ export default function App() {
             })() : (
               <>
                 <div className="filtersBar" style={{ marginBottom: 12 }}>
-                  <button
-                    className="tabButton active"
-                  >
+                  <button className="tabButton active">
                     Battle ({battleTargets.length})
                   </button>
-                  {modelFilter && (
-                    <span className="modelFilterBadge">
-                      {modelFilter}
-                      <button className="modelFilterClear" onClick={() => setModelFilter(null)}>✕</button>
-                    </span>
-                  )}
+                  <select
+                    className="filterSelect"
+                    value={modelFilter ?? ''}
+                    onChange={e => setModelFilter(e.target.value || null)}
+                  >
+                    <option value="">All models</option>
+                    {models.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
                   <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                     <button
                       className={`tabButton ${targetView === 'grid' ? 'active' : ''}`}

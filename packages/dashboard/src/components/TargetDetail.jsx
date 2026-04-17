@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { IS_PUBLIC } from '../hooks/useData.js';
 
-export default function TargetDetail({ target, type, runs, onBack, onPrev, onNext }) {
+export default function TargetDetail({ target, type, runs, modelFilter, models, onModelFilterChange, onBack, onPrev, onNext }) {
   const [selected, setSelected] = useState(null);
 
   // Callback ref re-runs whenever selected changes, guaranteeing the write
@@ -22,11 +22,12 @@ export default function TargetDetail({ target, type, runs, onBack, onPrev, onNex
       : `/api/targets/daily/${target.key}/image`;
 
   const solutions = useMemo(() => {
-    const filtered = runs.filter(r =>
+    let filtered = runs.filter(r =>
       Number(r.target_id) === Number(targetId) && r.target_type === type && r.code,
     );
+    if (modelFilter) filtered = filtered.filter(r => r.model === modelFilter);
     return [...filtered].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-  }, [runs, targetId, type]);
+  }, [runs, targetId, type, modelFilter]);
 
   // Auto-select best result
   useEffect(() => {
@@ -95,7 +96,19 @@ export default function TargetDetail({ target, type, runs, onBack, onPrev, onNex
       <div className="panel" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>
         <div className="panelHeader">
           <h2>Solutions</h2>
-          <span>{solutions.length} attempts with code</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {models?.length > 0 && (
+              <select
+                className="filterSelect"
+                value={modelFilter ?? ''}
+                onChange={e => onModelFilterChange?.(e.target.value || null)}
+              >
+                <option value="">All models</option>
+                {models.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            )}
+            <span>{solutions.length} attempts with code</span>
+          </span>
         </div>
         {solutions.length === 0 ? (
           <div className="stateBox">No solutions recorded for this target yet.</div>
@@ -105,6 +118,7 @@ export default function TargetDetail({ target, type, runs, onBack, onPrev, onNex
               <thead>
                 <tr>
                   <th>Model</th>
+                  <th>Prompt</th>
                   <th>Run</th>
                   <th className="numeric">Attempt</th>
                   <th className="numeric">Match</th>
@@ -121,6 +135,7 @@ export default function TargetDetail({ target, type, runs, onBack, onPrev, onNex
                     onClick={() => setSelected(r)}
                   >
                     <td className="modelName" title={r.model}>{r.model}</td>
+                    <td className="muted" style={{ fontSize: '0.82rem' }}>{r.prompt_version ?? '-'}</td>
                     <td className="muted" style={{ fontSize: '0.82rem' }}>{r.run_id?.slice(0, 8)}</td>
                     <td className="numeric muted">{r.attempt}</td>
                     <td className={`numeric ${r.match >= 100 ? 'perfect' : ''}`}>
