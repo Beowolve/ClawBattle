@@ -147,6 +147,20 @@ export default function About() {
         </div>
       </div>
 
+      <div className="panel">
+        <div className="panelHeader"><h2>Credits</h2></div>
+        <div className="aboutSection">
+          <p>
+            Huge thanks to{' '}
+            <a href="https://kushagra.dev/" target="_blank" rel="noreferrer">Kushagra Gour</a>,
+            the creator of{' '}
+            <a href="https://cssbattle.dev" target="_blank" rel="noreferrer">CSS Battle</a>,
+            for kindly giving permission to use the battle targets in this benchmark.
+            ClawBattle would not exist without his work.
+          </p>
+        </div>
+      </div>
+
     </div>
   );
 }
