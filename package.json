@@ -1,6 +1,9 @@
 {
+  "name": "clawbattle",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "dev": "docker compose up api dashboard",
     "sync": "node --env-file=.env scripts/sync-targets.js",
     "migrate": "node --env-file=.env scripts/migrate-runs.js",
     "upload": "node --env-file=.env scripts/upload-results.js",
