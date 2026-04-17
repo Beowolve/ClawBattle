@@ -159,6 +159,7 @@ export default function App() {
                 <TargetDetail
                   target={selectedTarget}
                   type={targetType}
+                  targetCount={sortedTargets.length}
                   runs={filteredRuns}
                   modelFilter={modelFilter}
                   models={models}
@@ -170,7 +171,7 @@ export default function App() {
               );
             })() : (
               <>
-                <div className="filtersBar" style={{ marginBottom: 12 }}>
+                <div className="filtersBar">
                   <button className="tabButton active">
                     Battle ({battleTargets.length})
                   </button>
@@ -225,9 +226,6 @@ export default function App() {
 
         {tab === 'insights' && (
           <div>
-            <div className="panelHeader" style={{ marginBottom: 12 }}>
-              <h2>Insights</h2>
-            </div>
             {insightsQ.isLoading
               ? <div className="stateBox">Loading...</div>
               : <Insights

@@ -65,7 +65,7 @@ export default function Leaderboard({ rows, onModelSelect }) {
 
   return (
     <div>
-      <div className="filtersBar" style={{ padding: '10px 14px', borderBottom: '1px solid var(--border-color)' }}>
+      <div className="filtersBar filtersBar--panel">
         <span className="filterLabel">Provider:</span>
         <select className="filterSelect" value={filterProvider} onChange={e => setFilterProvider(e.target.value)}>
           <option value="">All</option>

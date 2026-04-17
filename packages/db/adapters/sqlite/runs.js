@@ -223,11 +223,56 @@ export function saveRunEnd(db, data) {
 
 export function getRunMeta(db) {
   return db.prepare(`
-    SELECT run_id, model, provider, prompt_version, reasoning_effort,
-           started_at, finished_at, status
-    FROM run_state
-    ORDER BY started_at DESC
+    SELECT rs.run_id, rs.model, rs.provider, rs.prompt_version, rs.reasoning_effort,
+           rs.started_at, rs.finished_at, rs.status,
+           COALESCE(ac.attempt_count, 0) AS attempt_count
+    FROM run_state rs
+    LEFT JOIN (
+      SELECT run_id, COUNT(*) AS attempt_count
+      FROM runs
+      GROUP BY run_id
+    ) ac ON ac.run_id = rs.run_id
+    ORDER BY rs.started_at DESC
   `).all();
+}
+
+/**
+ * For a (model, promptVersion, reasoningEffort, targetType) tuple, return the
+ * highest stored attempt number per target and the code of that attempt.
+ * Used for fill-mode to know how many more attempts are needed per target
+ * and to seed follow-up context from the last stored attempt.
+ */
+export function getExistingAttempts(db, { model, promptVersion, reasoningEffort, targetType, targetIds }) {
+  if (!targetIds?.length) return new Map();
+  const placeholders = targetIds.map(() => '?').join(',');
+  // target_id is TEXT but may contain "1.0" from node:sqlite Number coercion;
+  // normalise on both sides via CAST to real then ROUND for matching.
+  const rows = db.prepare(`
+    SELECT CAST(ROUND(CAST(target_id AS REAL)) AS INTEGER) AS tid_norm,
+           attempt, code
+    FROM runs
+    WHERE model = ?
+      AND (prompt_version IS ? OR prompt_version = ?)
+      AND (reasoning_effort IS ? OR reasoning_effort = ?)
+      AND target_type = ?
+      AND CAST(ROUND(CAST(target_id AS REAL)) AS INTEGER) IN (${placeholders})
+    ORDER BY attempt DESC
+  `).all(
+    model,
+    promptVersion ?? null, promptVersion ?? null,
+    reasoningEffort ?? null, reasoningEffort ?? null,
+    targetType,
+    ...targetIds.map(id => Math.round(Number(id))),
+  );
+  const map = new Map();
+  for (const r of rows) {
+    const key = String(r.tid_norm);
+    const existing = map.get(key);
+    if (!existing || r.attempt > existing.maxAttempt) {
+      map.set(key, { maxAttempt: r.attempt, lastCode: r.code });
+    }
+  }
+  return map;
 }
 
 export function getCompletedTargetIds(db, runId) {
@@ -282,6 +327,11 @@ export function upsertRunStates(db, rows) {
     inserted += changes;
   }
   return inserted;
+}
+
+export function deleteRunById(db, runId) {
+  db.prepare('DELETE FROM runs WHERE run_id = ?').run(runId);
+  db.prepare('DELETE FROM run_state WHERE run_id = ?').run(runId);
 }
 
 export function deleteRunsByModel(db, model) {

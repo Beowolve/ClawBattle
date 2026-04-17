@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-13
+Last updated: 2026-04-17
 
 ## What's Done
 
@@ -19,6 +19,8 @@ Last updated: 2026-04-13
 - [x] `--concurrency <n>` — run N targets in parallel (attempts per target stay sequential)
 - [x] `--retries <n>` — retry a target from scratch if all attempts error
 - [x] Run resume — `resumeRunId` skips already-completed targets from a prior run
+- [x] Fill mode — new run fills only missing attempts per (model, prompt_version, reasoning_effort, target) up to the configured attempts; seeds follow-up context by re-rendering the last stored attempt's code
+- [x] Fast cancel — `render()` and adapter `generate()` are raced against the abort signal; worker queue is drained on abort; Ollama adapter now forwards the signal. Cancel returns control within ~500ms instead of waiting for the current attempt
 - [x] Resume button in Run History — pre-fills model/provider, shows resume banner in Start Run
 - [x] `getCompletedTargetIds` DB helper — returns completed target IDs for a given run
 - [x] Bugfix: node:sqlite stores Numbers as REAL ("1.0") — normalised to integer string on read
@@ -26,7 +28,8 @@ Last updated: 2026-04-13
 ### API
 - [x] REST endpoints — results, runs, target images
 - [x] `POST /api/runs/start` — kicks off benchmark async, returns runId; accepts concurrency, retries, resumeRunId
-- [x] `DELETE /api/runs/:runId` — cancels via AbortController
+- [x] `POST /api/runs/:runId/cancel` — cancels via AbortController
+- [x] `DELETE /api/runs/:runId` — deletes an empty run (no attempts saved); rejects when run is still running or has attempts
 - [x] `GET /api/runs/:runId/progress` — SSE stream with event replay
 - [x] run_meta always written (on start, after each target, on cancel/done)
 
@@ -35,7 +38,8 @@ Last updated: 2026-04-13
 - [x] Run History — sortable table with all runs, Resume button
 - [x] Target Grid — thumbnails, colors, best match per target
 - [x] Target Detail — sticky code/preview/target layout, Quirks Mode iframe, solutions table
-- [x] Start Run tab — model, provider, attempts, concurrency, retries, target range, cancel button
+- [x] Start Run tab — model, provider, attempts, concurrency, retries, target range, Fill toggle, cancel button
+- [x] Run History — Delete button for empty runs (no attempts saved)
 - [x] Target-grid progress view — live cards per target (pending/running/done/error/skipped)
   - Names visible immediately from start event
   - Pulsing dot on running cards

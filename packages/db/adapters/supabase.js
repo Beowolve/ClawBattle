@@ -116,3 +116,5 @@ export async function deleteRunsByModel(model) {
 // Local-only operations — not applicable for Supabase adapter
 export async function upsertRuns(_rows) { return 0; }
 export async function upsertRunStates(_rows) { return 0; }
+export async function getExistingAttempts(_opts) { return new Map(); }
+export async function deleteRunById(_runId) {}

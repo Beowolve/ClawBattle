@@ -10,7 +10,19 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 import { render, closeBrowser, getChromeVersion } from '../core/renderer.js';
 import { computeMatch, computeScore, PROXY_PERFECT_MATCH_THRESHOLD } from '../core/scorer.js';
 import { sanitizeCode } from '../core/utils/code.js';
-import { saveAttempt, saveRunStart, saveRunEnd, getBattleTargets, getDailyTargets, getCompletedTargetIds } from '../db/index.js';
+import { saveAttempt, saveRunStart, saveRunEnd, getBattleTargets, getDailyTargets, getCompletedTargetIds, getExistingAttempts } from '../db/index.js';
+
+function abortPromise(signal) {
+  return new Promise((_, reject) => {
+    if (signal.aborted) return reject(new DOMException('Run cancelled', 'AbortError'));
+    signal.addEventListener('abort', () => reject(new DOMException('Run cancelled', 'AbortError')), { once: true });
+  });
+}
+
+function raceAbort(promise, signal) {
+  if (!signal) return promise;
+  return Promise.race([promise, abortPromise(signal)]);
+}
 
 const BENCHMARK_VERSION = '1.0';
 const TARGET_WIDTH = 400;
@@ -25,12 +37,14 @@ export async function runBenchmark({
   concurrency = 1,
   retries = 0,
   resumeRunId,
+  fillMode = false,
   promptVersion,
   reasoningEffort,
   runId: providedRunId, onProgress, signal,
 }) {
   const runId = providedRunId ?? crypto.randomUUID();
   const startedAt = new Date().toISOString();
+  if (fillMode) retries = 0;
 
   console.log(`\nClawBattle Benchmark`);
   console.log(`  Run ID:              ${runId}`);
@@ -54,6 +68,23 @@ export async function runBenchmark({
     console.log(`  Completed target IDs found: [${[...completedIds].join(', ')}] (${completedIds.size} total)`);
   }
 
+  const existingByTarget = fillMode
+    ? getExistingAttempts({
+        model,
+        promptVersion: promptVersion ?? null,
+        reasoningEffort: reasoningEffort ?? null,
+        targetType,
+        targetIds: definitions.map(d => d.id),
+      })
+    : new Map();
+  if (fillMode) {
+    const summary = definitions.map(d => {
+      const e = existingByTarget.get(String(Math.round(Number(d.id))));
+      return `${d.id}:${e?.maxAttempt ?? 0}/${attempts}`;
+    }).join(' ');
+    console.log(`  Fill mode: target attempt counts → ${summary}`);
+  }
+
   const runMeta = { promptVersion, temperature: null, attemptsPerTarget: attempts, startedAt, reasoningEffort: reasoningEffort ?? null };
 
   saveRunStart({ runId, model, provider, promptVersion: promptVersion ?? null, reasoningEffort: reasoningEffort ?? null, startedAt });
@@ -75,6 +106,16 @@ export async function runBenchmark({
       return;
     }
 
+    // Fill: skip targets that already have enough attempts
+    const existing = fillMode ? existingByTarget.get(String(Math.round(Number(def.id)))) : null;
+    const startAttempt = fillMode ? ((existing?.maxAttempt ?? 0) + 1) : 1;
+    if (fillMode && startAttempt > attempts) {
+      console.log(`[${def.id}] Fill: already at ${existing.maxAttempt}/${attempts} — skipping`);
+      onProgress?.({ type: 'target_skipped', targetId: def.id, targetName: def.name });
+      onProgress?.({ type: 'target_done', targetId: def.id, targetName: def.name, bestMatch: null, bestScore: null, allErrors: false, skipped: true });
+      return;
+    }
+
     let retryNum = 0;
     while (true) {
       if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError');
@@ -84,7 +125,7 @@ export async function runBenchmark({
         onProgress?.({ type: 'target_retry', targetId: def.id, targetName: def.name, retryNum });
       }
 
-      console.log(`[${def.id}] ${def.name}`);
+      console.log(`[${def.id}] ${def.name}${fillMode ? ` (fill ${startAttempt}–${attempts})` : ''}`);
       onProgress?.({ type: 'target', targetId: def.id, targetName: def.name, targetCount: definitions.length });
 
       const scores = [];
@@ -92,7 +133,22 @@ export async function runBenchmark({
       let previousRender = null;
       let previousCode = null;
 
-      for (let attempt = 1; attempt <= attempts; attempt++) {
+      // Fill: seed follow-up context by re-rendering the last stored attempt's code.
+      if (fillMode && existing?.lastCode && startAttempt > 1) {
+        try {
+          const sanitized = sanitizeCode(existing.lastCode);
+          previousCode = sanitized;
+          previousRender = await raceAbort(render(sanitized, { signal }), signal);
+          console.log(`  [${def.id}] Seeded follow-up context from attempt ${existing.maxAttempt}`);
+        } catch (err) {
+          if (err?.name === 'AbortError') throw err;
+          console.warn(`  [${def.id}] Could not seed previous render: ${err.message} — continuing without follow-up context`);
+          previousRender = null;
+          previousCode = null;
+        }
+      }
+
+      for (let attempt = startAttempt; attempt <= attempts; attempt++) {
         if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError');
         const isFollowup = attempt > 1 && previousRender !== null;
         const prompt = isFollowup
@@ -102,10 +158,13 @@ export async function runBenchmark({
 
         try {
           const t0 = Date.now();
-          const { code: rawCode, tokensUsed, cost } = await adapter.generate({ model, prompt, images, reasoningEffort, signal });
+          const { code: rawCode, tokensUsed, cost } = await raceAbort(
+            adapter.generate({ model, prompt, images, reasoningEffort, signal }),
+            signal,
+          );
           const durationMs = Date.now() - t0;
           const code = sanitizeCode(rawCode);
-          const rendered = await render(code);
+          const rendered = await raceAbort(render(code, { signal }), signal);
           const { match, matchPercent, isProxyPerfect } = computeMatch(rendered, targetBuffer);
           const codeLength = code.length;
           const cssBattleScore = computeScore(codeLength, match);
@@ -125,6 +184,7 @@ export async function runBenchmark({
           console.log(`  [${def.id}] Attempt ${attempt}: ${matchPercent.toFixed(1)}%${isProxyPerfect ? ' (perfect)' : ''}`);
           onProgress?.({ type: 'attempt', targetId: def.id, attempt, matchPercent, perfect: isProxyPerfect });
         } catch (err) {
+          if (err?.name === 'AbortError') throw err;
           const isPolicyViolation = err?.name === 'PolicyViolationError';
           if (isPolicyViolation) {
             console.warn(`  [${def.id}] Attempt ${attempt} rejected by policy: ${err.message}`);
@@ -163,11 +223,17 @@ export async function runBenchmark({
     { length: Math.min(concurrency, definitions.length) },
     async () => {
       while (queue.length) {
-        if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError');
+        if (signal?.aborted) {
+          queue.length = 0;
+          throw new DOMException('Run cancelled', 'AbortError');
+        }
         await runTarget(queue.shift());
       }
     }
   );
+
+  // Drain queue as soon as abort fires so workers can't pick up more targets.
+  signal?.addEventListener('abort', () => { queue.length = 0; }, { once: true });
 
   let finalStatus = 'done';
   let workerError;

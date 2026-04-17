@@ -390,6 +390,28 @@ td.muted {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+/* Inside a panel: separator row with padding and bottom border, no extra margin */
+.filtersBar--panel {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0;
+}
+
+/* Inline variant: no padding, no border (e.g. TargetDetail breadcrumb bar) */
+.filtersBar--inline {
+  padding: 0;
+  border: none;
+  margin-bottom: 12px;
+}
+
+.filtersBar .breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
 }
 
 .filterSelect {

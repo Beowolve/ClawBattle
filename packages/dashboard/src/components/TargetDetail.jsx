@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { IS_PUBLIC } from '../hooks/useData.js';
 
-export default function TargetDetail({ target, type, runs, modelFilter, models, onModelFilterChange, onBack, onPrev, onNext }) {
+export default function TargetDetail({ target, type, targetCount, runs, modelFilter, models, onModelFilterChange, onBack, onPrev, onNext }) {
   const [selected, setSelected] = useState(null);
 
   // Callback ref re-runs whenever selected changes, guaranteeing the write
@@ -34,8 +34,29 @@ export default function TargetDetail({ target, type, runs, modelFilter, models, 
     setSelected(solutions[0] ?? null);
   }, [solutions]);
 
+  const typeLabel = type === 'battle' ? 'Battle' : 'Daily';
+
   return (
     <div className="targetDetailWrap">
+
+      {/* Breadcrumb + model filter bar */}
+      <div className="filtersBar filtersBar--panel filtersBar--inline">
+        <span className="breadcrumb">
+          <button className="tabButton" onClick={onBack} style={{ fontWeight: 500 }}>
+            {typeLabel}{targetCount != null ? ` (${targetCount})` : ''}
+          </button>
+        </span>
+        {models?.length > 0 && (
+          <select
+            className="filterSelect"
+            value={modelFilter ?? ''}
+            onChange={e => onModelFilterChange?.(e.target.value || null)}
+          >
+            <option value="">All models</option>
+            {models.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+        )}
+      </div>
 
       {/* Sticky top: header + code/preview/target */}
       <div className="targetDetailSticky">
@@ -43,7 +64,6 @@ export default function TargetDetail({ target, type, runs, modelFilter, models, 
           <button className="backButton" onClick={onBack}>← Back</button>
           <button className="navButton" onClick={onPrev} disabled={!onPrev}>‹ Prev</button>
           <button className="navButton" onClick={onNext} disabled={!onNext}>Next ›</button>
-          {imageUrl && <img className="targetDetailThumb" src={imageUrl} alt={target.name ?? target.key} />}
           <div>
             {type === 'battle' ? (
               <a
@@ -96,19 +116,7 @@ export default function TargetDetail({ target, type, runs, modelFilter, models, 
       <div className="panel" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderBottom: 'none' }}>
         <div className="panelHeader">
           <h2>Solutions</h2>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {models?.length > 0 && (
-              <select
-                className="filterSelect"
-                value={modelFilter ?? ''}
-                onChange={e => onModelFilterChange?.(e.target.value || null)}
-              >
-                <option value="">All models</option>
-                {models.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            )}
-            <span>{solutions.length} attempts with code</span>
-          </span>
+          <span>{solutions.length} attempts with code</span>
         </div>
         {solutions.length === 0 ? (
           <div className="stateBox">No solutions recorded for this target yet.</div>

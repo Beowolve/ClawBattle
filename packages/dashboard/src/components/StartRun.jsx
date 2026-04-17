@@ -47,6 +47,7 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
   const [targetFrom, setTargetFrom] = useState('1');
   const [targetTo, setTargetTo] = useState('25');
   const [resumeRunId, setResumeRunId] = useState(null);
+  const [fillMode, setFillMode] = useState(false);
   const [runId, setRunId] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | running | done | cancelled | error
 
@@ -95,6 +96,7 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
       setModel(resumeTarget.model ?? '');
       setProvider(resumeTarget.provider ?? 'openrouter');
       setResumeRunId(resumeTarget.runId);
+      setFillMode(false);
     } else {
       setResumeRunId(null);
     }
@@ -116,6 +118,7 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
         targetFrom: targetFrom !== '' ? Number(targetFrom) : undefined,
         targetTo: targetTo !== '' ? Number(targetTo) : undefined,
         ...(resumeRunId ? { resumeRunId } : {}),
+        ...(fillMode ? { fillMode: true } : {}),
       };
       console.log('[StartRun] POST /api/runs/start', payload);
       const res = await fetch('/api/runs/start', {
@@ -250,7 +253,7 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
 
   async function cancelRun() {
     if (!runId) return;
-    await fetch(`/api/runs/${runId}`, { method: 'DELETE' });
+    await fetch(`/api/runs/${runId}/cancel`, { method: 'POST' });
   }
 
   const canStart = model.trim().length > 0 && status !== 'running';
@@ -356,8 +359,17 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
               disabled={status === 'running'}
             />
           </span>
+          <label className="filterLabel" style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }} title="Fill missing attempts for existing (model, prompt, target) up to 'attempts' total">
+            <input
+              type="checkbox"
+              checked={fillMode}
+              onChange={(e) => setFillMode(e.target.checked)}
+              disabled={status === 'running' || !!resumeRunId}
+            />
+            Fill
+          </label>
           <button className="runButton" onClick={startRun} disabled={!canStart}>
-            {resumeRunId ? 'Resume' : status === 'running' ? 'Running...' : 'Run'}
+            {fillMode ? 'Fill' : resumeRunId ? 'Resume' : status === 'running' ? 'Running...' : 'Run'}
           </button>
           {status === 'running' && (
             <button className="cancelButton" onClick={cancelRun}>Cancel</button>

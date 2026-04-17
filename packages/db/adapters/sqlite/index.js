@@ -10,6 +10,8 @@ import {
   getInsights as _getInsights,
   deleteRunsByModel as _deleteRunsByModel,
   getCompletedTargetIds as _getCompletedTargetIds,
+  getExistingAttempts as _getExistingAttempts,
+  deleteRunById as _deleteRunById,
   saveRunStart as _saveRunStart,
   saveRunEnd as _saveRunEnd,
   getRunMeta as _getRunMeta,
@@ -25,6 +27,8 @@ import {
 
 export const saveAttempt           = (data)          => _saveAttempt(getDb(), data);
 export const getCompletedTargetIds = (runId)         => _getCompletedTargetIds(getDb(), runId);
+export const getExistingAttempts   = (opts)          => _getExistingAttempts(getDb(), opts);
+export const deleteRunById         = (runId)         => _deleteRunById(getDb(), runId);
 export const getResults            = (opts)          => _getResults(getDb(), opts);
 export const getResultsCount       = (opts)          => _getResultsCount(getDb(), opts);
 export const getLeaderboard        = (promptVersion) => _getLeaderboard(getDb(), promptVersion);

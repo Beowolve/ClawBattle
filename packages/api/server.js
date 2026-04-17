@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
-import { getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel, upsertRuns, upsertRunStates } from '../db/index.js';
+import { getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel, deleteRunById, upsertRuns, upsertRunStates } from '../db/index.js';
 import { uploadToSupabase, uploadTargetsToSupabase, downloadFromSupabase } from '../db/sync.js';
 import { runBenchmark } from '../runner/benchmark.js';
 import { createJob, getJob, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
@@ -93,6 +93,7 @@ app.post('/api/runs/start', (req, res) => {
     concurrency = 1,
     retries = 0,
     resumeRunId,
+    fillMode = false,
     reasoningEffort,
   } = req.body ?? {};
   if (!model) return res.status(400).json({ error: 'model required' });
@@ -109,6 +110,7 @@ app.post('/api/runs/start', (req, res) => {
     concurrency: Number(concurrency),
     retries: Number(retries),
     resumeRunId: resumeRunId ?? undefined,
+    fillMode: Boolean(fillMode),
     targetFrom: targetFrom != null ? Number(targetFrom) : undefined,
     targetTo: targetTo != null ? Number(targetTo) : undefined,
     reasoningEffort: reasoningEffort ?? undefined,
@@ -128,11 +130,23 @@ app.get('/api/runs/active', (req, res) => {
   res.json(listActiveJobs());
 });
 
-app.delete('/api/runs/:runId', (req, res) => {
+app.post('/api/runs/:runId/cancel', (req, res) => {
   const { runId } = req.params;
   if (!getJob(runId)) return res.status(404).json({ error: 'run not found' });
   const cancelled = cancelJob(runId);
   res.json({ cancelled });
+});
+
+app.delete('/api/runs/:runId', (req, res) => {
+  const { runId } = req.params;
+  if (getJob(runId)) return res.status(409).json({ error: 'run is still active — cancel it first' });
+  const meta = getRunMeta().find(r => r.run_id === runId);
+  if (!meta) return res.status(404).json({ error: 'run not found' });
+  if (getResultsCount({ runId }) > 0) {
+    return res.status(400).json({ error: 'run has attempts — cannot delete' });
+  }
+  deleteRunById(runId);
+  res.json({ deleted: true });
 });
 
 app.get('/api/runs/:runId/progress', (req, res) => {

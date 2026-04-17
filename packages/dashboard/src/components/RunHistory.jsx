@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useResultsPage, useResultsCount, useRuns } from '../hooks/useData.js';
 
 const PAGE_SIZE = 100;
@@ -20,6 +21,7 @@ const COLS = [
 ];
 
 export default function RunHistory({ onResume }) {
+  const queryClient = useQueryClient();
   const [selectedRun, setSelectedRun] = useState('');
   const [sortKey, setSortKey] = useState('created_at');
   const [sortDir, setSortDir] = useState('desc');
@@ -59,7 +61,7 @@ export default function RunHistory({ onResume }) {
 
   return (
     <div>
-      <div className="filtersBar" style={{ padding: '10px 14px', borderBottom: '1px solid var(--border-color)' }}>
+      <div className="filtersBar filtersBar--panel">
         <span className="filterLabel">Run:</span>
         <select className="filterSelect" value={selectedRun} onChange={e => setSelectedRun(e.target.value)}>
           <option value="">All</option>
@@ -87,6 +89,31 @@ export default function RunHistory({ onResume }) {
             >
               Resume
             </button>
+            {(() => {
+              const meta = metaById[selectedRun];
+              const canDelete = !!selectedRun && meta && Number(meta.attempt_count ?? 0) === 0;
+              return (
+                <button
+                  className="deleteButton"
+                  disabled={!canDelete}
+                  title={!selectedRun ? 'Select a run' : !canDelete ? 'Run has saved attempts — cannot delete' : 'Delete empty run'}
+                  onClick={async () => {
+                    if (!confirm(`Delete empty run ${selectedRun.slice(0, 8)}?`)) return;
+                    const res = await fetch(`/api/runs/${selectedRun}`, { method: 'DELETE' });
+                    if (!res.ok) {
+                      const { error } = await res.json().catch(() => ({}));
+                      alert(`Delete failed: ${error ?? res.status}`);
+                      return;
+                    }
+                    setSelectedRun('');
+                    queryClient.invalidateQueries({ queryKey: ['runs'] });
+                    queryClient.invalidateQueries({ queryKey: ['results'] });
+                  }}
+                >
+                  Delete
+                </button>
+              );
+            })()}
           </>
         )}
         {pageCount > 1 && (

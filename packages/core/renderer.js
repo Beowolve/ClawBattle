@@ -32,17 +32,30 @@ export async function closeBrowser() {
   }
 }
 
-export async function render(code) {
+function abortPromise(signal) {
+  return new Promise((_, reject) => {
+    if (signal.aborted) return reject(new DOMException('Aborted', 'AbortError'));
+    signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+  });
+}
+
+export async function render(code, { signal } = {}) {
   const b = await getBrowser();
   const page = await b.newPage();
 
-  await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
-  await page.setContent(code || '', { waitUntil: 'networkidle0' });
+  try {
+    const work = (async () => {
+      await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
+      await page.setContent(code || '', { waitUntil: 'networkidle0' });
+      return page.screenshot({ clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT } });
+    })();
 
-  const screenshot = await page.screenshot({
-    clip: { x: 0, y: 0, width: WIDTH, height: HEIGHT },
-  });
-
-  await page.close();
-  return screenshot;
+    if (signal) {
+      return await Promise.race([work, abortPromise(signal)]);
+    }
+    return await work;
+  } finally {
+    // Fire-and-forget: on abort, don't block returning to the worker.
+    page.close().catch(() => {});
+  }
 }
