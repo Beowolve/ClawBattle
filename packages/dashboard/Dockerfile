@@ -4,6 +4,7 @@ COPY packages/dashboard/package.json ./packages/dashboard/
 RUN cd packages/dashboard && npm install
 COPY packages/dashboard/ ./packages/dashboard/
 COPY prompts/ ./prompts/
+COPY package.json ./
 WORKDIR /app/packages/dashboard
 RUN npm run build
 

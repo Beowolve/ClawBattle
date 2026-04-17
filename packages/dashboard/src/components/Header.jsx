@@ -12,6 +12,7 @@ export default function Header({ promptVersions, promptFilter, onPromptChange })
         <img src="./clawbattle.svg" alt="ClawBattle Logo" className="brandLogo" />
         <div>
           <div className="brandText">ClawBattle</div>
+          <div className="brandSub">Silicon vs stylesheet</div>
         </div>
       </div>
       <div className="headerControls">

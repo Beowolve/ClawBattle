@@ -261,7 +261,7 @@ export default function App() {
         </div>
       </main>
       <footer className="appFooter">
-        ClawBattle – AI Model Benchmark
+        ClawBattle – AI Model Benchmark &nbsp;·&nbsp; <span style={{opacity: 0.6}}>v{__APP_VERSION__}</span>
       </footer>
     </div>
   );
