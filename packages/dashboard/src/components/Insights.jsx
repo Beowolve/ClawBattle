@@ -34,7 +34,7 @@ function DifficultyTooltip({ active, payload }) {
           style={{ display: 'block', width: 120, height: 90, objectFit: 'cover', borderRadius: 4, marginBottom: 6 }}
         />
       )}
-      <div style={{ fontWeight: 600, color: 'var(--heading-color)', marginBottom: 2 }}>{d.name}</div>
+      <div style={{ fontWeight: 600, color: 'var(--heading-color)', marginBottom: 2 }}>{d.label}: {d.name}</div>
       <div style={{ color: 'var(--muted-color)' }}>Avg Match: <span style={{ color: 'var(--font-color)' }}>{d.avgMatch}%</span></div>
     </div>
   );
@@ -72,7 +72,7 @@ export default function Insights({ data, onSelectTarget }) {
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--muted-color)' }} />
                 <YAxis
                   type="category"
-                  dataKey="name"
+                  dataKey="label"
                   width={46}
                   interval={0}
                   tick={{ fontSize: 11, fill: 'var(--muted-color)' }}
