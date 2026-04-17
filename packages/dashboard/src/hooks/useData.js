@@ -17,11 +17,18 @@ const SB_URL = import.meta.env.VITE_SUPABASE_URL;
 const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const PAGE_SIZE = 1000;
 
-async function fetchAllFromSupabase(table, order = '') {
+// filter: optional Supabase column filter string, e.g. 'prompt_version=eq.v1'
+async function fetchAllFromSupabase(table, order = '', filter = '') {
   const rows = [];
   let offset = 0;
   while (true) {
-    const url = `${SB_URL}/rest/v1/${table}?select=*&limit=${PAGE_SIZE}&offset=${offset}${order ? `&order=${order}` : ''}`;
+    const url = [
+      `${SB_URL}/rest/v1/${table}?select=*`,
+      `limit=${PAGE_SIZE}`,
+      `offset=${offset}`,
+      order  ? `order=${order}`   : '',
+      filter ? filter             : '',
+    ].filter(Boolean).join('&');
     const res = await fetch(url, {
       headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
     });
@@ -34,14 +41,219 @@ async function fetchAllFromSupabase(table, order = '') {
   return rows;
 }
 
+// ─── Public mode: leaderboard transform ──────────────────────────────────────
+
+// Converts rows from the `leaderboard` or `leaderboard_by_version` Supabase view
+// into the shape expected by Leaderboard.jsx and App.jsx KPI cards.
+function transformLeaderboard(viewRows, allVersionRows = null) {
+  const rows = viewRows.map(r => ({
+    model:          r.model,
+    reasoningEffort: r.reasoning_effort ?? null,
+    provider:       r.provider,
+    // leaderboard view has prompt_versions[]; leaderboard_by_version has prompt_version
+    promptVersions: r.prompt_versions ?? (r.prompt_version ? [r.prompt_version] : []),
+    targets:        Number(r.targets),
+    avgScore:       r.avg_score   != null ? Number(r.avg_score)   : null,
+    avgMatch:       r.avg_match   != null ? Number(r.avg_match)   : null,
+    avgDuration:    r.avg_duration_ms != null ? Number(r.avg_duration_ms) : null,
+    perfectCount:   Number(r.perfect_count ?? 0),
+    perfectRate:    r.perfect_rate != null ? Number(r.perfect_rate) : null,
+    totalCost:      r.total_cost  != null ? Number(r.total_cost)  : null,
+    avgCost:        r.avg_cost    != null ? Number(r.avg_cost)    : null,
+  }));
+
+  const totalAttempts = viewRows.reduce((a, r) => a + Number(r.attempt_count ?? 0), 0);
+  const totalCost     = viewRows.reduce((a, r) => a + Number(r.total_cost    ?? 0), 0);
+
+  // Collect all known prompt versions — prefer the unfiltered leaderboard rows
+  // (which carry prompt_versions[]) so the dropdown is always complete.
+  const source = allVersionRows ?? viewRows;
+  const promptVersions = [...new Set(
+    source.flatMap(r => r.prompt_versions ?? (r.prompt_version ? [r.prompt_version] : []))
+  )].sort();
+
+  return { rows, totalAttempts, totalCost, models: rows.length, promptVersions };
+}
+
+// ─── Public mode: insights transform ─────────────────────────────────────────
+
+// Bucket order matches the JS build in runs.js / the old buildInsights.
+const BUCKET_ORDER = [
+  '0–9','10–19','20–29','30–39','40–49',
+  '50–59','60–69','70–79','80–89','90–99','100',
+];
+
+function transformInsights(diffRows, consistRows, costRows, distRows) {
+  // ── difficulty ──────────────────────────────────────────────────────────────
+  // Multiple rows per target when prompt_version is in group-by (or no filter).
+  // Average avg_match across versions per target; keep first name/image_url.
+  const diffByTarget = {};
+  for (const r of diffRows) {
+    const rawId = r.target_type === 'battle'
+      ? String(Math.round(Number(r.target_id)))
+      : r.target_id;
+    const key = `${r.target_type}__${rawId}`;
+    if (!diffByTarget[key]) {
+      diffByTarget[key] = {
+        key,
+        label:      `#${rawId}`,
+        name:       r.name      ?? `#${rawId}`,
+        imgUrl:     r.image_url ?? null,
+        targetType: r.target_type,
+        rawId,
+        sum:        0,
+        count:      0,
+      };
+    }
+    diffByTarget[key].sum   += Number(r.avg_match ?? 0);
+    diffByTarget[key].count += 1;
+  }
+  const difficulty = Object.values(diffByTarget)
+    .map(t => ({ ...t, avgMatch: +(t.sum / t.count).toFixed(1) }))
+    .sort((a, b) => a.avgMatch - b.avgMatch);
+
+  // ── consistency ─────────────────────────────────────────────────────────────
+  // Average avg_match and std_dev across versions per model (unweighted approx).
+  const consistByModel = {};
+  for (const r of consistRows) {
+    if (!consistByModel[r.model]) {
+      consistByModel[r.model] = { model: r.model, avgMatches: [], stdDevs: [], totalN: 0 };
+    }
+    const m = consistByModel[r.model];
+    m.avgMatches.push(Number(r.avg_match ?? 0));
+    m.stdDevs.push(Number(r.std_dev   ?? 0));
+    m.totalN  += Number(r.n ?? 0);
+  }
+  const consistency = Object.values(consistByModel)
+    .map(m => ({
+      model:    m.model,
+      avgMatch: +(m.avgMatches.reduce((a, b) => a + b, 0) / m.avgMatches.length).toFixed(1),
+      stdDev:   +(m.stdDevs.reduce((a, b) => a + b, 0)   / m.stdDevs.length).toFixed(1),
+      n:        m.totalN,
+    }))
+    .sort((a, b) => a.stdDev - b.stdDev);
+
+  // ── cost efficiency ──────────────────────────────────────────────────────────
+  const costByModel = {};
+  for (const r of costRows) {
+    if (!costByModel[r.model]) costByModel[r.model] = { model: r.model, scores: [], costs: [] };
+    costByModel[r.model].scores.push(Number(r.avg_score ?? 0));
+    if (r.avg_cost != null) costByModel[r.model].costs.push(Number(r.avg_cost));
+  }
+  const costEfficiency = Object.values(costByModel)
+    .map(m => {
+      const avgScore = m.scores.reduce((a, b) => a + b, 0) / m.scores.length;
+      const avgCost  = m.costs.length
+        ? m.costs.reduce((a, b) => a + b, 0) / m.costs.length
+        : 0;
+      const ratio = avgCost > 0 ? avgScore / (avgCost * 1000) : null;
+      return { model: m.model, avgScore: +avgScore.toFixed(1), avgCost, ratio };
+    })
+    .sort((a, b) => (b.ratio ?? -Infinity) - (a.ratio ?? -Infinity));
+
+  // ── distributions ────────────────────────────────────────────────────────────
+  // Sum counts across versions per (model, bucket); also build '' (all models).
+  const distByModelBucket = {};
+  for (const r of distRows) {
+    const key = `${r.model}__${r.bucket}`;
+    distByModelBucket[key] = (distByModelBucket[key] ?? 0) + Number(r.count ?? 0);
+  }
+
+  const modelSet = new Set(distRows.map(r => r.model));
+  const distributions = {};
+
+  for (const model of ['', ...modelSet]) {
+    distributions[model] = BUCKET_ORDER.map(range => ({
+      range,
+      count: model === ''
+        // all models: sum across every model for this bucket
+        ? [...modelSet].reduce((a, m) => a + (distByModelBucket[`${m}__${range}`] ?? 0), 0)
+        : (distByModelBucket[`${model}__${range}`] ?? 0),
+    }));
+  }
+
+  const models = [...modelSet].sort();
+
+  return { difficulty, consistency, costEfficiency, distributions, models };
+}
+
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
-export function useResults() {
+export function useLeaderboard(promptFilter) {
+  const pv = promptFilter && promptFilter !== 'all' ? promptFilter : null;
+  return useQuery({
+    queryKey: ['leaderboard', pv ?? ''],
+    queryFn: IS_PUBLIC
+      ? async () => {
+          if (pv) {
+            // Filtered: use leaderboard_by_version view.
+            // Also fetch the unfiltered leaderboard to get the full promptVersions list.
+            const [filtered, all] = await Promise.all([
+              fetchAllFromSupabase('leaderboard_by_version', '', `prompt_version=eq.${encodeURIComponent(pv)}`),
+              fetchAllFromSupabase('leaderboard'),
+            ]);
+            return transformLeaderboard(filtered, all);
+          }
+          const rows = await fetchAllFromSupabase('leaderboard');
+          return transformLeaderboard(rows);
+        }
+      : () => fetchJson(`/leaderboard${pv ? `?prompt_version=${encodeURIComponent(pv)}` : ''}`),
+  });
+}
+
+export function useInsights(promptFilter) {
+  const pv = promptFilter && promptFilter !== 'all' ? promptFilter : null;
+  const pvFilter = pv ? `prompt_version=eq.${encodeURIComponent(pv)}` : '';
+  return useQuery({
+    queryKey: ['insights', pv ?? ''],
+    queryFn: IS_PUBLIC
+      ? async () => {
+          const [diffRows, consistRows, costRows, distRows] = await Promise.all([
+            fetchAllFromSupabase('target_difficulty',  '', pvFilter),
+            fetchAllFromSupabase('model_consistency',  '', pvFilter),
+            fetchAllFromSupabase('cost_efficiency',    '', pvFilter),
+            fetchAllFromSupabase('match_distribution', '', pvFilter),
+          ]);
+          return transformInsights(diffRows, consistRows, costRows, distRows);
+        }
+      : () => fetchJson(`/insights${pv ? `?prompt_version=${encodeURIComponent(pv)}` : ''}`),
+  });
+}
+
+const RESULTS_PAGE_SIZE = 100;
+
+export function useResultsPage({ page = 0, sort = 'created_at', dir = 'desc', runId = '' } = {}) {
+  return useQuery({
+    queryKey: ['results', 'page', page, sort, dir, runId],
+    queryFn: () => {
+      const params = new URLSearchParams({
+        limit:  RESULTS_PAGE_SIZE,
+        offset: page * RESULTS_PAGE_SIZE,
+        sort,
+        dir,
+      });
+      if (runId) params.set('run_id', runId);
+      return fetchJson(`/results?${params}`);
+    },
+    // Keep previous page data visible while fetching next page
+    placeholderData: prev => prev,
+  });
+}
+
+export function useResultsCount(runId = '') {
+  return useQuery({
+    queryKey: ['results', 'count', runId],
+    queryFn: () => fetchJson(`/results/count${runId ? `?run_id=${encodeURIComponent(runId)}` : ''}`),
+  });
+}
+
+export function useResults({ enabled = true } = {}) {
   return useQuery({
     queryKey: ['results'],
     queryFn: IS_PUBLIC
       ? () => fetchAllFromSupabase('runs', 'created_at.asc')
       : () => fetchJson('/results'),
+    enabled,
   });
 }
 

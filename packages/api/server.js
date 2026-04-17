@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
-import { getResults, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel, upsertRuns, upsertRunStates } from '../db/index.js';
+import { getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel, upsertRuns, upsertRunStates } from '../db/index.js';
 import { uploadToSupabase, uploadTargetsToSupabase, downloadFromSupabase } from '../db/sync.js';
 import { runBenchmark } from '../runner/benchmark.js';
 import { createJob, getJob, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
@@ -50,8 +50,30 @@ app.get('/api/targets/daily/:key/image', (req, res) => {
   res.sendFile(path.join(TARGETS_DIR, 'images', 'daily', `${req.params.key}.png`));
 });
 
+app.get('/api/leaderboard', (req, res) => {
+  const promptVersion = req.query.prompt_version || null;
+  res.json(getLeaderboard(promptVersion));
+});
+
+app.get('/api/insights', (req, res) => {
+  const promptVersion = req.query.prompt_version || null;
+  res.json(getInsights(promptVersion));
+});
+
 app.get('/api/results', (req, res) => {
-  res.json(getResults());
+  const { limit, offset, sort, dir, run_id } = req.query;
+  res.json(getResults({
+    limit: limit != null ? Number(limit) : undefined,
+    offset: offset != null ? Number(offset) : undefined,
+    sort: sort || 'created_at',
+    dir: dir || 'desc',
+    runId: run_id || undefined,
+  }));
+});
+
+app.get('/api/results/count', (req, res) => {
+  const { run_id } = req.query;
+  res.json({ count: getResultsCount({ runId: run_id || undefined }) });
 });
 
 app.get('/api/runs', (req, res) => {

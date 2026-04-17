@@ -1,5 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useResults, useRuns, useBattleTargets, useDailyTargets, IS_PUBLIC } from './hooks/useData.js';
+import {
+  useResults, useBattleTargets, useDailyTargets,
+  useLeaderboard, useInsights,
+  IS_PUBLIC,
+} from './hooks/useData.js';
 import Header from './components/Header.jsx';
 import KpiCard from './components/KpiCard.jsx';
 import Leaderboard from './components/Leaderboard.jsx';
@@ -24,33 +28,22 @@ const TABS = [
   ] : []),
 ];
 
-function computeKpis(runs, battleTargets) {
-  if (!runs.length) return { totalRuns: 0, avgBestScore: '-', totalCost: '-', models: 0 };
-
-  const bestPerModelTarget = {};
-  for (const r of runs) {
-    const key = `${r.model}__${r.target_id}__${r.target_type}`;
-    if (!bestPerModelTarget[key] || r.score > bestPerModelTarget[key]) {
-      bestPerModelTarget[key] = r.score;
-    }
-  }
-
-  const scores = Object.values(bestPerModelTarget).filter(s => s != null);
-  const avgBestScore = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2) : '-';
-  const totalCost = runs.reduce((a, r) => a + (r.cost ?? 0), 0);
-  const models = new Set(runs.map(r => r.model)).size;
-
+function computeKpisFromLeaderboard(data) {
+  if (!data?.rows?.length) return { totalRuns: 0, avgBestScore: '-', totalCost: '-', models: 0 };
+  const totalTargets = data.rows.reduce((a, r) => a + r.targets, 0);
+  const weightedScore = data.rows.reduce((a, r) => a + (r.avgScore ?? 0) * r.targets, 0);
+  const avgBestScore = totalTargets > 0 ? (weightedScore / totalTargets).toFixed(2) : '-';
   return {
-    totalRuns: runs.length,
+    totalRuns: data.totalAttempts,
     avgBestScore,
-    totalCost: totalCost > 0 ? '$' + totalCost.toFixed(4) : '-',
-    models,
+    totalCost: data.totalCost > 0 ? '$' + data.totalCost.toFixed(4) : '-',
+    models: data.models,
   };
 }
 
 export default function App() {
   const [tab, setTab] = useState('leaderboard');
-  const [targetType, setTargetType] = useState('battle');
+  const [targetType] = useState('battle');
   const [targetView, setTargetView] = useState('table');
   const [runStatus, setRunStatus] = useState('idle');
   const [selectedTarget, setSelectedTarget] = useState(null);
@@ -75,34 +68,41 @@ export default function App() {
     setTab('run');
   }
 
-  const resultsQ = useResults();
-  const runsQ = useRuns();
+  // Leaderboard and Insights fetch their own aggregated data eagerly
+  const leaderboardQ = useLeaderboard(promptFilter);
+  const insightsQ = useInsights(promptFilter);
+
+  // Raw results loaded lazily — only when the Targets tab is open
+  const resultsQ = useResults({ enabled: tab === 'targets' });
   const battleQ = useBattleTargets();
   const dailyQ = useDailyTargets();
 
   const runs = resultsQ.data ?? [];
-  const runMeta = runsQ.data ?? [];
   const battleTargets = battleQ.data ?? [];
   const dailyTargets = dailyQ.data ?? [];
 
-  const promptVersions = useMemo(
-    () => [...new Set(runs.map(r => r.prompt_version).filter(Boolean))].sort(),
-    [runs],
-  );
+  // Prompt versions come from the leaderboard response (always available)
+  const promptVersions = leaderboardQ.data?.promptVersions ?? [];
 
   const filteredRuns = useMemo(
     () => promptFilter === 'all' ? runs : runs.filter(r => r.prompt_version === promptFilter),
     [runs, promptFilter],
   );
 
-  const kpis = useMemo(() => computeKpis(filteredRuns, battleTargets), [filteredRuns, battleTargets]);
+  // KPIs derived from leaderboard aggregation — available without loading raw runs
+  const kpis = computeKpisFromLeaderboard(leaderboardQ.data);
 
   const sortedTargets = useMemo(() => {
     const list = targetType === 'battle' ? battleTargets : dailyTargets;
-    return [...list].sort((a, b) => (a.target_number ?? a.id) - (b.target_number ?? b.id));
-  }, [targetType, battleTargets, dailyTargets]);
-
-  const isLoading = resultsQ.isLoading || battleQ.isLoading;
+    const sorted = [...list].sort((a, b) => (a.target_number ?? a.id) - (b.target_number ?? b.id));
+    if (IS_PUBLIC && targetType === 'battle') {
+      const targetIdsWithRuns = new Set(
+        filteredRuns.filter(r => r.target_type === 'battle').map(r => Number(r.target_id))
+      );
+      return sorted.filter(t => targetIdsWithRuns.has(Number(t.id)));
+    }
+    return sorted;
+  }, [targetType, battleTargets, dailyTargets, filteredRuns]);
 
   return (
     <div className="appRoot">
@@ -135,11 +135,11 @@ export default function App() {
           <div className="panel">
             <div className="panelHeader">
               <h2>Leaderboard</h2>
-              <span>{filteredRuns.length} run{filteredRuns.length !== 1 ? 's' : ''}</span>
+              <span>{kpis.totalRuns} run{kpis.totalRuns !== 1 ? 's' : ''}</span>
             </div>
-            {isLoading
+            {leaderboardQ.isLoading
               ? <div className="stateBox">Loading...</div>
-              : <Leaderboard runs={filteredRuns} onModelSelect={handleModelSelect} />
+              : <Leaderboard rows={leaderboardQ.data?.rows ?? []} onModelSelect={handleModelSelect} />
             }
           </div>
         )}
@@ -164,16 +164,9 @@ export default function App() {
               <>
                 <div className="filtersBar" style={{ marginBottom: 12 }}>
                   <button
-                    className={`tabButton ${targetType === 'battle' ? 'active' : ''}`}
-                    onClick={() => setTargetType('battle')}
+                    className="tabButton active"
                   >
                     Battle ({battleTargets.length})
-                  </button>
-                  <button
-                    className={`tabButton ${targetType === 'daily' ? 'active' : ''}`}
-                    onClick={() => setTargetType('daily')}
-                  >
-                    Daily ({dailyTargets.length})
                   </button>
                   {modelFilter && (
                     <span className="modelFilterBadge">
@@ -198,9 +191,9 @@ export default function App() {
                 </div>
                 <div className="panel">
                   <div className="panelHeader">
-                    <h2>{targetType === 'battle' ? 'Battle Targets' : 'Daily Targets'}</h2>
+                    <h2>Battle Targets</h2>
                   </div>
-                  {battleQ.isLoading || dailyQ.isLoading
+                  {battleQ.isLoading || resultsQ.isLoading
                     ? <div className="stateBox">Loading...</div>
                     : targetView === 'table'
                       ? <TargetTable
@@ -226,16 +219,12 @@ export default function App() {
           <div>
             <div className="panelHeader" style={{ marginBottom: 12 }}>
               <h2>Insights</h2>
-              <span>{runs.length} run{runs.length !== 1 ? 's' : ''} across {new Set(runs.map(r => r.model)).size} model{new Set(runs.map(r => r.model)).size !== 1 ? 's' : ''}</span>
             </div>
-            {isLoading
+            {insightsQ.isLoading
               ? <div className="stateBox">Loading...</div>
               : <Insights
-                  runs={filteredRuns}
-                  battleTargets={battleTargets}
-                  dailyTargets={dailyTargets}
+                  data={insightsQ.data}
                   onSelectTarget={(target, type) => {
-                    setTargetType(type);
                     setSelectedTarget(target);
                     setTab('targets');
                   }}
@@ -250,12 +239,8 @@ export default function App() {
           <div className="panel">
             <div className="panelHeader">
               <h2>Run History</h2>
-              <span>{runs.length} entries</span>
             </div>
-            {resultsQ.isLoading
-              ? <div className="stateBox">Loading...</div>
-              : <RunHistory runs={runs} runMeta={runMeta} onResume={handleResume} />
-            }
+            <RunHistory onResume={handleResume} />
           </div>
         )}
 

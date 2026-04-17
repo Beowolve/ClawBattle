@@ -1,10 +1,7 @@
-import { useMemo, useState } from 'react';
-import { IS_PUBLIC } from '../hooks/useData.js';
+import { useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
 } from 'recharts';
-
-const COLORS = ['#2f5fb8', '#23897d', '#9c5fe0', '#e07c39', '#c96179', '#6a7895', '#d4a017', '#4a9ced'];
 
 const TOOLTIP = {
   contentStyle: {
@@ -17,113 +14,6 @@ const TOOLTIP = {
   itemStyle: { color: 'var(--font-color)' },
   cursor: { fill: 'var(--bg-color)' },
 };
-
-// ── Compute helpers ────────────────────────────────────────────────────
-
-function computeTargetDifficulty(runs, battleTargets, dailyTargets) {
-  const nameMap = {};
-  const objMap = {};
-  for (const t of battleTargets) {
-    const k = `battle__${t.id}`;
-    nameMap[k] = t.name ?? `#${t.id}`;
-    objMap[k] = t;
-  }
-  for (const t of dailyTargets) {
-    const k = `daily__${t.key}`;
-    nameMap[k] = t.name ?? t.key;
-    objMap[k] = t;
-  }
-
-  const byTarget = {};
-  for (const r of runs) {
-    const key = `${r.target_type}__${r.target_id}`;
-    if (!byTarget[key]) byTarget[key] = {};
-    if (byTarget[key][r.model] == null || r.match > byTarget[key][r.model]) {
-      byTarget[key][r.model] = r.match;
-    }
-  }
-
-  return Object.entries(byTarget)
-    .map(([key, modelScores]) => {
-      const scores = Object.values(modelScores).filter(s => s != null);
-      if (!scores.length) return null;
-      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-      const type = key.startsWith('battle__') ? 'battle' : 'daily';
-      const rawId = type === 'battle'
-        ? String(Math.round(Number(key.replace('battle__', ''))))
-        : key.replace('daily__', '');
-      return {
-        key,
-        name: nameMap[key] ?? `#${rawId}`,
-        avgMatch: +avg.toFixed(1),
-        targetObj: objMap[key] ?? null,
-        targetType: type,
-        imgUrl: IS_PUBLIC
-          ? (objMap[key]?.image_url ?? null)
-          : `/api/targets/${type}/${rawId}/image`,
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => a.avgMatch - b.avgMatch);
-}
-
-function computeModelConsistency(runs) {
-  const byModel = {};
-  for (const r of runs) {
-    if (r.match == null) continue;
-    if (!byModel[r.model]) byModel[r.model] = [];
-    byModel[r.model].push(r.match);
-  }
-
-  return Object.entries(byModel)
-    .map(([model, values]) => {
-      const n = values.length;
-      const avg = values.reduce((a, b) => a + b, 0) / n;
-      const stdDev = Math.sqrt(values.reduce((a, b) => a + (b - avg) ** 2, 0) / n);
-      return { model, avgMatch: +avg.toFixed(1), stdDev: +stdDev.toFixed(1), n };
-    })
-    .sort((a, b) => a.stdDev - b.stdDev);
-}
-
-function computeCostEfficiency(runs) {
-  const byModel = {};
-  for (const r of runs) {
-    if (!byModel[r.model]) byModel[r.model] = { bestScores: {}, costs: [] };
-    const tKey = `${r.target_type}__${r.target_id}`;
-    if (byModel[r.model].bestScores[tKey] == null || r.score > byModel[r.model].bestScores[tKey]) {
-      byModel[r.model].bestScores[tKey] = r.score;
-    }
-    if (r.cost != null) byModel[r.model].costs.push(r.cost);
-  }
-
-  return Object.entries(byModel)
-    .map(([model, { bestScores, costs }]) => {
-      const scores = Object.values(bestScores).filter(s => s != null);
-      const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-      const avgCost = costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : 0;
-      const ratio = avgCost > 0 ? avgScore / (avgCost * 1000) : null;
-      return { model, avgScore: +avgScore.toFixed(1), avgCost, ratio };
-    })
-    .sort((a, b) => (b.ratio ?? -Infinity) - (a.ratio ?? -Infinity));
-}
-
-function computeMatchDistribution(runs, modelFilter) {
-  const src = modelFilter ? runs.filter(r => r.model === modelFilter) : runs;
-  const buckets = Array.from({ length: 10 }, (_, i) => ({
-    range: i === 9 ? '90–99' : `${i * 10}–${i * 10 + 9}`,
-    count: 0,
-  }));
-  const perfect = { range: '100', count: 0 };
-
-  for (const r of src) {
-    if (r.match == null) continue;
-    if (r.match >= 100) { perfect.count++; continue; }
-    buckets[Math.min(Math.floor(r.match / 10), 9)].count++;
-  }
-  return [...buckets, perfect];
-}
-
-// ── Custom tooltip for Target Difficulty ───────────────────────────────
 
 function DifficultyTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -150,30 +40,18 @@ function DifficultyTooltip({ active, payload }) {
   );
 }
 
-// ── Component ───────────────────────────────────────────────────────
-
-export default function Insights({ runs, battleTargets, dailyTargets, onSelectTarget }) {
+// data shape: { difficulty, consistency, costEfficiency, distributions, models }
+export default function Insights({ data, onSelectTarget }) {
   const [distModel, setDistModel] = useState('');
 
-  const models = useMemo(() => [...new Set(runs.map(r => r.model))].sort(), [runs]);
-  const difficulty = useMemo(
-    () => computeTargetDifficulty(runs, battleTargets, dailyTargets),
-    [runs, battleTargets, dailyTargets],
-  );
-  const consistencyData = useMemo(() => computeModelConsistency(runs), [runs]);
-  const costData = useMemo(() => computeCostEfficiency(runs), [runs]);
-  const distribution = useMemo(
-    () => computeMatchDistribution(runs, distModel),
-    [runs, distModel],
-  );
-
-  if (!runs.length) {
+  if (!data || !data.models?.length) {
     return <div className="stateBox">No data yet — run a benchmark first.</div>;
   }
 
+  const { difficulty, consistency, costEfficiency, distributions, models } = data;
+  const distribution = distributions[distModel] ?? distributions[''] ?? [];
   const diffSlice = difficulty.slice(0, 20);
-  const hasCosts = costData.some(d => d.avgCost > 0);
-
+  const hasCosts = costEfficiency.some(d => d.avgCost > 0);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -191,18 +69,13 @@ export default function Insights({ runs, battleTargets, dailyTargets, onSelectTa
             <ResponsiveContainer width="100%" height={Math.max(180, diffSlice.length * 24)}>
               <BarChart data={diffSlice} layout="vertical" margin={{ left: 8, right: 28, top: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-color)" />
-                <XAxis
-                  type="number"
-                  domain={[0, 100]}
-                  tick={{ fontSize: 11, fill: 'var(--muted-color)' }}
-                />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--muted-color)' }} />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  width={82}
+                  width={46}
                   interval={0}
                   tick={{ fontSize: 11, fill: 'var(--muted-color)' }}
-                  tickFormatter={v => v.length > 11 ? v.slice(0, 11) + '…' : v}
                 />
                 <Tooltip content={<DifficultyTooltip />} />
                 <Bar
@@ -210,6 +83,8 @@ export default function Insights({ runs, battleTargets, dailyTargets, onSelectTa
                   fill="#2f5fb8"
                   radius={[0, 3, 3, 0]}
                   maxBarSize={18}
+                  onClick={d => onSelectTarget?.(d.targetObj ?? { id: d.rawId }, d.targetType)}
+                  style={{ cursor: onSelectTarget ? 'pointer' : undefined }}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -247,10 +122,7 @@ export default function Insights({ runs, battleTargets, dailyTargets, onSelectTa
                 <Tooltip formatter={v => [v, 'Attempts']} {...TOOLTIP} />
                 <Bar dataKey="count" radius={[3, 3, 0, 0]} maxBarSize={32}>
                   {distribution.map(entry => (
-                    <Cell
-                      key={entry.range}
-                      fill={entry.range === '100' ? '#23897d' : '#2f5fb8'}
-                    />
+                    <Cell key={entry.range} fill={entry.range === '100' ? '#23897d' : '#2f5fb8'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -270,8 +142,8 @@ export default function Insights({ runs, battleTargets, dailyTargets, onSelectTa
             <span>std deviation of match% · lower = more predictable</span>
           </div>
           <div style={{ padding: '12px 4px 8px' }}>
-            <ResponsiveContainer width="100%" height={Math.max(180, consistencyData.length * 36)}>
-              <BarChart data={consistencyData} layout="vertical" margin={{ left: 8, right: 48, top: 0, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={Math.max(180, consistency.length * 36)}>
+              <BarChart data={consistency} layout="vertical" margin={{ left: 8, right: 48, top: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-color)" />
                 <XAxis
                   type="number"
@@ -317,7 +189,7 @@ export default function Insights({ runs, battleTargets, dailyTargets, onSelectTa
                   </tr>
                 </thead>
                 <tbody>
-                  {costData.map((row, i) => (
+                  {costEfficiency.map((row, i) => (
                     <tr key={row.model}>
                       <td className="numeric muted">{i + 1}</td>
                       <td className="modelName">{row.model}</td>
