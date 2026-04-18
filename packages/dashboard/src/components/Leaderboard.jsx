@@ -19,6 +19,28 @@ const COLS = [
   ...(!IS_PUBLIC ? [{ key: 'actions', label: '' }] : []),
 ];
 
+function getColumn(key) {
+  return COLS.find(col => col.key === key);
+}
+
+function getSortValue(row, key) {
+  if (key === 'promptVersions') {
+    return row.promptVersions?.join(', ') ?? '';
+  }
+  return row[key];
+}
+
+function compareSortValues(left, right) {
+  if (typeof left === 'number' && typeof right === 'number') {
+    return left - right;
+  }
+
+  return String(left).localeCompare(String(right), undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
+}
+
 export default function Leaderboard({ rows, onModelSelect }) {
   const [sortKey, setSortKey] = useState('avgScore');
   const [sortDir, setSortDir] = useState('desc');
@@ -102,9 +124,15 @@ export default function Leaderboard({ rows, onModelSelect }) {
     let filtered = filterProvider ? rows.filter(r => r.provider === filterProvider) : rows;
     if (filterModel) filtered = filtered.filter(r => r.model.toLowerCase().includes(filterModel.toLowerCase()));
     return [...filtered].sort((a, b) => {
-      const av = a[sortKey] ?? -Infinity;
-      const bv = b[sortKey] ?? -Infinity;
-      return sortDir === 'asc' ? av - bv : bv - av;
+      const left = getSortValue(a, sortKey);
+      const right = getSortValue(b, sortKey);
+
+      if (left == null && right == null) return 0;
+      if (left == null) return 1;
+      if (right == null) return -1;
+
+      const cmp = compareSortValues(left, right);
+      return sortDir === 'asc' ? cmp : -cmp;
     });
   }, [rows, sortKey, sortDir, filterProvider, filterModel]);
 
@@ -113,7 +141,7 @@ export default function Leaderboard({ rows, onModelSelect }) {
       setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     } else {
       setSortKey(key);
-      setSortDir('desc');
+      setSortDir(getColumn(key)?.numeric ? 'desc' : 'asc');
     }
   }
 
@@ -141,7 +169,7 @@ export default function Leaderboard({ rows, onModelSelect }) {
           <thead>
             <tr>
               {COLS.map(col => {
-                const sortable = col.key !== 'rank' && col.key !== 'model' && col.key !== 'actions';
+                const sortable = col.key !== 'rank' && col.key !== 'actions';
                 return (
                   <th
                     key={col.key}
