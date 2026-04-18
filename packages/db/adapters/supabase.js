@@ -106,11 +106,39 @@ export async function getCompletedTargetIds(runId) {
   return new Set(rows.map(r => String(Math.round(Number(r.target_id)))));
 }
 
-export async function deleteRunsByModel(model) {
-  const rows = await sbFetch(`runs?select=run_id&model=eq.${encodeURIComponent(model)}`);
-  const count = rows.length;
-  await sbFetch(`runs?model=eq.${encodeURIComponent(model)}`, { method: 'DELETE', prefer: 'return=minimal' });
-  return { deleted: count };
+export async function deleteRunGroup({ model, reasoningEffort = null, promptVersions } = {}) {
+  if (!model) {
+    throw new Error('model is required');
+  }
+
+  const selectedPromptVersions = Array.isArray(promptVersions)
+    ? [...new Set(promptVersions.filter(Boolean))]
+    : [];
+
+  const query = [`select=run_id`, `model=eq.${encodeURIComponent(model)}`];
+  if (reasoningEffort == null) {
+    query.push('reasoning_effort=is.null');
+  } else {
+    query.push(`reasoning_effort=eq.${encodeURIComponent(reasoningEffort)}`);
+  }
+  if (selectedPromptVersions.length) {
+    const promptList = selectedPromptVersions.map(v => `"${String(v).replace(/"/g, '\\"')}"`).join(',');
+    query.push(`prompt_version=in.(${encodeURIComponent(promptList)})`);
+  }
+
+  const runRows = await sbFetch(`run_state?${query.join('&')}`);
+  const runIds = runRows.map(r => r.run_id);
+  if (!runIds.length) {
+    return { deletedRuns: 0, deletedAttempts: 0 };
+  }
+
+  const runIdList = runIds.map(id => `"${String(id).replace(/"/g, '\\"')}"`).join(',');
+  const encodedRunIdList = encodeURIComponent(runIdList);
+  const attempts = await sbFetch(`runs?select=run_id&run_id=in.(${encodedRunIdList})`);
+  await sbFetch(`runs?run_id=in.(${encodedRunIdList})`, { method: 'DELETE', prefer: 'return=minimal' });
+  await sbFetch(`run_state?run_id=in.(${encodedRunIdList})`, { method: 'DELETE', prefer: 'return=minimal' });
+
+  return { deletedRuns: runIds.length, deletedAttempts: attempts.length };
 }
 
 // Local-only operations — not applicable for Supabase adapter

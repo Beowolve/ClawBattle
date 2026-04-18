@@ -15,7 +15,7 @@ export const {
   getRunMeta,
   getBattleTargets, getDailyTargets,
   upsertBattleTarget, upsertDailyTarget,
-  deleteRunsByModel, getCompletedTargetIds,
+  deleteRunGroup, getCompletedTargetIds,
   getExistingAttempts, deleteRunById,
   upsertRuns, upsertRunStates,
 } = mod;

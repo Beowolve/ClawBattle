@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openDb } from './connection.js';
-import { saveAttempt, getResults, getRunMeta, saveRunStart, saveRunEnd } from './runs.js';
+import { saveAttempt, getResults, getRunMeta, saveRunStart, saveRunEnd, deleteRunGroup } from './runs.js';
 
 function makeDb() {
   return openDb(':memory:');
@@ -103,4 +103,54 @@ test('saveRunEnd is a no-op when finishedAt is null', () => {
   const [row] = getRunMeta(db);
   assert.equal(row.finished_at, null);
   assert.equal(row.status, 'running');
+});
+
+test('deleteRunGroup deletes only the selected leaderboard group and prompt versions', () => {
+  const db = makeDb();
+
+  saveRunStart(db, { runId: 'run-low-v1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: 'low', startedAt: '2024-01-01T00:00:00Z' });
+  saveRunStart(db, { runId: 'run-low-v2', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v2', reasoningEffort: 'low', startedAt: '2024-01-01T01:00:00Z' });
+  saveRunStart(db, { runId: 'run-high-v1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: 'high', startedAt: '2024-01-01T02:00:00Z' });
+  saveRunStart(db, { runId: 'run-other', model: 'gpt-4.1', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: 'low', startedAt: '2024-01-01T03:00:00Z' });
+
+  saveAttempt(db, { ...baseAttempt, runId: 'run-low-v1', promptVersion: 'v1', reasoningEffort: 'low' });
+  saveAttempt(db, { ...baseAttempt, runId: 'run-low-v2', promptVersion: 'v2', reasoningEffort: 'low' });
+  saveAttempt(db, { ...baseAttempt, runId: 'run-high-v1', promptVersion: 'v1', reasoningEffort: 'high' });
+  saveAttempt(db, { ...baseAttempt, runId: 'run-other', model: 'gpt-4.1', promptVersion: 'v1', reasoningEffort: 'low' });
+
+  const result = deleteRunGroup(db, {
+    model: 'gpt-4o',
+    reasoningEffort: 'low',
+    promptVersions: ['v2'],
+  });
+
+  assert.deepEqual(result, { deletedRuns: 1, deletedAttempts: 1 });
+
+  const remainingRunIds = getRunMeta(db).map(r => r.run_id).sort();
+  assert.deepEqual(remainingRunIds, ['run-high-v1', 'run-low-v1', 'run-other']);
+
+  const remainingAttempts = getResults(db).map(r => r.run_id).sort();
+  assert.deepEqual(remainingAttempts, ['run-high-v1', 'run-low-v1', 'run-other']);
+});
+
+test('deleteRunGroup deletes all prompt versions for the selected model and null reasoning group', () => {
+  const db = makeDb();
+
+  saveRunStart(db, { runId: 'run-null-v1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T00:00:00Z' });
+  saveRunStart(db, { runId: 'run-null-v2', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v2', reasoningEffort: null, startedAt: '2024-01-01T01:00:00Z' });
+  saveRunStart(db, { runId: 'run-low-v1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: 'low', startedAt: '2024-01-01T02:00:00Z' });
+
+  saveAttempt(db, { ...baseAttempt, runId: 'run-null-v1', promptVersion: 'v1', reasoningEffort: null });
+  saveAttempt(db, { ...baseAttempt, runId: 'run-null-v2', promptVersion: 'v2', reasoningEffort: null });
+  saveAttempt(db, { ...baseAttempt, runId: 'run-low-v1', promptVersion: 'v1', reasoningEffort: 'low' });
+
+  const result = deleteRunGroup(db, {
+    model: 'gpt-4o',
+    reasoningEffort: null,
+  });
+
+  assert.deepEqual(result, { deletedRuns: 2, deletedAttempts: 2 });
+
+  const remainingRunIds = getRunMeta(db).map(r => r.run_id);
+  assert.deepEqual(remainingRunIds, ['run-low-v1']);
 });

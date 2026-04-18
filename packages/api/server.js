@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
-import { getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta, getBattleTargets, getDailyTargets, deleteRunsByModel, deleteRunById, upsertRuns, upsertRunStates } from '../db/index.js';
+import { getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta, getBattleTargets, getDailyTargets, deleteRunGroup, deleteRunById, upsertRuns, upsertRunStates } from '../db/index.js';
 import { uploadToSupabase, uploadTargetsToSupabase, downloadFromSupabase } from '../db/sync.js';
 import { runBenchmark } from '../runner/benchmark.js';
 import { createJob, getJob, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
@@ -80,10 +80,18 @@ app.get('/api/runs', (req, res) => {
   res.json(getRunMeta());
 });
 
-app.delete('/api/runs', (req, res) => {
-  const model = req.query.model;
-  if (!model) return res.status(400).json({ error: 'model query param required' });
-  res.json(deleteRunsByModel(model));
+app.delete('/api/runs/group', (req, res) => {
+  const { model, reasoningEffort = null, promptVersions } = req.body ?? {};
+  if (!model) return res.status(400).json({ error: 'model required' });
+  if (promptVersions != null && !Array.isArray(promptVersions)) {
+    return res.status(400).json({ error: 'promptVersions must be an array when provided' });
+  }
+
+  try {
+    res.json(deleteRunGroup({ model, reasoningEffort, promptVersions }));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.post('/api/runs/start', (req, res) => {

@@ -567,6 +567,104 @@ td.muted {
   cursor: default;
 }
 
+/* ─── Dialog ───────────────────────────────────────────────────── */
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.dialogCard {
+  width: min(520px, 100%);
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.22);
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dialogHeader h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--heading-color);
+}
+
+.dialogBody {
+  padding: 14px 20px 20px;
+  color: var(--text-color);
+}
+
+.dialogBody p {
+  margin: 0 0 12px;
+}
+
+.dialogToolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dialogCheckboxList {
+  display: grid;
+  gap: 8px;
+}
+
+.dialogCheckboxItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--table-row-bg);
+}
+
+.dialogCheckboxItem input {
+  margin: 0;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 20px 20px;
+}
+
+.dialogSecondaryButton {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.dialogSecondaryButton:hover:not(:disabled) {
+  background: var(--table-row-bg);
+}
+
+.dialogSecondaryButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* ─── Empty/loading states ─────────────────────────────────────── */
 .stateBox {
   padding: 32px;

@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-17
+Last updated: 2026-04-18
 
 ## What's Done
 
@@ -40,6 +40,7 @@ Last updated: 2026-04-17
 - [x] Target Detail — sticky code/preview/target layout, Quirks Mode iframe, solutions table
 - [x] Start Run tab — model, provider, attempts, concurrency, retries, target range, Fill toggle, cancel button
 - [x] Run History — Delete button for empty runs (no attempts saved)
+- [x] Leaderboard delete flow now targets a single leaderboard entry (`model + reasoning_effort`) and can limit deletion to selected prompt versions
 - [x] Target-grid progress view — live cards per target (pending/running/done/error/skipped)
   - Names visible immediately from start event
   - Pulsing dot on running cards

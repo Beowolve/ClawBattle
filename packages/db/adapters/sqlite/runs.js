@@ -334,12 +334,49 @@ export function deleteRunById(db, runId) {
   db.prepare('DELETE FROM run_state WHERE run_id = ?').run(runId);
 }
 
-export function deleteRunsByModel(db, model) {
-  const runIds = db.prepare('SELECT DISTINCT run_id FROM runs WHERE model = ?').all(model).map(r => r.run_id);
-  db.prepare('DELETE FROM runs WHERE model = ?').run(model);
-  if (runIds.length) {
-    const placeholders = runIds.map(() => '?').join(',');
-    db.prepare(`DELETE FROM run_state WHERE run_id IN (${placeholders})`).run(...runIds);
+export function deleteRunGroup(db, { model, reasoningEffort = null, promptVersions } = {}) {
+  if (!model) {
+    throw new Error('model is required');
   }
-  return { deleted: runIds.length };
+
+  const selectedPromptVersions = Array.isArray(promptVersions)
+    ? [...new Set(promptVersions.filter(Boolean))]
+    : [];
+
+  const where = ['model = ?'];
+  const params = [model];
+
+  if (reasoningEffort == null) {
+    where.push('reasoning_effort IS NULL');
+  } else {
+    where.push('reasoning_effort = ?');
+    params.push(reasoningEffort);
+  }
+
+  if (selectedPromptVersions.length) {
+    const placeholders = selectedPromptVersions.map(() => '?').join(',');
+    where.push(`prompt_version IN (${placeholders})`);
+    params.push(...selectedPromptVersions);
+  }
+
+  const selectSql = `SELECT run_id FROM run_state WHERE ${where.join(' AND ')}`;
+
+  db.exec('BEGIN');
+  try {
+    const runIds = db.prepare(selectSql).all(...params).map(r => r.run_id);
+    if (!runIds.length) {
+      db.exec('COMMIT');
+      return { deletedRuns: 0, deletedAttempts: 0 };
+    }
+
+    const placeholders = runIds.map(() => '?').join(',');
+    const deleteAttempts = db.prepare(`DELETE FROM runs WHERE run_id IN (${placeholders})`).run(...runIds);
+    db.prepare(`DELETE FROM run_state WHERE run_id IN (${placeholders})`).run(...runIds);
+
+    db.exec('COMMIT');
+    return { deletedRuns: runIds.length, deletedAttempts: deleteAttempts.changes };
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
 }

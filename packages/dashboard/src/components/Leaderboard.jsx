@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { IS_PUBLIC } from '../hooks/useData.js';
+import DeleteLeaderboardRunsDialog from './DeleteLeaderboardRunsDialog.jsx';
 
 const COLS = [
   { key: 'rank', label: '#' },
@@ -23,20 +24,75 @@ export default function Leaderboard({ rows, onModelSelect }) {
   const [sortDir, setSortDir] = useState('desc');
   const [filterProvider, setFilterProvider] = useState('');
   const [filterModel, setFilterModel] = useState('');
-  const [deleting, setDeleting] = useState(null);
+  const [deleteDialog, setDeleteDialog] = useState(null);
+  const [deletingKey, setDeletingKey] = useState(null);
   const queryClient = useQueryClient();
 
-  async function handleDelete(model) {
-    if (!window.confirm(`Delete all runs for "${model}"?`)) return;
-    setDeleting(model);
+  function getRowDeleteKey(row) {
+    return `${row.model}__${row.reasoningEffort ?? ''}`;
+  }
+
+  function openDeleteDialog(row) {
+    setDeleteDialog({
+      row,
+      selectedPrompts: [...(row.promptVersions ?? [])],
+    });
+  }
+
+  function closeDeleteDialog() {
+    if (deletingKey) return;
+    setDeleteDialog(null);
+  }
+
+  function togglePrompt(promptVersion) {
+    setDeleteDialog(current => {
+      if (!current) return current;
+      const selectedPrompts = current.selectedPrompts.includes(promptVersion)
+        ? current.selectedPrompts.filter(value => value !== promptVersion)
+        : [...current.selectedPrompts, promptVersion].sort();
+      return { ...current, selectedPrompts };
+    });
+  }
+
+  function selectAllPrompts() {
+    setDeleteDialog(current => current ? {
+      ...current,
+      selectedPrompts: [...(current.row.promptVersions ?? [])],
+    } : current);
+  }
+
+  function clearPrompts() {
+    setDeleteDialog(current => current ? { ...current, selectedPrompts: [] } : current);
+  }
+
+  async function confirmDelete() {
+    if (!deleteDialog) return;
+
+    const { row, selectedPrompts } = deleteDialog;
+    const deleteKey = getRowDeleteKey(row);
+    const payload = {
+      model: row.model,
+      reasoningEffort: row.reasoningEffort ?? null,
+      promptVersions: selectedPrompts,
+    };
+
+    setDeletingKey(deleteKey);
     try {
-      await fetch(`/api/runs?model=${encodeURIComponent(model)}`, { method: 'DELETE' });
+      const response = await fetch('/api/runs/group', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Delete failed');
+
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
       queryClient.invalidateQueries({ queryKey: ['insights'] });
       queryClient.invalidateQueries({ queryKey: ['results'] });
       queryClient.invalidateQueries({ queryKey: ['runs'] });
+      setDeleteDialog(null);
     } finally {
-      setDeleting(null);
+      setDeletingKey(null);
     }
   }
 
@@ -124,10 +180,10 @@ export default function Leaderboard({ rows, onModelSelect }) {
                   <td>
                     <button
                       className="deleteButton"
-                      disabled={deleting === row.model}
-                      onClick={() => handleDelete(row.model)}
+                      disabled={deletingKey === getRowDeleteKey(row)}
+                      onClick={() => openDeleteDialog(row)}
                     >
-                      {deleting === row.model ? '...' : 'Delete'}
+                      {deletingKey === getRowDeleteKey(row) ? '...' : 'Delete'}
                     </button>
                   </td>
                 )}
@@ -136,6 +192,18 @@ export default function Leaderboard({ rows, onModelSelect }) {
           </tbody>
         </table>
       </div>
+      {!IS_PUBLIC && deleteDialog && (
+        <DeleteLeaderboardRunsDialog
+          row={deleteDialog.row}
+          selectedPrompts={deleteDialog.selectedPrompts}
+          deleting={deletingKey === getRowDeleteKey(deleteDialog.row)}
+          onTogglePrompt={togglePrompt}
+          onSelectAll={selectAllPrompts}
+          onClear={clearPrompts}
+          onCancel={closeDeleteDialog}
+          onConfirm={confirmDelete}
+        />
+      )}
     </div>
   );
 }
