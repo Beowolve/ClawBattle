@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-import { render, closeBrowser, getChromeVersion } from '../core/renderer.js';
+import { render, getChromeVersion } from '../core/renderer.js';
 import { computeMatch, computeScore, PROXY_PERFECT_MATCH_THRESHOLD } from '../core/scorer.js';
 import { sanitizeCode } from '../core/utils/code.js';
 import { saveAttempt, saveRunStart, saveRunEnd, getBattleTargets, getDailyTargets, getCompletedTargetIds, getExistingAttempts } from '../db/index.js';
@@ -244,7 +244,6 @@ export async function runBenchmark({
     finalStatus = err.name === 'AbortError' ? 'cancelled' : 'error';
     workerError = err;
   } finally {
-    try { await closeBrowser(); } catch { /* ignore browser-close errors */ }
     saveRunEnd({ runId, finishedAt: new Date().toISOString(), status: finalStatus });
   }
   if (workerError) throw workerError;

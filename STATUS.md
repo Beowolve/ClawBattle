@@ -7,6 +7,8 @@ Last updated: 2026-04-18
 ### Core Pipeline
 - [x] Benchmark runner (`packages/runner/`) — model → render → score → DB
 - [x] Renderer (`packages/core/renderer.js`) — Puppeteer/Chromium, Quirks Mode
+- [x] Renderer lifecycle hardened — launch race fixed, browser ownership moved to process entrypoints, no per-run global browser shutdown
+- [x] Renderer lifecycle tests — concurrent launch, disconnect recovery, and parallel render integration coverage
 - [x] Scorer (`packages/core/scorer.js`) — pixelmatch threshold 0.01, CSS Battle formula
 - [x] SQLite adapter (`packages/db/`) — runs, run_meta tables
 - [x] LLM adapters — OpenRouter, OpenAI, Ollama (with AbortSignal support)

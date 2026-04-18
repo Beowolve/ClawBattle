@@ -4,6 +4,7 @@
 
 import { parseArgs } from 'node:util';
 import { runBenchmark } from './benchmark.js';
+import { closeBrowser } from '../core/renderer.js';
 
 const { values } = parseArgs({
   options: {
@@ -25,14 +26,18 @@ if (!values.model) {
   process.exit(1);
 }
 
-await runBenchmark({
-  model:           values.model,
-  provider:        values.provider,
-  targetType:      values.targets,
-  targetId:        values['target-id'],
-  attempts:        parseInt(values.attempts),
-  promptVersion:   values.prompt,
-  concurrency:     parseInt(values.concurrency),
-  retries:         parseInt(values.retries),
-  reasoningEffort: values.reasoning ?? undefined,
-});
+try {
+  await runBenchmark({
+    model:           values.model,
+    provider:        values.provider,
+    targetType:      values.targets,
+    targetId:        values['target-id'],
+    attempts:        parseInt(values.attempts),
+    promptVersion:   values.prompt,
+    concurrency:     parseInt(values.concurrency),
+    retries:         parseInt(values.retries),
+    reasoningEffort: values.reasoning ?? undefined,
+  });
+} finally {
+  await closeBrowser().catch(() => {});
+}

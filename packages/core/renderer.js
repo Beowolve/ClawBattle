@@ -1,5 +1,5 @@
-// Core renderer – wraps Puppeteer
-// Browser is reused across renders; call closeBrowser() when done.
+// Core renderer – wraps Puppeteer.
+// Browser ownership lives at the process entrypoint, not inside a benchmark run.
 
 import puppeteer from 'puppeteer';
 
@@ -7,16 +7,54 @@ const WIDTH = 400;
 const HEIGHT = 300;
 
 let browser;
+let launchPromise;
+let shutdownPromise;
+let browserLauncher = launchBrowser;
+
+function isBrowserUsable(candidate) {
+  return candidate && candidate.connected !== false;
+}
+
+async function launchBrowser() {
+  return puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+    defaultViewport: { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 },
+  });
+}
+
+function handleBrowserDisconnected(instance) {
+  if (browser === instance) {
+    browser = undefined;
+  }
+}
+
+function attachDisconnectHandler(instance) {
+  const onDisconnected = () => handleBrowserDisconnected(instance);
+  if (typeof instance.once === 'function') {
+    instance.once('disconnected', onDisconnected);
+  } else if (typeof instance.on === 'function') {
+    instance.on('disconnected', onDisconnected);
+  }
+}
 
 async function getBrowser() {
-  if (!browser) {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-dev-shm-usage'],
-      defaultViewport: { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1 },
+  if (isBrowserUsable(browser)) {
+    return browser;
+  }
+
+  if (!launchPromise) {
+    launchPromise = (async () => {
+      const instance = await browserLauncher();
+      attachDisconnectHandler(instance);
+      browser = instance;
+      return instance;
+    })().finally(() => {
+      launchPromise = undefined;
     });
   }
-  return browser;
+
+  return launchPromise;
 }
 
 export async function getChromeVersion() {
@@ -26,10 +64,26 @@ export async function getChromeVersion() {
 }
 
 export async function closeBrowser() {
-  if (browser) {
-    await browser.close();
-    browser = undefined;
+  if (shutdownPromise) {
+    return shutdownPromise;
   }
+
+  shutdownPromise = (async () => {
+    const instance = launchPromise
+      ? await launchPromise.catch(() => null)
+      : browser;
+
+    browser = undefined;
+    if (instance && typeof instance.close === 'function') {
+      await instance.close();
+    }
+  })().finally(() => {
+    browser = undefined;
+    launchPromise = undefined;
+    shutdownPromise = undefined;
+  });
+
+  return shutdownPromise;
 }
 
 function abortPromise(signal) {
@@ -58,4 +112,16 @@ export async function render(code, { signal } = {}) {
     // Fire-and-forget: on abort, don't block returning to the worker.
     page.close().catch(() => {});
   }
+}
+
+export function __setBrowserLauncherForTests(launcher) {
+  browserLauncher = launcher;
+}
+
+export async function __resetRendererForTests() {
+  await closeBrowser().catch(() => {});
+  browser = undefined;
+  launchPromise = undefined;
+  shutdownPromise = undefined;
+  browserLauncher = launchBrowser;
 }

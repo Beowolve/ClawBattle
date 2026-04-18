@@ -8,6 +8,7 @@ import { getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta, g
 import { uploadToSupabase, uploadTargetsToSupabase, downloadFromSupabase } from '../db/sync.js';
 import { runBenchmark } from '../runner/benchmark.js';
 import { createJob, getJob, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
+import { closeBrowser } from '../core/renderer.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -214,4 +215,32 @@ app.post('/api/sync/download', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`ClawBattle API running on :${PORT}`));
+const server = app.listen(PORT, () => console.log(`ClawBattle API running on :${PORT}`));
+
+let shuttingDown = false;
+
+async function shutdown(signal, exitCode) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  console.log(`[API] ${signal} received — shutting down`);
+
+  for (const job of listActiveJobs()) {
+    cancelJob(job.runId);
+  }
+
+  await new Promise(resolve => {
+    server.close(() => resolve());
+  });
+
+  await closeBrowser().catch(() => {});
+  process.exit(exitCode);
+}
+
+process.once('SIGINT', () => {
+  void shutdown('SIGINT', 130);
+});
+
+process.once('SIGTERM', () => {
+  void shutdown('SIGTERM', 143);
+});
