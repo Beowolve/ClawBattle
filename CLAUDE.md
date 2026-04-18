@@ -18,6 +18,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Strong modularization** — modules must be loosely coupled and independently usable. One responsibility per file. If a file is getting long, split it.
 - **Testable by design** — functions take their dependencies as parameters (e.g. `saveAttempt(db, data)`). Singletons are wired in a dedicated `index.js`; never inside the logic modules themselves.
-- **Test-driven development** — write tests alongside or before implementation. Use Node's built-in `node:test` runner; no external test framework.
+- **Test-driven development** — for bug fixes and new features, write or update the failing test first, then implement the smallest change that makes it pass, then refactor. Follow `red -> green -> refactor`. Use Node's built-in `node:test` runner; no external test framework.
 - **No large files** — keep functions short and focused.
 - **Avoid code duplication** — prefer composition over inheritance. Use higher-order functions and functional programming techniques.

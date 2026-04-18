@@ -212,6 +212,16 @@ export function saveRunEnd(db, data) {
   if (!data.finishedAt) return;
   const finishedAt = data.finishedAt;
   const status = data.status ?? 'done';
+
+  const attemptCount = Number(
+    db.prepare('SELECT COUNT(*) AS count FROM runs WHERE run_id = ?').get(data.runId).count ?? 0,
+  );
+
+  if (attemptCount === 0) {
+    db.prepare('DELETE FROM run_state WHERE run_id = ?').run(data.runId);
+    return;
+  }
+
   db.prepare(
     'UPDATE run_state SET finished_at = ?, status = ? WHERE run_id = ?'
   ).run(finishedAt, status, data.runId);

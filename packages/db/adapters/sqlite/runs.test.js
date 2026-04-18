@@ -105,6 +105,23 @@ test('saveRunEnd is a no-op when finishedAt is null', () => {
   assert.equal(row.status, 'running');
 });
 
+test('saveRunEnd removes run_state rows that never stored a single attempt', () => {
+  const db = makeDb();
+  saveRunStart(db, {
+    runId: 'run-1',
+    model: 'gpt-4o',
+    provider: 'openrouter',
+    promptVersion: 'v1',
+    reasoningEffort: null,
+    startedAt: '2024-01-01T00:00:00Z',
+  });
+
+  saveRunEnd(db, { runId: 'run-1', finishedAt: '2024-01-01T01:00:00Z', status: 'incomplete' });
+
+  assert.deepEqual(getRunMeta(db), []);
+  assert.deepEqual(getResults(db, { runId: 'run-1' }), []);
+});
+
 test('deleteRunGroup deletes only the selected leaderboard group and prompt versions', () => {
   const db = makeDb();
 

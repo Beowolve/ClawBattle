@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta, getBattleTargets, getDailyTargets, deleteRunGroup, deleteRunById, upsertRuns, upsertRunStates } from '../db/index.js';
 import { uploadToSupabase, uploadTargetsToSupabase, downloadFromSupabase } from '../db/sync.js';
 import { runBenchmark } from '../runner/benchmark.js';
-import { createJob, getJob, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
+import { createJob, getJob, isJobActive, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
 import { closeBrowser } from '../core/renderer.js';
 
 const app = express();
@@ -148,7 +148,7 @@ app.post('/api/runs/:runId/cancel', (req, res) => {
 
 app.delete('/api/runs/:runId', (req, res) => {
   const { runId } = req.params;
-  if (getJob(runId)) return res.status(409).json({ error: 'run is still active — cancel it first' });
+  if (isJobActive(runId)) return res.status(409).json({ error: 'run is still active — cancel it first' });
   const meta = getRunMeta().find(r => r.run_id === runId);
   if (!meta) return res.status(404).json({ error: 'run not found' });
   if (getResultsCount({ runId }) > 0) {
