@@ -171,3 +171,47 @@ test('deleteRunGroup deletes all prompt versions for the selected model and null
   const remainingRunIds = getRunMeta(db).map(r => r.run_id);
   assert.deepEqual(remainingRunIds, ['run-low-v1']);
 });
+
+// ─── Views read from attempt_results (done-only) ─────────────────────────────
+
+test('leaderboard view excludes non-done attempts', () => {
+  const db = makeDb();
+  // One finished attempt and one still-pending attempt for the same model.
+  saveAttempt(db, { ...baseAttempt, runId: 'r-done', targetId: '1', match: 100, score: 1000 });
+  // Insert a pending row directly so it does not accidentally show up in the view.
+  db.prepare(`
+    INSERT INTO runs (run_id, benchmark_version, model, provider, target_id, target_type, attempt, status, enqueued_at)
+    VALUES ('r-open', '1.0', 'gpt-4o', 'openrouter', '2', 'battle', 1, 'pending', datetime('now'))
+  `).run();
+  const board = db.prepare('SELECT * FROM leaderboard').all();
+  assert.equal(board.length, 1);
+  assert.equal(board[0].targets, 1, 'should only count the one done target');
+  assert.equal(board[0].perfect_count, 1);
+});
+
+test('match_distribution view excludes non-done attempts', () => {
+  const db = makeDb();
+  saveAttempt(db, { ...baseAttempt, runId: 'r-done', targetId: '1', match: 95 });
+  db.prepare(`
+    INSERT INTO runs (run_id, benchmark_version, model, provider, target_id, target_type, attempt, match, status, enqueued_at)
+    VALUES ('r-open', '1.0', 'gpt-4o', 'openrouter', '2', 'battle', 1, 42, 'error', datetime('now'))
+  `).run();
+  const rows = db.prepare('SELECT * FROM match_distribution').all();
+  // Only the done row's bucket should appear; the error row must not leak in.
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].bucket, '90\u201399');
+  assert.equal(rows[0].count, 1);
+});
+
+test('attempt_results view returns exactly status=done rows', () => {
+  const db = makeDb();
+  saveAttempt(db, { ...baseAttempt, runId: 'r-done', targetId: '1' });
+  db.prepare(`
+    INSERT INTO runs (run_id, benchmark_version, model, provider, target_id, target_type, attempt, status, enqueued_at)
+    VALUES ('r-open', '1.0', 'gpt-4o', 'openrouter', '2', 'battle', 1, 'pending', datetime('now'))
+  `).run();
+  const rows = db.prepare('SELECT run_id, status FROM attempt_results').all();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].run_id, 'r-done');
+  assert.equal(rows[0].status, 'done');
+});

@@ -122,13 +122,17 @@ export function initSchema(db) {
   `);
 
   db.exec(`
+    DROP VIEW IF EXISTS attempt_results;
+    CREATE VIEW attempt_results AS
+    SELECT * FROM runs WHERE status = 'done';
+
     DROP VIEW IF EXISTS leaderboard;
     CREATE VIEW leaderboard AS
     WITH ranked AS (
       SELECT *, ROW_NUMBER() OVER (
         PARTITION BY model, reasoning_effort, target_id, target_type
         ORDER BY score DESC NULLS LAST
-      ) AS rn FROM runs
+      ) AS rn FROM attempt_results
     ),
     best_per_target AS (SELECT * FROM ranked WHERE rn = 1),
     model_costs AS (
@@ -136,7 +140,7 @@ export function initSchema(db) {
         SUM(cost) AS total_cost,
         COUNT(*) AS attempt_count,
         GROUP_CONCAT(DISTINCT prompt_version ORDER BY prompt_version) AS prompt_versions
-      FROM runs GROUP BY model, reasoning_effort
+      FROM attempt_results GROUP BY model, reasoning_effort
     )
     SELECT
       b.model, b.reasoning_effort,
@@ -163,14 +167,14 @@ export function initSchema(db) {
       SELECT *, ROW_NUMBER() OVER (
         PARTITION BY model, reasoning_effort, target_id, target_type, prompt_version
         ORDER BY score DESC NULLS LAST
-      ) AS rn FROM runs
+      ) AS rn FROM attempt_results
     ),
     best_per_target AS (SELECT * FROM ranked WHERE rn = 1),
     model_version_costs AS (
       SELECT model, reasoning_effort, prompt_version,
         SUM(cost) AS total_cost,
         COUNT(*) AS attempt_count
-      FROM runs GROUP BY model, reasoning_effort, prompt_version
+      FROM attempt_results GROUP BY model, reasoning_effort, prompt_version
     )
     SELECT
       b.model, b.reasoning_effort, b.prompt_version,
@@ -199,7 +203,7 @@ export function initSchema(db) {
       SELECT *, ROW_NUMBER() OVER (
         PARTITION BY model, target_id, target_type, prompt_version
         ORDER BY match DESC NULLS LAST
-      ) AS rn FROM runs
+      ) AS rn FROM attempt_results
     ),
     best_per_model AS (SELECT * FROM ranked WHERE rn = 1)
     SELECT
@@ -222,7 +226,7 @@ export function initSchema(db) {
       AVG(match) AS avg_match,
       SQRT(AVG(match * match) - AVG(match) * AVG(match)) AS std_dev,
       COUNT(*) AS n
-    FROM runs WHERE match IS NOT NULL
+    FROM attempt_results WHERE match IS NOT NULL
     GROUP BY model, prompt_version;
 
     DROP VIEW IF EXISTS cost_efficiency;
@@ -231,7 +235,7 @@ export function initSchema(db) {
       SELECT *, ROW_NUMBER() OVER (
         PARTITION BY model, target_id, target_type, prompt_version
         ORDER BY score DESC NULLS LAST
-      ) AS rn FROM runs
+      ) AS rn FROM attempt_results
     ),
     best_per_target AS (SELECT * FROM ranked WHERE rn = 1)
     SELECT model, prompt_version,
@@ -256,12 +260,8 @@ export function initSchema(db) {
         ELSE                   '0\u20139'
       END AS bucket,
       COUNT(*) AS count
-    FROM runs WHERE match IS NOT NULL
+    FROM attempt_results WHERE match IS NOT NULL
     GROUP BY model, prompt_version, bucket;
-
-    DROP VIEW IF EXISTS attempt_results;
-    CREATE VIEW attempt_results AS
-    SELECT * FROM runs WHERE status = 'done';
 
     DROP VIEW IF EXISTS runs_summary;
     CREATE VIEW runs_summary AS
