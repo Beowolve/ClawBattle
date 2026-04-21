@@ -1,3 +1,8 @@
+// Row reads + analytical helpers for the `runs` table.
+// Writes during a benchmark flow through packages/db/adapters/sqlite/queue.js
+// (enqueueRun / claimNextPending / completeAttempt / failAttempt).
+// `saveAttempt` below is a test-only shortcut that inserts a done row directly.
+
 export function saveAttempt(db, data) {
   db.prepare(`
     INSERT INTO runs
@@ -186,7 +191,7 @@ export function getInsights(db, promptVersion) {
     ? db.prepare('SELECT bucket, SUM(count) AS count FROM match_distribution WHERE prompt_version = ? GROUP BY bucket').all(promptVersion)
     : db.prepare('SELECT bucket, SUM(count) AS count FROM match_distribution GROUP BY bucket').all();
 
-  const models = db.prepare('SELECT DISTINCT model FROM runs ORDER BY model').all().map(r => r.model);
+  const models = db.prepare('SELECT DISTINCT model FROM attempt_results ORDER BY model').all().map(r => r.model);
 
   return {
     difficulty: mapDifficulty(diffRows),
@@ -197,56 +202,7 @@ export function getInsights(db, promptVersion) {
   };
 }
 
-// ─── Run metadata ─────────────────────────────────────────────────────────────
-
-export function saveRunStart(db, data) {
-  db.prepare(`
-    INSERT OR IGNORE INTO run_state (run_id, model, provider, prompt_version, reasoning_effort, started_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(
-    data.runId, data.model, data.provider,
-    data.promptVersion ?? null, data.reasoningEffort ?? null,
-    data.startedAt,
-  );
-}
-
-export function saveRunEnd(db, data) {
-  if (!data.finishedAt) return;
-  const finishedAt = data.finishedAt;
-  const status = data.status ?? 'done';
-
-  const attemptCount = Number(
-    db.prepare('SELECT COUNT(*) AS count FROM runs WHERE run_id = ?').get(data.runId).count ?? 0,
-  );
-
-  if (attemptCount === 0) {
-    db.prepare('DELETE FROM run_state WHERE run_id = ?').run(data.runId);
-    return;
-  }
-
-  db.prepare(
-    'UPDATE run_state SET finished_at = ?, status = ? WHERE run_id = ?'
-  ).run(finishedAt, status, data.runId);
-  // Also stamp finished_at on all attempt rows so started_at→finished_at spans the full run
-  db.prepare(
-    'UPDATE runs SET finished_at = ? WHERE run_id = ?'
-  ).run(finishedAt, data.runId);
-}
-
-export function getRunMeta(db) {
-  return db.prepare(`
-    SELECT rs.run_id, rs.model, rs.provider, rs.prompt_version, rs.reasoning_effort,
-           rs.started_at, rs.finished_at, rs.status,
-           COALESCE(ac.attempt_count, 0) AS attempt_count
-    FROM run_state rs
-    LEFT JOIN (
-      SELECT run_id, COUNT(*) AS attempt_count
-      FROM runs
-      GROUP BY run_id
-    ) ac ON ac.run_id = rs.run_id
-    ORDER BY rs.started_at DESC
-  `).all();
-}
+// ─── Fill / resume helpers ────────────────────────────────────────────────────
 
 /**
  * For a (model, promptVersion, reasoningEffort, targetType) tuple, return the
@@ -267,6 +223,7 @@ export function getExistingAttempts(db, { model, promptVersion, reasoningEffort,
       AND (prompt_version IS ? OR prompt_version = ?)
       AND (reasoning_effort IS ? OR reasoning_effort = ?)
       AND target_type = ?
+      AND status = 'done'
       AND CAST(ROUND(CAST(target_id AS REAL)) AS INTEGER) IN (${placeholders})
     ORDER BY attempt DESC
   `).all(
@@ -289,7 +246,7 @@ export function getExistingAttempts(db, { model, promptVersion, reasoningEffort,
 
 export function getCompletedTargetIds(db, runId) {
   const rows = db.prepare(
-    'SELECT DISTINCT target_id FROM runs WHERE run_id = ?'
+    "SELECT DISTINCT target_id FROM runs WHERE run_id = ? AND status = 'done'"
   ).all(runId);
   // node:sqlite stores JS Numbers as REAL, so target_id TEXT may contain "1.0" instead of "1".
   // Normalise to integer string to match String(def.id) comparisons in benchmark.js.
@@ -297,6 +254,8 @@ export function getCompletedTargetIds(db, runId) {
 }
 
 // Upsert rows downloaded from Supabase — skips rows already present locally.
+// Supabase only stores done attempts; locally they land with status='done'
+// (default column value), no queue-state columns required.
 export function upsertRuns(db, rows) {
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO runs
@@ -323,29 +282,9 @@ export function upsertRuns(db, rows) {
   return inserted;
 }
 
-export function upsertRunStates(db, rows) {
-  const stmt = db.prepare(`
-    INSERT OR IGNORE INTO run_state
-      (run_id, model, provider, prompt_version, reasoning_effort, started_at, finished_at, status)
-    VALUES (?,?,?,?,?,?,?,?)
-  `);
-  let inserted = 0;
-  for (const r of rows) {
-    const { changes } = stmt.run(
-      r.run_id, r.model, r.provider,
-      r.prompt_version ?? null, r.reasoning_effort ?? null,
-      r.started_at, r.finished_at ?? null, r.status ?? 'done',
-    );
-    inserted += changes;
-  }
-  return inserted;
-}
-
-export function deleteRunById(db, runId) {
-  db.prepare('DELETE FROM runs WHERE run_id = ?').run(runId);
-  db.prepare('DELETE FROM run_state WHERE run_id = ?').run(runId);
-}
-
+// Deletes every row (done + queue state) that matches the (model,
+// reasoningEffort, promptVersions) filter. Targets the `runs` table
+// directly — `run_state` was removed in the slice 4.3 cleanup.
 export function deleteRunGroup(db, { model, reasoningEffort = null, promptVersions } = {}) {
   if (!model) {
     throw new Error('model is required');
@@ -371,7 +310,7 @@ export function deleteRunGroup(db, { model, reasoningEffort = null, promptVersio
     params.push(...selectedPromptVersions);
   }
 
-  const selectSql = `SELECT run_id FROM run_state WHERE ${where.join(' AND ')}`;
+  const selectSql = `SELECT DISTINCT run_id FROM runs WHERE ${where.join(' AND ')}`;
 
   db.exec('BEGIN');
   try {
@@ -383,7 +322,6 @@ export function deleteRunGroup(db, { model, reasoningEffort = null, promptVersio
 
     const placeholders = runIds.map(() => '?').join(',');
     const deleteAttempts = db.prepare(`DELETE FROM runs WHERE run_id IN (${placeholders})`).run(...runIds);
-    db.prepare(`DELETE FROM run_state WHERE run_id IN (${placeholders})`).run(...runIds);
 
     db.exec('COMMIT');
     return { deletedRuns: runIds.length, deletedAttempts: deleteAttempts.changes };

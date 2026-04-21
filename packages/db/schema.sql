@@ -48,23 +48,9 @@ drop policy if exists "allow_all" on public.runs;
 drop policy if exists "allow_select" on public.runs;
 create policy "allow_select" on public.runs for select using (true);
 
--- ─── run_state ───────────────────────────────────────────────────────────────
-
-create table if not exists public.run_state (
-  run_id           text primary key,
-  model            text not null,
-  provider         text not null,
-  prompt_version   text,
-  reasoning_effort text,
-  started_at       timestamp with time zone not null,
-  finished_at      timestamp with time zone,
-  status           text not null default 'running'
-);
-
-alter table public.run_state enable row level security;
-drop policy if exists "allow_all" on public.run_state;
-drop policy if exists "allow_select" on public.run_state;
-create policy "allow_select" on public.run_state for select using (true);
+-- run_state was removed in the queue refactor — Supabase only stores done
+-- attempts, and queue state lives in local SQLite on each runner process.
+drop table if exists public.run_state cascade;
 
 -- ─── battle_targets ──────────────────────────────────────────────────────────
 

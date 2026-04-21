@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openDb } from './connection.js';
-import { saveAttempt, getResults, getRunMeta, saveRunStart, saveRunEnd, deleteRunGroup } from './runs.js';
+import { saveAttempt, getResults, deleteRunGroup } from './runs.js';
 
 function makeDb() {
   return openDb(':memory:');
@@ -25,6 +25,10 @@ const baseAttempt = {
   code: '<div></div><style>div{width:400px;height:300px;background:#5d3a3a}</style>',
   codeLength: 70,
 };
+
+// saveAttempt is kept as a test-only helper: it's the shortest path to seed
+// a completed row for view/aggregate/delete tests. Real benchmark flow writes
+// rows via enqueueRun + completeAttempt instead.
 
 test('saveAttempt persists a run row', () => {
   const db = makeDb();
@@ -75,60 +79,13 @@ test('saveAttempt stores optional fields as null when omitted', () => {
   assert.equal(row.score, null);
 });
 
-test('getRunMeta returns rows from run_state', () => {
-  const db = makeDb();
-  saveRunStart(db, { runId: 'run-1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T00:00:00Z' });
-  saveRunStart(db, { runId: 'run-2', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T01:00:00Z' });
-  const meta = getRunMeta(db);
-  assert.equal(meta.length, 2);
-  assert.equal(meta.find(r => r.run_id === 'run-1').model, 'gpt-4o');
-});
-
-test('saveRunEnd sets finished_at and status on run_state and runs', () => {
-  const db = makeDb();
-  saveRunStart(db, { runId: 'run-1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T00:00:00Z' });
-  saveAttempt(db, { ...baseAttempt, attempt: 1 });
-  saveRunEnd(db, { runId: 'run-1', finishedAt: '2024-01-01T01:00:00Z', status: 'done' });
-  const [meta] = getRunMeta(db);
-  assert.equal(meta.finished_at, '2024-01-01T01:00:00Z');
-  assert.equal(meta.status, 'done');
-  const [row] = getResults(db);
-  assert.equal(row.finished_at, '2024-01-01T01:00:00Z');
-});
-
-test('saveRunEnd is a no-op when finishedAt is null', () => {
-  const db = makeDb();
-  saveRunStart(db, { runId: 'run-1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T00:00:00Z' });
-  saveRunEnd(db, { runId: 'run-1', finishedAt: null });
-  const [row] = getRunMeta(db);
-  assert.equal(row.finished_at, null);
-  assert.equal(row.status, 'running');
-});
-
-test('saveRunEnd removes run_state rows that never stored a single attempt', () => {
-  const db = makeDb();
-  saveRunStart(db, {
-    runId: 'run-1',
-    model: 'gpt-4o',
-    provider: 'openrouter',
-    promptVersion: 'v1',
-    reasoningEffort: null,
-    startedAt: '2024-01-01T00:00:00Z',
-  });
-
-  saveRunEnd(db, { runId: 'run-1', finishedAt: '2024-01-01T01:00:00Z', status: 'incomplete' });
-
-  assert.deepEqual(getRunMeta(db), []);
-  assert.deepEqual(getResults(db, { runId: 'run-1' }), []);
-});
+// ─── deleteRunGroup ──────────────────────────────────────────────────────────
+// Queries the runs table directly (run_state is gone in slice 4.3).
+// Queue rows (non-done) are swept along with done rows — deleting a group
+// is destructive by design.
 
 test('deleteRunGroup deletes only the selected leaderboard group and prompt versions', () => {
   const db = makeDb();
-
-  saveRunStart(db, { runId: 'run-low-v1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: 'low', startedAt: '2024-01-01T00:00:00Z' });
-  saveRunStart(db, { runId: 'run-low-v2', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v2', reasoningEffort: 'low', startedAt: '2024-01-01T01:00:00Z' });
-  saveRunStart(db, { runId: 'run-high-v1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: 'high', startedAt: '2024-01-01T02:00:00Z' });
-  saveRunStart(db, { runId: 'run-other', model: 'gpt-4.1', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: 'low', startedAt: '2024-01-01T03:00:00Z' });
 
   saveAttempt(db, { ...baseAttempt, runId: 'run-low-v1', promptVersion: 'v1', reasoningEffort: 'low' });
   saveAttempt(db, { ...baseAttempt, runId: 'run-low-v2', promptVersion: 'v2', reasoningEffort: 'low' });
@@ -143,19 +100,12 @@ test('deleteRunGroup deletes only the selected leaderboard group and prompt vers
 
   assert.deepEqual(result, { deletedRuns: 1, deletedAttempts: 1 });
 
-  const remainingRunIds = getRunMeta(db).map(r => r.run_id).sort();
+  const remainingRunIds = [...new Set(getResults(db).map(r => r.run_id))].sort();
   assert.deepEqual(remainingRunIds, ['run-high-v1', 'run-low-v1', 'run-other']);
-
-  const remainingAttempts = getResults(db).map(r => r.run_id).sort();
-  assert.deepEqual(remainingAttempts, ['run-high-v1', 'run-low-v1', 'run-other']);
 });
 
 test('deleteRunGroup deletes all prompt versions for the selected model and null reasoning group', () => {
   const db = makeDb();
-
-  saveRunStart(db, { runId: 'run-null-v1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: null, startedAt: '2024-01-01T00:00:00Z' });
-  saveRunStart(db, { runId: 'run-null-v2', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v2', reasoningEffort: null, startedAt: '2024-01-01T01:00:00Z' });
-  saveRunStart(db, { runId: 'run-low-v1', model: 'gpt-4o', provider: 'openrouter', promptVersion: 'v1', reasoningEffort: 'low', startedAt: '2024-01-01T02:00:00Z' });
 
   saveAttempt(db, { ...baseAttempt, runId: 'run-null-v1', promptVersion: 'v1', reasoningEffort: null });
   saveAttempt(db, { ...baseAttempt, runId: 'run-null-v2', promptVersion: 'v2', reasoningEffort: null });
@@ -168,8 +118,25 @@ test('deleteRunGroup deletes all prompt versions for the selected model and null
 
   assert.deepEqual(result, { deletedRuns: 2, deletedAttempts: 2 });
 
-  const remainingRunIds = getRunMeta(db).map(r => r.run_id);
+  const remainingRunIds = [...new Set(getResults(db).map(r => r.run_id))].sort();
   assert.deepEqual(remainingRunIds, ['run-low-v1']);
+});
+
+test('deleteRunGroup removes queue rows alongside done attempts', () => {
+  const db = makeDb();
+  saveAttempt(db, { ...baseAttempt, runId: 'run-mix', promptVersion: 'v1', reasoningEffort: null });
+  // Attempt 2 still pending for the same run.
+  db.prepare(`
+    INSERT INTO runs (run_id, benchmark_version, model, provider, prompt_version, reasoning_effort,
+                      target_id, target_type, attempt, status, enqueued_at)
+    VALUES ('run-mix', '1.0', 'gpt-4o', 'openrouter', 'v1', NULL, 'battle-001', 'battle', 2, 'pending', datetime('now'))
+  `).run();
+
+  const result = deleteRunGroup(db, { model: 'gpt-4o', reasoningEffort: null });
+  assert.deepEqual(result, { deletedRuns: 1, deletedAttempts: 2 });
+
+  const remaining = db.prepare('SELECT COUNT(*) AS n FROM runs').get().n;
+  assert.equal(remaining, 0);
 });
 
 // ─── Views read from attempt_results (done-only) ─────────────────────────────

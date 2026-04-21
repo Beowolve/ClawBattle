@@ -270,11 +270,39 @@ export function useRunQueue({ refetchInterval = 2000 } = {}) {
 }
 
 // DB-backed history of fully-done runs only. Source of truth for RunHistory.
+// In public mode Supabase only stores done attempts (no runs_summary view yet),
+// so we fetch the raw rows and aggregate one entry per run_id client-side —
+// matching the shape the local /runs/history endpoint returns.
 export function useRunHistory() {
   return useQuery({
     queryKey: ['runs', 'history'],
     queryFn: IS_PUBLIC
-      ? () => fetchAllFromSupabase('run_state', 'started_at.desc')
+      ? async () => {
+          const rows = await fetchAllFromSupabase('runs', 'created_at.desc');
+          const byRun = new Map();
+          for (const r of rows) {
+            const existing = byRun.get(r.run_id);
+            if (!existing) {
+              byRun.set(r.run_id, {
+                run_id: r.run_id,
+                model: r.model,
+                provider: r.provider,
+                prompt_version: r.prompt_version ?? null,
+                reasoning_effort: r.reasoning_effort ?? null,
+                started_at: r.started_at,
+                finished_at: r.finished_at,
+                total: 1,
+              });
+            } else {
+              existing.total += 1;
+              if (r.started_at && (!existing.started_at || r.started_at < existing.started_at)) existing.started_at = r.started_at;
+              if (r.finished_at && (!existing.finished_at || r.finished_at > existing.finished_at)) existing.finished_at = r.finished_at;
+            }
+          }
+          return [...byRun.values()].sort(
+            (a, b) => String(b.finished_at ?? b.started_at ?? '').localeCompare(a.finished_at ?? a.started_at ?? '')
+          );
+        }
       : () => fetchJson('/runs/history'),
   });
 }

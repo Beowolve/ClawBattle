@@ -5,8 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import {
-  getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta,
-  getBattleTargets, getDailyTargets, deleteRunGroup, deleteRunById,
+  getResults, getResultsCount, getLeaderboard, getInsights,
+  getBattleTargets, getDailyTargets, deleteRunGroup,
   upsertRuns,
   getRunQueue, getRunHistory, retryAttempt, resetErrors, pauseRun, resumeRun,
   requeueStaleRunningAttempts,
@@ -84,12 +84,6 @@ app.get('/api/results/count', (req, res) => {
   res.json({ count: getResultsCount({ runId: run_id || undefined }) });
 });
 
-// Deprecated: `GET /api/runs` kept until dashboard migrates to useRunHistory
-// in Phase 3. Scheduled for removal in Phase 4.
-app.get('/api/runs', (req, res) => {
-  res.json(getRunMeta());
-});
-
 // Queue/history/retry/resume/reset routes.
 // Resume rewires a benchmark run against the now-pending DB rows; the worker
 // pool picks them up via claimNextPending just like a fresh run.
@@ -100,7 +94,7 @@ app.use('/api/runs', createRunsQueueRouter({
   resetErrors,
   resumeRun,
   startResumedRun: (runId) => {
-    const meta = getRunQueue().find(r => r.run_id === runId) ?? getRunMeta().find(r => r.run_id === runId);
+    const meta = getRunQueue().find(r => r.run_id === runId);
     if (!meta) return;
     const signal = createJob(runId, {
       model: meta.model,
@@ -192,18 +186,6 @@ app.post('/api/runs/:runId/cancel', (req, res) => {
   // Then flip any remaining queue rows to paused so they're resumable.
   const paused = pauseRun(runId);
   res.json({ cancelled, paused });
-});
-
-app.delete('/api/runs/:runId', (req, res) => {
-  const { runId } = req.params;
-  if (isJobActive(runId)) return res.status(409).json({ error: 'run is still active — cancel it first' });
-  const meta = getRunMeta().find(r => r.run_id === runId);
-  if (!meta) return res.status(404).json({ error: 'run not found' });
-  if (getResultsCount({ runId }) > 0) {
-    return res.status(400).json({ error: 'run has attempts — cannot delete' });
-  }
-  deleteRunById(runId);
-  res.json({ deleted: true });
 });
 
 app.get('/api/runs/:runId/progress', (req, res) => {

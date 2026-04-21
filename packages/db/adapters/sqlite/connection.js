@@ -73,16 +73,9 @@ export function initSchema(db) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS runs (${RUNS_COLUMNS_SQL});
 
-    CREATE TABLE IF NOT EXISTS run_state (
-      run_id           TEXT PRIMARY KEY,
-      model            TEXT NOT NULL,
-      provider         TEXT NOT NULL,
-      prompt_version   TEXT,
-      reasoning_effort TEXT,
-      started_at       TEXT NOT NULL,
-      finished_at      TEXT,
-      status           TEXT NOT NULL DEFAULT 'running'
-    );
+    -- run_state was removed in the queue refactor (slice 4.3). The runs_summary
+    -- view aggregates status + metadata directly from the runs table.
+    DROP TABLE IF EXISTS run_state;
 
     CREATE TABLE IF NOT EXISTS battle_targets (
       id INTEGER PRIMARY KEY,

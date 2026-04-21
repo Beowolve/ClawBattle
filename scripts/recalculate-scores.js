@@ -1,6 +1,5 @@
 // Recalculates match% and score for all runs with stored code,
 // using the current scorer threshold (0.01 instead of previous 0.1).
-// Also updates run_meta summaries to reflect the new values.
 //
 // Run with: node --env-file=.env scripts/recalculate-scores.js
 
@@ -57,34 +56,6 @@ for (const run of runs) {
 
 await closeBrowser();
 console.log(`\nRuns done. Updated: ${updated}, Skipped: ${skipped}, Errors: ${errors}`);
-
-// Recalculate run_meta summaries from the updated runs table
-console.log('\nRecalculating run_meta summaries...');
-
-const metaResult = db.prepare(`
-  UPDATE run_meta SET summary = (
-    SELECT json_object(
-      'avgScore', (
-        SELECT AVG(best_score) FROM (
-          SELECT MAX(score) AS best_score FROM runs r
-          WHERE r.run_id = run_meta.run_id GROUP BY r.target_id
-        )
-      ),
-      'perfectRate', (
-        SELECT SUM(CASE WHEN best_match >= 100 THEN 1.0 ELSE 0.0 END) / COUNT(*)
-        FROM (
-          SELECT MAX(match) AS best_match FROM runs r
-          WHERE r.run_id = run_meta.run_id GROUP BY r.target_id
-        )
-      ),
-      'targetCount', (
-        SELECT COUNT(DISTINCT target_id) FROM runs r WHERE r.run_id = run_meta.run_id
-      )
-    )
-  )
-`).run();
-
-console.log(`run_meta summaries updated: ${metaResult.changes} rows`);
 
 db.close();
 console.log('\nDone.');

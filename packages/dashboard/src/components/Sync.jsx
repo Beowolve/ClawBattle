@@ -106,7 +106,7 @@ export default function Sync() {
             <div className={`syncResult syncResult--${uploadState.error ? 'error' : 'success'}`}>
               {uploadState.error
                 ? `Error: ${uploadState.error}`
-                : `✓ ${uploadState.result.uploadedRuns} run rows, ${uploadState.result.uploadedStates} run_state rows uploaded`}
+                : `✓ ${uploadState.result.uploadedRuns} done run rows uploaded`}
             </div>
           )}
         </div>

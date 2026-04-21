@@ -3,7 +3,6 @@
 
 import { getDb } from './connection.js';
 import {
-  saveAttempt as _saveAttempt,
   getResults as _getResults,
   getResultsCount as _getResultsCount,
   getLeaderboard as _getLeaderboard,
@@ -11,12 +10,7 @@ import {
   deleteRunGroup as _deleteRunGroup,
   getCompletedTargetIds as _getCompletedTargetIds,
   getExistingAttempts as _getExistingAttempts,
-  deleteRunById as _deleteRunById,
-  saveRunStart as _saveRunStart,
-  saveRunEnd as _saveRunEnd,
-  getRunMeta as _getRunMeta,
   upsertRuns as _upsertRuns,
-  upsertRunStates as _upsertRunStates,
 } from './runs.js';
 import {
   upsertBattleTarget as _upsertBattleTarget,
@@ -34,20 +28,14 @@ import {
   requeueStaleRunningAttempts as _requeueStaleRunningAttempts,
 } from './queue.js';
 
-export const saveAttempt           = (data)          => _saveAttempt(getDb(), data);
 export const getCompletedTargetIds = (runId)         => _getCompletedTargetIds(getDb(), runId);
 export const getExistingAttempts   = (opts)          => _getExistingAttempts(getDb(), opts);
-export const deleteRunById         = (runId)         => _deleteRunById(getDb(), runId);
 export const getResults            = (opts)          => _getResults(getDb(), opts);
 export const getResultsCount       = (opts)          => _getResultsCount(getDb(), opts);
 export const getLeaderboard        = (promptVersion) => _getLeaderboard(getDb(), promptVersion);
 export const getInsights           = (promptVersion) => _getInsights(getDb(), promptVersion);
 export const deleteRunGroup        = (filters)       => _deleteRunGroup(getDb(), filters);
-export const saveRunStart          = (data)          => _saveRunStart(getDb(), data);
-export const saveRunEnd            = (data)          => _saveRunEnd(getDb(), data);
 export const upsertRuns            = (rows)          => _upsertRuns(getDb(), rows);
-export const upsertRunStates       = (rows)          => _upsertRunStates(getDb(), rows);
-export const getRunMeta            = ()              => _getRunMeta(getDb());
 export const upsertBattleTarget    = (t)             => _upsertBattleTarget(getDb(), t);
 export const upsertDailyTarget     = (t)             => _upsertDailyTarget(getDb(), t);
 export const getBattleTargets      = ()              => _getBattleTargets(getDb());

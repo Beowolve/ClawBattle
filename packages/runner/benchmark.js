@@ -16,7 +16,6 @@ import { sanitizeCode } from '../core/utils/code.js';
 import {
   getBattleTargets, getDailyTargets,
   getCompletedTargetIds, getExistingAttempts,
-  saveRunStart, saveRunEnd,
 } from '../db/index.js';
 import { getDb } from '../db/adapters/sqlite/connection.js';
 import { enqueueRun } from '../db/adapters/sqlite/queue.js';
@@ -120,15 +119,7 @@ export async function runBenchmark({
     });
   }
 
-  saveRunStart({
-    runId, model, provider,
-    promptVersion: promptVersion ?? null,
-    reasoningEffort: reasoningEffort ?? null,
-    startedAt,
-  });
-
   if (enqueueDefs.length === 0) {
-    saveRunEnd({ runId, finishedAt: new Date().toISOString(), status: 'done' });
     const summary = { avgScore: 0, perfectRate: 0, targetCount: 0 };
     onProgress?.({ type: 'done', runId, summary });
     return { runId, summary };
@@ -249,27 +240,9 @@ export async function runBenchmark({
     }),
   );
 
-  let finalStatus = 'done';
-  let workerError;
-  try {
-    await Promise.all(workers);
-    const counts = db.prepare(`
-      SELECT
-        SUM(CASE WHEN status IN ('pending','running','waiting') THEN 1 ELSE 0 END) AS open_count,
-        SUM(CASE WHEN status = 'paused' THEN 1 ELSE 0 END) AS paused_count,
-        SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count
-      FROM runs WHERE run_id = ?
-    `).get(runId);
-    if ((counts.paused_count ?? 0) > 0) finalStatus = 'cancelled';
-    else if ((counts.open_count ?? 0) > 0) finalStatus = 'incomplete';
-    else if ((counts.error_count ?? 0) > 0) finalStatus = 'incomplete';
-  } catch (err) {
-    finalStatus = err?.name === 'AbortError' ? 'cancelled' : 'error';
-    workerError = err;
-  } finally {
-    saveRunEnd({ runId, finishedAt: new Date().toISOString(), status: finalStatus });
-  }
-  if (workerError) throw workerError;
+  // finished_at is stamped per-row by completeAttempt; run-level status is
+  // derived from runs_summary by the dashboard — no extra bookkeeping here.
+  await Promise.all(workers);
 
   const summary = buildSummaryFromDb(db, runId);
   console.log(`\nDone`);

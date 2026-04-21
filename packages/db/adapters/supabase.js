@@ -1,5 +1,10 @@
 // DB Adapter – Supabase (results: runs table)
 // Uses SUPABASE_RESULTS_URL + SUPABASE_RESULTS_KEY from environment.
+//
+// Supabase only ever stores done attempts — the queue lives in SQLite on
+// whichever process is running the benchmark. This adapter is used by the
+// public read-only dashboard (VITE_PUBLIC_MODE=true); queue-related methods
+// are stubbed out.
 
 const SB_URL = process.env.SUPABASE_RESULTS_URL;
 const SB_KEY = process.env.SUPABASE_RESULTS_KEY;
@@ -26,38 +31,6 @@ async function sbFetch(path, { method = 'GET', body, prefer } = {}) {
   return text ? JSON.parse(text) : [];
 }
 
-function toRunRow(data) {
-  return {
-    run_id: data.runId,
-    benchmark_version: data.benchmarkVersion,
-    model: data.model,
-    provider: data.provider,
-    prompt_version: data.promptVersion ?? null,
-    temperature: data.temperature ?? null,
-    attempts_per_target: data.attemptsPerTarget ?? null,
-    started_at: data.startedAt ?? null,
-    target_id: data.targetId,
-    target_type: data.targetType,
-    attempt: data.attempt,
-    match: data.match ?? null,
-    score: data.score ?? null,
-    tokens_used: data.tokensUsed ?? null,
-    code: data.code ?? null,
-    code_length: data.codeLength ?? null,
-    cost: data.cost ?? null,
-    duration_ms: data.durationMs ?? null,
-    reasoning_effort: data.reasoningEffort ?? null,
-  };
-}
-
-export async function saveAttempt(data) {
-  await sbFetch('runs', { method: 'POST', body: toRunRow(data), prefer: 'return=minimal' });
-}
-
-// run_state lifecycle tracking is local-only; Supabase is used for result uploads only.
-export async function saveRunStart(_data) {}
-export async function saveRunEnd(_data) {}
-
 export async function getResults() {
   const PAGE_SIZE = 1000;
   const rows = [];
@@ -69,10 +42,6 @@ export async function getResults() {
     offset += PAGE_SIZE;
   }
   return rows;
-}
-
-export async function getRunMeta() {
-  return sbFetch('run_state?select=*&order=started_at.desc');
 }
 
 export async function getBattleTargets() {
@@ -126,8 +95,8 @@ export async function deleteRunGroup({ model, reasoningEffort = null, promptVers
     query.push(`prompt_version=in.(${encodeURIComponent(promptList)})`);
   }
 
-  const runRows = await sbFetch(`run_state?${query.join('&')}`);
-  const runIds = runRows.map(r => r.run_id);
+  const runRows = await sbFetch(`runs?${query.join('&')}`);
+  const runIds = [...new Set(runRows.map(r => r.run_id))];
   if (!runIds.length) {
     return { deletedRuns: 0, deletedAttempts: 0 };
   }
@@ -136,16 +105,16 @@ export async function deleteRunGroup({ model, reasoningEffort = null, promptVers
   const encodedRunIdList = encodeURIComponent(runIdList);
   const attempts = await sbFetch(`runs?select=run_id&run_id=in.(${encodedRunIdList})`);
   await sbFetch(`runs?run_id=in.(${encodedRunIdList})`, { method: 'DELETE', prefer: 'return=minimal' });
-  await sbFetch(`run_state?run_id=in.(${encodedRunIdList})`, { method: 'DELETE', prefer: 'return=minimal' });
 
   return { deletedRuns: runIds.length, deletedAttempts: attempts.length };
 }
 
-// Local-only operations — not applicable for Supabase adapter
+// Local-only operations — not applicable for the read-only Supabase adapter.
+export async function getResultsCount() { return 0; }
+export async function getLeaderboard() { return { rows: [], totalAttempts: 0, totalCost: 0, models: 0, promptVersions: [] }; }
+export async function getInsights() { return { difficulty: [], consistency: [], costEfficiency: [], distributions: { '': [] }, models: [] }; }
 export async function upsertRuns(_rows) { return 0; }
-export async function upsertRunStates(_rows) { return 0; }
 export async function getExistingAttempts(_opts) { return new Map(); }
-export async function deleteRunById(_runId) {}
 export async function getRunQueue() { return []; }
 export async function getRunHistory() { return []; }
 export async function retryAttempt(_id) { return false; }

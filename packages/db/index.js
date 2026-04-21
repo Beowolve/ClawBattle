@@ -10,14 +10,12 @@ if (adapter === 'supabase') {
 }
 
 export const {
-  saveAttempt, saveRunStart, saveRunEnd,
   getResults, getResultsCount, getLeaderboard, getInsights,
-  getRunMeta,
   getBattleTargets, getDailyTargets,
   upsertBattleTarget, upsertDailyTarget,
   deleteRunGroup, getCompletedTargetIds,
-  getExistingAttempts, deleteRunById,
-  upsertRuns, upsertRunStates,
+  getExistingAttempts,
+  upsertRuns,
   getRunQueue, getRunHistory,
   retryAttempt, resetErrors,
   pauseRun, resumeRun,
