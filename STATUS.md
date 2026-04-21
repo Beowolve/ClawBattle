@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-20
+Last updated: 2026-04-21
 
 ## What's Done
 
@@ -10,7 +10,7 @@ Last updated: 2026-04-20
 - [x] Renderer lifecycle hardened — launch race fixed, browser ownership moved to process entrypoints, no per-run global browser shutdown
 - [x] Renderer lifecycle tests — concurrent launch, disconnect recovery, and parallel render integration coverage
 - [x] Scorer (`packages/core/scorer.js`) — pixelmatch threshold 0.01, CSS Battle formula
-- [x] SQLite adapter (`packages/db/`) — runs, run_meta tables
+- [x] SQLite adapter (`packages/db/`) — single `runs` table, acts as both attempt-log and persistent queue
 - [x] LLM adapters — OpenRouter, OpenAI, Ollama (with AbortSignal support)
 - [x] LLM error handling — API-level errors detected even on HTTP 200, empty response guard
 - [x] Code safety guard — generated HTML/CSS is sanitized; JS, SVG, and external resources are rejected before render/score
@@ -28,21 +28,24 @@ Last updated: 2026-04-20
 - [x] Bugfix: node:sqlite stores Numbers as REAL ("1.0") — normalised to integer string on read
 
 ### API
-- [x] REST endpoints — results, runs, target images
-- [x] `POST /api/runs/start` — kicks off benchmark async, returns runId; accepts concurrency, retries, resumeRunId
-- [x] `POST /api/runs/:runId/cancel` — cancels via AbortController
-- [x] `DELETE /api/runs/:runId` — deletes an empty run (no attempts saved); rejects when run is still running or has attempts
+- [x] REST endpoints — results, queue, history, target images
+- [x] `POST /api/runs/start` — kicks off benchmark async, returns runId; accepts concurrency, retries, resumeRunId, fillMode, targetFrom/To, reasoningEffort
+- [x] `POST /api/runs/:runId/cancel` — aborts the run and pauses the queue (`{ cancelled, paused }`)
+- [x] `POST /api/runs/:runId/resume` — restores the pre-pause state (`paused_from`) and bumps `enqueued_at`
+- [x] `POST /api/runs/attempts/:id/retry` — single `error` → `pending`
+- [x] `POST /api/runs/:runId/reset-errors` — bulk `error` → `pending` per run
+- [x] `GET /api/runs/queue` — all non-done runs, attempts nested
+- [x] `GET /api/runs/history` — done-only runs, newest finish first
 - [x] `GET /api/runs/:runId/progress` — SSE stream with event replay
-- [x] run_meta always written (on start, after each target, on cancel/done)
 
 ### Dashboard
 - [x] Leaderboard — avg score, 100% rate, 100% count, avg cost, sortable
-- [x] Run History — sortable table with all runs, Resume button
+- [x] Run tab — live queue with per-attempt status badges (waiting/pending/running/paused/error/done), Retry + Reset-errors + Resume buttons
+- [x] Run History — clickable list of completed runs only; click filters the attempt table
 - [x] Target Grid — thumbnails, colors, best match per target
 - [x] Target Detail — sticky code/preview/target layout, Quirks Mode iframe, solutions table
 - [x] Start Run tab — model, provider, attempts, concurrency, retries, target range, Fill toggle, cancel button
-- [x] Run History — Delete button for empty runs (no attempts saved)
-- [x] Leaderboard delete flow now targets a single leaderboard entry (`model + reasoning_effort`) and can limit deletion to selected prompt versions
+- [x] Leaderboard delete flow targets a single leaderboard entry (`model + reasoning_effort`) and can limit deletion to selected prompt versions
 - [x] Target-grid progress view — live cards per target (pending/running/done/error/skipped)
   - Names visible immediately from start event
   - Pulsing dot on running cards
@@ -63,18 +66,14 @@ Last updated: 2026-04-20
 
 ### Scripts
 - [x] `scripts/recalculate-scores.js` — re-renders all stored runs with current scorer
-- [x] `scripts/backfill-run-meta.js` — fills missing run_meta rows
-- [x] Unified `runs` table — meta fields (prompt_version, temperature, etc.) denormalized into runs; `run_meta` table removed
-- [x] Supabase DB adapter — `packages/db/adapters/supabase.js` fully implemented (results: runs table)
-- [x] `scripts/migrate-runs.js` — migrates existing SQLite DB to unified schema
-- [x] `scripts/upload-results.js` — batch-uploads local SQLite runs to Supabase
+- [x] `scripts/upload-results.js` — uploads done-only runs to Supabase (queue state stays local)
 - [x] `scripts/download-results.js` — downloads runs from Supabase into local SQLite
 - [x] `scripts/upload-targets.js` — seeds battle_targets / daily_targets in Supabase
 - [x] `scripts/sync-targets.js` — syncs targets + images from Supabase into local SQLite
-- [x] Supabase schema (`packages/db/schema.sql`) — idempotent, RLS, run_state table
+- [x] Supabase DB adapter — `packages/db/adapters/supabase.js` (read-only for the public dashboard; writes are local-only by design)
+- [x] Supabase schema (`packages/db/schema.sql`) — idempotent, RLS, `run_state` dropped
 - [x] Bidirectional sync UI (Sync tab) — Upload Targets, Upload Results, Download from Supabase
-- [x] Run lifecycle tracking — `run_state` table, `saveRunStart` / `saveRunEnd`; run visible in history immediately after start
-- [x] Run statuses: `running` | `done` | `incomplete` | `cancelled` | `error`; ⏳/⚠️ indicators in Run History
+- [x] Persistent DB-backed attempt queue — one row per `(run_id, target_id, attempt)` with status `waiting | pending | running | done | error | paused`; survives process restarts, `runs_summary` view aggregates per-run status
 - [x] localStorage persistence for active runId + mount reconnect via `GET /api/runs/active`
 - [x] Public dashboard mode — `VITE_PUBLIC_MODE=true` builds a read-only variant (Leaderboard/Targets/Insights only, no delete buttons, data fetched from Supabase via anon key)
 
@@ -88,48 +87,80 @@ Last updated: 2026-04-20
 - [ ] Expand baselines/human.json beyond target 12
 - [ ] Compare benchmark results against the human baseline (`baselines/human.json`)
 
-### Run-System-Refactor (DB-Queue, eine Tabelle)
+### Run-System (DB-backed queue, single `runs` table)
 
-Plan: `C:\Users\Andy\.claude\plans\berlege-dir-eine-vereinfachung-luminous-nebula.md`
+The runner is built around a single SQLite table that doubles as a
+persistent attempt queue. The README has the user-facing summary; this
+section captures the design invariants that tests and future work depend
+on.
 
-Phase 1 — DB-Grundlage:
-- [x] 1.1 Schema-Migration (status, error_message, enqueued_at, claimed_at, claim_token, paused_from; match nullable; idx_runs_queue)
-- [x] 1.2 Views runs_summary + attempt_results (Status-Priorität paused > running > error > queued > done)
-- [x] 1.3 enqueueRun (Pre-Insert pending/waiting, idempotent via INSERT OR IGNORE)
-- [x] 1.4 claimNextPending (atomic FIFO claim via BEGIN IMMEDIATE + UPDATE...RETURNING, unique claim_token per call)
-- [x] 1.5 completeAttempt / failAttempt (claim_token-protected; complete promotes next waiting→pending, fail leaves successors on waiting)
-- [x] 1.6 retryAttempt / resetErrors (single error→pending; bulk reset scoped by runId or global, clears error/claim fields)
-- [x] 1.7 pauseRun / resumeRun (pause wipes partial results + claim fields, stores original status in paused_from; resume restores exactly and bumps enqueued_at)
-- [x] 1.8 requeueStaleRunningAttempts (server-restart recovery: running → pending, claim fields cleared, stale tokens invalidated)
-- [x] 1.9 getRunQueue / getRunHistory (queue returns non-done runs with attempts[] nested; history returns done-only summaries, newest first)
+**Schema (one row per `(run_id, target_id, attempt)`):**
 
-Phase 1 komplett (109 DB-Tests grün).
+- `status` ∈ `waiting | pending | running | done | error | paused`
+- `claim_token` + `claimed_at` — atomic claim protection; any abort/pause
+  invalidates the token so a stale worker can't overwrite a restored row
+- `enqueued_at` — FIFO ordering key (resumed runs are re-enqueued at `now()`)
+- `paused_from` — original status captured when the user pauses, so
+  resume restores `pending`/`waiting`/`error` exactly
+- `error_message` — set on the final (after internal-retry) failure
+- Unique index on `(run_id, target_id, attempt)`; partial queue index on
+  `(status, enqueued_at, id)` for non-done statuses
 
-Phase 2 — Runner & API:
-- [x] 2.1 Runner-Worker auf DB-Queue umstellen (claim → run → complete/fail; kein lokales queue-Array mehr; Follow-up-Kontext aus Attempt n-1 mit status='done')
-  - [x] 2.1a `getPreviousAttempt(db, runId, targetId, attempt)` — DB-Helper für Follow-up-Kontext
-  - [x] 2.1b `processClaim()` — Orchestrierung: Prompt → Adapter → Render → Score → complete/fail
-  - [x] 2.1c `workerLoop(db, deps, signal)` — claim + process im Kreis; emittiert `target_done` wenn letzter offener Attempt eines Targets abschließt
-  - [x] 2.1d `runBenchmark` verdrahten: `enqueueRun` + Worker-Pool; Resume skippt completed Targets, Fill pre-seedet `done`-Rows mit `lastCode` auf Attempt `startAttempt-1`
-- [x] 2.2 Interner Worker-Retry innerhalb eines Claims (transient Netz-/Rate-Fehler); endgültiger Fehler → status='error' + error_message — `processClaim` retried `adapter.generate` bis zu `internalRetries` mal (Default 2, 300ms Backoff); `AbortError` und `PolicyViolationError` umgehen den Retry
-- [x] 2.3 API Queue/History splitten — `GET /api/runs/queue`, `GET /api/runs/history`, `POST /api/runs/:runId/resume`, `POST /api/runs/attempts/:id/retry`, `POST /api/runs/:runId/reset-errors` via `packages/api/routes/runs-queue.js` (8 HTTP-Tests grün); altes `GET /api/runs` bleibt vorerst als deprecated Alias bis UI-Migration in Phase 3, finale Entfernung in Phase 4
-- [x] 2.4 Cancel-Endpoint auf Pause umstellen — `POST /api/runs/:runId/cancel` bricht AbortController ab **und** ruft `pauseRun`, Response: `{ cancelled, paused }`
-- [x] 2.5 Startup-Recovery verdrahten — `requeueStaleRunningAttempts` läuft beim API-Start; geloggt falls > 0 Rows requeued
+**Views:**
 
-Phase 3 — UI:
-- [x] 3.1 React-Query-Hooks `useRunQueue` / `useRunHistory` angelegt (useData.js); `useRuns` bleibt als deprecated alias bis 3.5
-- [x] 3.2 Queue-Tabelle im Run-Tab — `RunQueue.jsx` zeigt alle nicht-`done` Runs mit nested Attempts, pollt alle 2s via `useRunQueue`; Status-Badges für `pending`/`waiting`/`running`/`paused`/`error`/`queued`/`done` inkl. pulsierender Dot auf `running` und `waiting` als "waiting for prev. result"
-- [x] 3.3 Retry button per `error` row + "Reset all errors" button per run — `RunQueue.jsx` has a `postJson` helper, a Retry button on each error attempt (disabled while in-flight via `busyIds`), and a Reset-errors button in the card header when `error_count > 0` (disabled via `resettingRuns`). Both call `/api/runs/attempts/:id/retry` and `/api/runs/:runId/reset-errors` respectively and invalidate the `['runs','queue']` query. Errors surface in the panel header as a `queueActionError` text. The card header CSS is split into `queueRunHeaderMain` (clickable, expands the card) and `queueRunActions` (buttons)
-- [x] 3.4 Resume button for `paused` runs — `RunQueue.jsx` renders a primary-colored Resume button on run cards with `status='paused'`. It calls `POST /api/runs/:runId/resume`, continuing the existing run (same `run_id`) instead of spawning a new one. The `resumingRuns` set disables the button while the request is in-flight; failures surface in the panel header. The old resume path from RunHistory (new `run_id`) stays in place alongside it until 3.5 removes it
-- [x] 3.5 History view down to `done` only; run dropdown removed — `RunHistory.jsx` now uses `useRunHistory` (`GET /api/runs/history`, only `status='done'` rows from `runs_summary`) instead of `useRuns`. The old run dropdown with Resume/Delete is replaced by a clickable list of completed runs; clicking a row toggles the filter on the attempt table. The `useRuns` hook is gone; the `resumeTarget` state + `onResume` prop chain is removed from App.jsx/StartRun.jsx (resume now lives exclusively on the Queue-tab button from 3.4)
+- `attempt_results` = `SELECT * FROM runs WHERE status = 'done'` — the
+  single source of truth for leaderboard, insights, history, REST
+  `/results`, and Supabase upload
+- `runs_summary` — one row per `run_id` with aggregated status
+  (priority `paused > running > error > queued > done`), total/done/
+  pending/waiting/running/paused/error counts, and run-level metadata
+  (model, provider, prompt_version, reasoning_effort, started_at,
+  finished_at)
 
-Phase 3 complete — the Run tab shows a live queue with Retry/Reset/Resume, History lists only completed runs.
+**Core DB API** (`packages/db/adapters/sqlite/queue.js`):
 
-Phase 4 — Cleanup:
-- [x] 4.1 Leaderboard + insight views (`leaderboard`, `leaderboard_by_version`, `target_difficulty`, `model_consistency`, `cost_efficiency`, `match_distribution`) now read from `attempt_results` instead of raw `runs`. `attempt_results` is defined first in the migration so the dependent views resolve cleanly. Three new tests in `runs.test.js` prove pending/error rows no longer bleed into leaderboard / match_distribution / attempt_results
-- [x] 4.2 Sync policy is now done-only, no more `run_state` sync — `uploadToSupabase` filters to `status='done'` rows and strips the queue-only columns (`status`, `claim_token`, `enqueued_at`, `claimed_at`, `paused_from`, `error_message`) before upload. `downloadFromSupabase` no longer fetches `run_state`. `getResults` / `getResultsCount` read from `attempt_results`, so the REST `/results` endpoint, RunHistory attempt table and sync upload all share one done-only source. API server + `scripts/upload-results.js` + `scripts/download-results.js` no longer touch `upsertRunStates`. Four new tests in `packages/db/sync.test.js` cover done-only filtering, queue-column stripping, legacy rows without `status`, and the empty-upload case
-- [ ] 4.3 Alte Shims entfernen (`saveAttempt`, `saveRunStart`, `saveRunEnd`); `run_state`-Tabelle droppen
-- [ ] 4.4 STATUS.md + README.md finalisieren (Refactor-Abschnitt durch Ist-Zustand ersetzen)
+- `enqueueRun` — pre-inserts attempt 1 as `pending`, 2..N as `waiting`
+- `claimNextPending` — `BEGIN IMMEDIATE` + `UPDATE ... RETURNING`; claims
+  the oldest `pending` row and stamps a fresh `claim_token`
+- `completeAttempt` / `failAttempt` — token-protected finalization;
+  `complete` promotes the next `waiting` attempt of the same target
+- `retryAttempt` / `resetErrors` — manual error recovery, single or bulk
+- `pauseRun` / `resumeRun` — precise pause with `paused_from`, precise
+  restore
+- `requeueStaleRunningAttempts` — one-shot startup recovery for crashed
+  processes (`running` → `pending`, token cleared)
+- `getRunQueue` / `getRunHistory` — the two dashboard reads
+
+**Runner** (`packages/runner/benchmark.js`):
+
+- No in-process queue array. `enqueueRun` pre-inserts all attempts, then
+  a pool of `workerLoop` workers claim rows atomically from the DB.
+- Follow-up context (attempts 2+) comes from the previous `done` row of
+  the same `(run_id, target_id)`.
+- Resume skips already-completed targets (reuses `resumeRunId`).
+- Fill mode seeds `done` rows with the prior attempt's `lastCode`, then
+  flips the target attempt from `waiting` → `pending`.
+- `processClaim` does a short internal retry for transient adapter
+  errors (default 2, 300ms backoff). `AbortError` and
+  `PolicyViolationError` bypass the retry.
+
+**API** — endpoints listed in the API section above. `POST /cancel`
+always pauses (abort + `pauseRun`); `POST /resume` is the only way a
+run returns to the queue with the same `run_id`.
+
+**Sync** — Supabase only stores `done` rows. `uploadToSupabase` filters
+to `status='done'` and strips the queue-only columns (`status`,
+`claim_token`, `enqueued_at`, `claimed_at`, `paused_from`,
+`error_message`) before upload. `downloadFromSupabase` round-trips them
+back in with `status='done'` as the column default.
+
+**Dashboard** — React Query hooks `useRunQueue` (2s refetch) and
+`useRunHistory`. The Run tab renders the queue with per-attempt status
+badges, Retry / Reset-errors / Resume buttons. The History tab lists
+only done runs; clicking a row filters the attempt table below.
+
+Full original design notes live in
+`C:\Users\Andy\.claude\plans\berlege-dir-eine-vereinfachung-luminous-nebula.md`.
 
 ## Ideas / Backlog
 

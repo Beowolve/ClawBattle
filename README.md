@@ -92,8 +92,7 @@ prompts/
   v1/          Original benchmark prompt
   v2/          Improved prompt (better color accuracy guidance)
 scripts/
-  migrate-runs.js         Migrate DB schema to latest version
-  upload-results.js       Upload local SQLite results → Supabase
+  upload-results.js       Upload local SQLite results → Supabase (done rows only)
   download-results.js     Download results Supabase → local SQLite
   upload-targets.js       Seed battle/daily targets in Supabase
   sync-targets.js         Sync target definitions + images from Supabase
@@ -105,11 +104,14 @@ scripts/
 Results can be synced bidirectionally between local SQLite and Supabase via the **⇅ Sync** tab or CLI scripts:
 
 ```bash
-npm run upload          # local SQLite → Supabase (runs + run_state)
+npm run upload          # local SQLite → Supabase (only rows with status='done')
 npm run download        # Supabase → local SQLite
 npm run upload-targets  # seed battle_targets / daily_targets in Supabase
 npm run sync            # sync targets + images from Supabase locally
 ```
+
+Queue state (pending / running / waiting / paused / error attempts) never
+leaves the local process — only completed `done` rows are synced.
 
 Configure `SUPABASE_RESULTS_URL` and `SUPABASE_RESULTS_KEY` in `.env`. Run `packages/db/schema.sql` once in your Supabase project to set up the schema.
 
@@ -137,36 +139,51 @@ cd packages/dashboard
 npm run build:public   # output → dist-public/
 ```
 
-## Run-System Refactor (work in progress)
+## Run System
 
-The run orchestrator is being migrated from an in-memory queue + split `runs`/`run_state` schema to a single DB-backed attempt queue. Phase 1 (DB primitives) is complete; Phases 2–4 are open.
+The benchmark runner is built around a single table (`runs`) that doubles as
+a persistent attempt queue. Every `(run_id, target_id, attempt)` combination
+is pre-inserted before any work starts and moves through these statuses:
 
-**Target behaviour when done:**
+`waiting` → `pending` → `running` → `done` | `error` | `paused`
 
-- Queue is persistent — restart the process and work continues. Every `(target, attempt)` combination is pre-inserted with status `waiting | pending | running | done | error | paused`.
-- Attempt 2/3 only runs after attempt 1 finishes `done`. If attempt 1 ends in `error`, successors stay `waiting` — no automatic skip.
-- Errors are non-terminal. A run stays visible in the queue with a **Retry** button per errored attempt plus **Reset all errors** per run, until every attempt is `done`.
-- Pause/Resume is precise: the pre-pause status is stored per row and fully restored on resume; resumed runs are re-enqueued at the back of the queue.
-- Dashboard splits into a **Queue** view (everything not-yet-done, with live attempt rows) and a **History** view (only fully-completed runs).
+- **`waiting`** — follow-up attempt (n ≥ 2), blocked until the previous
+  attempt for the same target finishes `done`.
+- **`pending`** — claim-ready. A worker may pick it up.
+- **`running`** — claimed by a worker; protected with a `claim_token` so a
+  pause or re-claim can't be overwritten by a stale worker.
+- **`done`** — complete. Only `done` rows appear in the leaderboard,
+  insights, the History view and the Supabase upload.
+- **`error`** — non-terminal. The row stays visible in the Queue view with
+  a Retry button per attempt, plus Reset-all-errors per run.
+- **`paused`** — set by Cancel. The original status is saved in
+  `paused_from` so Resume restores the row exactly.
 
-**Open work:**
+A `runs_summary` view aggregates per-run status with priority
+`paused > running > error > queued > done` and powers the Queue / History
+split in the dashboard.
 
-- **Phase 2 — Runner & API**
-  - Replace the in-process queue/worker pool in `packages/runner/benchmark.js` with DB-claim workers (`claimNextPending` → run → `completeAttempt` / `failAttempt`).
-  - Keep the internal transient-error retry inside a claim; only promote to `status='error'` after it's exhausted.
-  - API surface: `POST /api/runs/start`, `POST /api/runs/:runId/cancel` (now pauses), `POST /api/runs/:runId/resume`, `POST /api/runs/attempts/:id/retry`, `POST /api/runs/:runId/reset-errors`, `GET /api/runs/queue`, `GET /api/runs/history`. The unified `GET /api/runs` endpoint goes away.
-  - Run `requeueStaleRunningAttempts` once on server start to recover from crashes.
-- **Phase 3 — Dashboard**
-  - New hooks `useRunQueue` / `useRunHistory`, old `useRuns` removed.
-  - Run tab shows the queue as a table (per-attempt status badges incl. `waiting for prev. result`), with Retry / Reset-errors / Resume buttons.
-  - Run History only shows `done` runs; the active-run dropdown is removed.
-- **Phase 4 — Cleanup**
-  - Leaderboard and insight views read from `attempt_results` (only `status='done'`) instead of raw `runs`.
-  - Supabase sync only uploads `done` rows; queue state stays local. `run_state` sync removed.
-  - Drop the legacy `saveAttempt` / `saveRunStart` / `saveRunEnd` shims and the `run_state` table.
-  - Finalise [STATUS.md](STATUS.md) and this section.
+Workers claim the next `pending` row atomically with `BEGIN IMMEDIATE` +
+`UPDATE ... RETURNING`. Ordering is FIFO over `(enqueued_at, id)` across
+all runs, so a resumed run re-enters at the back of the queue.
 
-Full design notes live in the plan file referenced from [STATUS.md](STATUS.md).
+On server startup, any leftover `running` rows (from a crashed process)
+are flipped back to `pending` and their claim tokens are cleared.
+
+**API surface**
+
+- `POST /api/runs/start` — new run or fill-run. Pre-enqueues all attempts.
+- `POST /api/runs/:runId/cancel` — pauses the run (abort + `paused_from`).
+- `POST /api/runs/:runId/resume` — restores the pre-pause state and bumps
+  `enqueued_at` to now.
+- `POST /api/runs/attempts/:id/retry` — single `error` → `pending`.
+- `POST /api/runs/:runId/reset-errors` — bulk `error` → `pending`.
+- `GET /api/runs/queue` — everything not-yet-done, with attempts nested.
+- `GET /api/runs/history` — done-only runs, newest finish first.
+- `GET /api/runs/:runId/progress` — SSE, used by the Run tab.
+
+Queue state is local to each runner process — only `done` rows are ever
+synced to Supabase.
 
 ## Running Tests
 
