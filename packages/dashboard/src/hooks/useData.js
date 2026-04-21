@@ -222,9 +222,9 @@ export function useInsights(promptFilter) {
 
 const RESULTS_PAGE_SIZE = 100;
 
-export function useResultsPage({ page = 0, sort = 'created_at', dir = 'desc', runId = '' } = {}) {
+export function useResultsPage({ page = 0, sort = 'created_at', dir = 'desc', runId = '', model = '' } = {}) {
   return useQuery({
-    queryKey: ['results', 'page', page, sort, dir, runId],
+    queryKey: ['results', 'page', page, sort, dir, runId, model],
     queryFn: () => {
       const params = new URLSearchParams({
         limit:  RESULTS_PAGE_SIZE,
@@ -233,6 +233,7 @@ export function useResultsPage({ page = 0, sort = 'created_at', dir = 'desc', ru
         dir,
       });
       if (runId) params.set('run_id', runId);
+      if (model) params.set('model', model);
       return fetchJson(`/results?${params}`);
     },
     // Keep previous page data visible while fetching next page
@@ -240,10 +241,16 @@ export function useResultsPage({ page = 0, sort = 'created_at', dir = 'desc', ru
   });
 }
 
-export function useResultsCount(runId = '') {
+export function useResultsCount({ runId = '', model = '' } = {}) {
   return useQuery({
-    queryKey: ['results', 'count', runId],
-    queryFn: () => fetchJson(`/results/count${runId ? `?run_id=${encodeURIComponent(runId)}` : ''}`),
+    queryKey: ['results', 'count', runId, model],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (runId) params.set('run_id', runId);
+      if (model) params.set('model', model);
+      const qs = params.toString();
+      return fetchJson(`/results/count${qs ? `?${qs}` : ''}`);
+    },
   });
 }
 

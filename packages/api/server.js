@@ -69,19 +69,20 @@ app.get('/api/insights', (req, res) => {
 });
 
 app.get('/api/results', (req, res) => {
-  const { limit, offset, sort, dir, run_id } = req.query;
+  const { limit, offset, sort, dir, run_id, model } = req.query;
   res.json(getResults({
     limit: limit != null ? Number(limit) : undefined,
     offset: offset != null ? Number(offset) : undefined,
     sort: sort || 'created_at',
     dir: dir || 'desc',
     runId: run_id || undefined,
+    model: model || undefined,
   }));
 });
 
 app.get('/api/results/count', (req, res) => {
-  const { run_id } = req.query;
-  res.json({ count: getResultsCount({ runId: run_id || undefined }) });
+  const { run_id, model } = req.query;
+  res.json({ count: getResultsCount({ runId: run_id || undefined, model: model || undefined }) });
 });
 
 // Queue/history/retry/resume/reset routes.

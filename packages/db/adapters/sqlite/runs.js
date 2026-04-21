@@ -29,15 +29,15 @@ const VALID_SORT = new Set([
 
 // Reads from attempt_results so in-progress rows (pending/running/waiting/
 // paused/error) never leak into the history UI, analytics, or sync uploads.
-export function getResults(db, { limit, offset, sort = 'created_at', dir = 'desc', runId } = {}) {
+export function getResults(db, { limit, offset, sort = 'created_at', dir = 'desc', runId, model } = {}) {
   const col = VALID_SORT.has(sort) ? sort : 'created_at';
   const direction = dir === 'asc' ? 'ASC' : 'DESC';
   const params = [];
+  const where = [];
+  if (runId) { where.push('run_id = ?'); params.push(runId); }
+  if (model) { where.push('model = ?'); params.push(model); }
   let sql = 'SELECT * FROM attempt_results';
-  if (runId) {
-    sql += ' WHERE run_id = ?';
-    params.push(runId);
-  }
+  if (where.length) sql += ' WHERE ' + where.join(' AND ');
   sql += ` ORDER BY ${col} ${direction}`;
   if (limit != null) {
     sql += ' LIMIT ?';
@@ -50,11 +50,14 @@ export function getResults(db, { limit, offset, sort = 'created_at', dir = 'desc
   return db.prepare(sql).all(...params);
 }
 
-export function getResultsCount(db, { runId } = {}) {
-  if (runId) {
-    return db.prepare('SELECT COUNT(*) as count FROM attempt_results WHERE run_id = ?').get(runId).count;
-  }
-  return db.prepare('SELECT COUNT(*) as count FROM attempt_results').get().count;
+export function getResultsCount(db, { runId, model } = {}) {
+  const params = [];
+  const where = [];
+  if (runId) { where.push('run_id = ?'); params.push(runId); }
+  if (model) { where.push('model = ?'); params.push(model); }
+  const sql = 'SELECT COUNT(*) as count FROM attempt_results' +
+    (where.length ? ' WHERE ' + where.join(' AND ') : '');
+  return db.prepare(sql).get(...params).count;
 }
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────

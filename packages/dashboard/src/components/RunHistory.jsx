@@ -1,6 +1,5 @@
-// History view: lists fully-done runs from runs_summary. Clicking a run
-// filters the attempt table below to that run. Paused/running/error runs
-// live in the Queue tab instead and never appear here.
+// History view: all done attempts with a model filter and sortable columns.
+// Paused/running/error runs live in the Queue tab and never appear here.
 
 import { useState, useMemo, useEffect } from 'react';
 import { useResultsPage, useResultsCount, useRunHistory } from '../hooks/useData.js';
@@ -23,34 +22,32 @@ const COLS = [
   { key: 'created_at',      label: 'Created' },
 ];
 
-function formatTs(ts) {
-  if (!ts) return '';
-  return ts.replace('T', ' ').slice(0, 16);
-}
-
 export default function RunHistory() {
-  const [selectedRun, setSelectedRun] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
   const [sortKey, setSortKey] = useState('created_at');
   const [sortDir, setSortDir] = useState('desc');
   const [page, setPage] = useState(0);
 
   // Reset to page 0 whenever filter/sort changes
-  useEffect(() => { setPage(0); }, [selectedRun, sortKey, sortDir]);
+  useEffect(() => { setPage(0); }, [selectedModel, sortKey, sortDir]);
 
+  // Run history is used only to derive the list of distinct models for the dropdown.
   const runsQ = useRunHistory();
-  const runs = runsQ.data ?? [];
+  const models = useMemo(() => {
+    const runs = runsQ.data ?? [];
+    const seen = new Set();
+    return runs
+      .map(r => r.model)
+      .filter(m => m && !seen.has(m) && seen.add(m))
+      .sort();
+  }, [runsQ.data]);
 
-  const pageQ = useResultsPage({ page, sort: sortKey, dir: sortDir, runId: selectedRun });
-  const countQ = useResultsCount(selectedRun);
+  const pageQ = useResultsPage({ page, sort: sortKey, dir: sortDir, model: selectedModel });
+  const countQ = useResultsCount({ model: selectedModel });
 
   const rows = pageQ.data ?? [];
   const total = countQ.data?.count ?? 0;
   const pageCount = Math.ceil(total / PAGE_SIZE);
-
-  const selectedMeta = useMemo(
-    () => runs.find(r => r.run_id === selectedRun) ?? null,
-    [runs, selectedRun],
-  );
 
   function handleSort(key) {
     if (key === sortKey) {
@@ -61,54 +58,25 @@ export default function RunHistory() {
     }
   }
 
-  function toggleRun(runId) {
-    setSelectedRun(prev => prev === runId ? '' : runId);
-  }
-
-  if (!runsQ.isLoading && !runs.length && !rows.length) {
+  if (!runsQ.isLoading && !models.length && !rows.length) {
     return <div className="stateBox">No completed runs yet.</div>;
   }
 
   return (
     <div>
-      {runs.length > 0 && (
-        <div className="runHistoryList">
-          {runs.map(run => (
-            <button
-              key={run.run_id}
-              type="button"
-              className={`runHistoryRow${selectedRun === run.run_id ? ' runHistoryRow--selected' : ''}`}
-              onClick={() => toggleRun(run.run_id)}
-              title={run.run_id}
-            >
-              <span className="runHistoryModel">
-                {run.model}
-                {run.reasoning_effort ? ` [${run.reasoning_effort}]` : ''}
-              </span>
-              <span className="muted runHistoryPrompt">{run.prompt_version ?? '—'}</span>
-              <span className="muted runHistoryTs">
-                {formatTs(run.finished_at ?? run.started_at)}
-              </span>
-              <span className="muted runHistoryCount">
-                {run.total ?? 0} attempt{run.total === 1 ? '' : 's'}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="filtersBar filtersBar--panel">
-        {selectedRun ? (
-          <>
-            <span className="filterLabel">
-              Filtered to run <code>{selectedRun.slice(0, 8)}</code>
-              {selectedMeta && ` — ${selectedMeta.model}`}
-            </span>
-            <button className="deleteButton" onClick={() => setSelectedRun('')}>Clear filter</button>
-          </>
-        ) : (
-          <span className="filterLabel muted">All attempts from completed runs</span>
-        )}
+        <label className="filterLabel" htmlFor="modelFilter">Model</label>
+        <select
+          id="modelFilter"
+          className="filterSelect"
+          value={selectedModel}
+          onChange={e => setSelectedModel(e.target.value)}
+        >
+          <option value="">All models</option>
+          {models.map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
         {pageCount > 1 && (
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span className="muted" style={{ fontSize: '0.85em' }}>
