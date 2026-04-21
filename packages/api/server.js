@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import {
   getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta,
   getBattleTargets, getDailyTargets, deleteRunGroup, deleteRunById,
-  upsertRuns, upsertRunStates,
+  upsertRuns,
   getRunQueue, getRunHistory, retryAttempt, resetErrors, pauseRun, resumeRun,
   requeueStaleRunningAttempts,
 } from '../db/index.js';
@@ -228,9 +228,10 @@ app.post('/api/sync/upload', async (req, res) => {
   const key = process.env.SUPABASE_RESULTS_KEY;
   if (!url || !key) return res.status(400).json({ error: 'Supabase not configured in .env' });
   try {
+    // getResults() already reads from attempt_results (done rows only),
+    // so in-flight queue state never leaves the local process.
     const runs = getResults();
-    const runState = getRunMeta();
-    const result = await uploadToSupabase({ url, key, runs, runState });
+    const result = await uploadToSupabase({ url, key, runs });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -256,7 +257,7 @@ app.post('/api/sync/download', async (req, res) => {
   const key = process.env.SUPABASE_RESULTS_KEY;
   if (!url || !key) return res.status(400).json({ error: 'Supabase not configured in .env' });
   try {
-    const result = await downloadFromSupabase({ url, key, upsertRuns, upsertRunStates });
+    const result = await downloadFromSupabase({ url, key, upsertRuns });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

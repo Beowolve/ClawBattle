@@ -49,20 +49,36 @@ export async function uploadTargetsToSupabase({ url, key, battleTargets, dailyTa
   return { uploadedBattle: battleTargets.length, uploadedDaily: dailyTargets.length };
 }
 
-export async function uploadToSupabase({ url, key, runs, runState }) {
-  for (let i = 0; i < runs.length; i += BATCH_SIZE) {
-    await sbPost(url, key, 'runs', runs.slice(i, i + BATCH_SIZE));
+// Sync only completed attempts. Queue-state columns (status, claim_token,
+// enqueued_at, claimed_at, paused_from, error_message) are intentionally
+// stripped before upload — a queue is local to a single process and must
+// not leak into Supabase.
+const QUEUE_ONLY_FIELDS = new Set([
+  'status', 'claim_token', 'enqueued_at', 'claimed_at',
+  'paused_from', 'error_message',
+]);
+
+function stripQueueFields(row) {
+  const out = {};
+  for (const [k, v] of Object.entries(row)) {
+    if (!QUEUE_ONLY_FIELDS.has(k)) out[k] = v;
   }
-  for (let i = 0; i < runState.length; i += BATCH_SIZE) {
-    await sbPost(url, key, 'run_state', runState.slice(i, i + BATCH_SIZE));
-  }
-  return { uploadedRuns: runs.length, uploadedStates: runState.length };
+  return out;
 }
 
-export async function downloadFromSupabase({ url, key, upsertRuns, upsertRunStates }) {
+export async function uploadToSupabase({ url, key, runs }) {
+  // Callers should already filter to done rows via getResults / attempt_results,
+  // but guard defensively so an accidental raw-runs feed still stays safe.
+  const doneRuns = runs.filter(r => r.status === undefined || r.status === 'done');
+  const clean = doneRuns.map(stripQueueFields);
+  for (let i = 0; i < clean.length; i += BATCH_SIZE) {
+    await sbPost(url, key, 'runs', clean.slice(i, i + BATCH_SIZE));
+  }
+  return { uploadedRuns: clean.length };
+}
+
+export async function downloadFromSupabase({ url, key, upsertRuns }) {
   const runs = await sbFetchAll(url, key, 'runs');
-  const runState = await sbFetchAll(url, key, 'run_state');
   const insertedRuns = runs.length ? upsertRuns(runs) : 0;
-  const insertedStates = runState.length ? upsertRunStates(runState) : 0;
-  return { fetchedRuns: runs.length, insertedRuns, fetchedStates: runState.length, insertedStates };
+  return { fetchedRuns: runs.length, insertedRuns };
 }

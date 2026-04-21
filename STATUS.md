@@ -127,7 +127,7 @@ Phase 3 complete — the Run tab shows a live queue with Retry/Reset/Resume, His
 
 Phase 4 — Cleanup:
 - [x] 4.1 Leaderboard + insight views (`leaderboard`, `leaderboard_by_version`, `target_difficulty`, `model_consistency`, `cost_efficiency`, `match_distribution`) now read from `attempt_results` instead of raw `runs`. `attempt_results` is defined first in the migration so the dependent views resolve cleanly. Three new tests in `runs.test.js` prove pending/error rows no longer bleed into leaderboard / match_distribution / attempt_results
-- [ ] 4.2 Sync-Policy: nur `status='done'` syncen; `run_state`-Sync aus `packages/db/sync.js` entfernen
+- [x] 4.2 Sync policy is now done-only, no more `run_state` sync — `uploadToSupabase` filters to `status='done'` rows and strips the queue-only columns (`status`, `claim_token`, `enqueued_at`, `claimed_at`, `paused_from`, `error_message`) before upload. `downloadFromSupabase` no longer fetches `run_state`. `getResults` / `getResultsCount` read from `attempt_results`, so the REST `/results` endpoint, RunHistory attempt table and sync upload all share one done-only source. API server + `scripts/upload-results.js` + `scripts/download-results.js` no longer touch `upsertRunStates`. Four new tests in `packages/db/sync.test.js` cover done-only filtering, queue-column stripping, legacy rows without `status`, and the empty-upload case
 - [ ] 4.3 Alte Shims entfernen (`saveAttempt`, `saveRunStart`, `saveRunEnd`); `run_state`-Tabelle droppen
 - [ ] 4.4 STATUS.md + README.md finalisieren (Refactor-Abschnitt durch Ist-Zustand ersetzen)
 

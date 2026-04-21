@@ -22,11 +22,13 @@ const VALID_SORT = new Set([
   'match', 'attempt', 'cost', 'duration_ms', 'run_id',
 ]);
 
+// Reads from attempt_results so in-progress rows (pending/running/waiting/
+// paused/error) never leak into the history UI, analytics, or sync uploads.
 export function getResults(db, { limit, offset, sort = 'created_at', dir = 'desc', runId } = {}) {
   const col = VALID_SORT.has(sort) ? sort : 'created_at';
   const direction = dir === 'asc' ? 'ASC' : 'DESC';
   const params = [];
-  let sql = 'SELECT * FROM runs';
+  let sql = 'SELECT * FROM attempt_results';
   if (runId) {
     sql += ' WHERE run_id = ?';
     params.push(runId);
@@ -45,9 +47,9 @@ export function getResults(db, { limit, offset, sort = 'created_at', dir = 'desc
 
 export function getResultsCount(db, { runId } = {}) {
   if (runId) {
-    return db.prepare('SELECT COUNT(*) as count FROM runs WHERE run_id = ?').get(runId).count;
+    return db.prepare('SELECT COUNT(*) as count FROM attempt_results WHERE run_id = ?').get(runId).count;
   }
-  return db.prepare('SELECT COUNT(*) as count FROM runs').get().count;
+  return db.prepare('SELECT COUNT(*) as count FROM attempt_results').get().count;
 }
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
@@ -62,7 +64,7 @@ export function getLeaderboard(db, promptVersion) {
     : rows;
 
   const promptVersions = db.prepare(
-    'SELECT DISTINCT prompt_version FROM runs WHERE prompt_version IS NOT NULL ORDER BY prompt_version'
+    'SELECT DISTINCT prompt_version FROM attempt_results WHERE prompt_version IS NOT NULL ORDER BY prompt_version'
   ).all().map(r => r.prompt_version);
 
   return {
