@@ -50,7 +50,7 @@ export async function runBenchmark({
   console.log(`  Concurrency:         ${concurrency}\n`);
 
   const promptTemplate = fs.readFileSync(path.join(PROMPTS_DIR, promptVersion, 'prompt.md'), 'utf8');
-  const followupAppendix = fs.readFileSync(path.join(PROMPTS_DIR, 'followup.md'), 'utf8');
+  const followupAppendix = fs.readFileSync(path.join(PROMPTS_DIR, promptVersion, 'followup.md'), 'utf8');
   const chromeVersion = await getChromeVersion();
   const db = getDb();
 

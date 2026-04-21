@@ -10,9 +10,12 @@ when existing DB rows must stay reproducible.
 
 ```
 prompts/
-├── followup.md       # version-independent follow-up appendix (see below)
-└── v1/
-    └── prompt.md     # base prompt for version v1
+├── v1/
+│   ├── prompt.md     # base prompt for attempt 1
+│   └── followup.md   # follow-up appendix for attempts 2+
+└── v2/
+    ├── prompt.md
+    └── followup.md
 ```
 
 ## Base prompt (`vN/prompt.md`)
@@ -26,10 +29,11 @@ Used for the first attempt of each target. Placeholders:
 | `{{HEIGHT}}` | Canvas height in px (currently 300) |
 | `{{COLORS}}` | Comma-separated list of allowed colors |
 
-## Follow-up appendix (`followup.md`)
+## Follow-up appendix (`vN/followup.md`)
 
-For attempts 2 and beyond, `followup.md` is appended to the base prompt.
-The model also receives two images: image 1 is the target, image 2 is its previous render.
+For attempts 2 and beyond, `followup.md` from the same version directory is appended to the
+base prompt. The model also receives two images: image 1 is the target, image 2 is its
+previous render.
 
 Additional placeholder:
 

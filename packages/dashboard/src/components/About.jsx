@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import promptV1 from '../../../../prompts/v1/prompt.md?raw';
 import promptV2 from '../../../../prompts/v2/prompt.md?raw';
-import followupPrompt from '../../../../prompts/followup.md?raw';
+import followupV1 from '../../../../prompts/v1/followup.md?raw';
+import followupV2 from '../../../../prompts/v2/followup.md?raw';
 
 const PROMPTS = [
-  { key: 'v2', label: 'v2 (current)', content: promptV2 },
-  { key: 'v1', label: 'v1', content: promptV1 },
+  { key: 'v2', label: 'v2 (current)', content: promptV2, followup: followupV2 },
+  { key: 'v1', label: 'v1', content: promptV1, followup: followupV1 },
 ];
 
 export default function About() {
@@ -142,7 +143,7 @@ export default function About() {
           </div>
           <div className="aboutPromptBlock">
             <div className="aboutPromptTitle">Follow-up appendix (attempts 2-3)</div>
-            <pre className="aboutPrompt">{followupPrompt}</pre>
+            <pre className="aboutPrompt">{current.followup}</pre>
           </div>
         </div>
       </div>
