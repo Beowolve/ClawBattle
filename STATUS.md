@@ -87,80 +87,55 @@ Last updated: 2026-04-21
 - [ ] Expand baselines/human.json beyond target 12
 - [ ] Compare benchmark results against the human baseline (`baselines/human.json`)
 
+## Architecture Notes
+
 ### Run-System (DB-backed queue, single `runs` table)
 
-The runner is built around a single SQLite table that doubles as a
-persistent attempt queue. The README has the user-facing summary; this
-section captures the design invariants that tests and future work depend
-on.
+The runner is built around a single SQLite table (`runs`) that doubles as a
+persistent attempt queue. One row per `(run_id, target_id, attempt)`.
 
-**Schema (one row per `(run_id, target_id, attempt)`):**
+**Schema columns of note:**
 
 - `status` ∈ `waiting | pending | running | done | error | paused`
-- `claim_token` + `claimed_at` — atomic claim protection; any abort/pause
-  invalidates the token so a stale worker can't overwrite a restored row
-- `enqueued_at` — FIFO ordering key (resumed runs are re-enqueued at `now()`)
-- `paused_from` — original status captured when the user pauses, so
-  resume restores `pending`/`waiting`/`error` exactly
-- `error_message` — set on the final (after internal-retry) failure
+- `claim_token` + `claimed_at` — atomic claim protection; pause/abort
+  invalidates the token so a stale worker cannot overwrite a restored row
+- `enqueued_at` — FIFO ordering key; resumed runs are re-enqueued at `now()`
+- `paused_from` — original status saved on pause so resume restores it exactly
+- `error_message` — set on the final failure (after internal retries exhausted)
 - Unique index on `(run_id, target_id, attempt)`; partial queue index on
-  `(status, enqueued_at, id)` for non-done statuses
+  `(status, enqueued_at, id)` covering non-done statuses
 
-**Views:**
+**Views (`packages/db/adapters/sqlite/connection.js`):**
 
-- `attempt_results` = `SELECT * FROM runs WHERE status = 'done'` — the
-  single source of truth for leaderboard, insights, history, REST
-  `/results`, and Supabase upload
-- `runs_summary` — one row per `run_id` with aggregated status
-  (priority `paused > running > error > queued > done`), total/done/
-  pending/waiting/running/paused/error counts, and run-level metadata
-  (model, provider, prompt_version, reasoning_effort, started_at,
+- `attempt_results` — `SELECT * FROM runs WHERE status = 'done'`; single
+  source of truth for leaderboard, insights, history, and Supabase upload
+- `runs_summary` — one row per `run_id`; aggregated status with priority
+  `paused > running > error > queued > done`; counts per status; run-level
+  metadata (model, provider, prompt_version, reasoning_effort, started_at,
   finished_at)
 
-**Core DB API** (`packages/db/adapters/sqlite/queue.js`):
+**Core DB API (`packages/db/adapters/sqlite/queue.js`):**
 
-- `enqueueRun` — pre-inserts attempt 1 as `pending`, 2..N as `waiting`
-- `claimNextPending` — `BEGIN IMMEDIATE` + `UPDATE ... RETURNING`; claims
-  the oldest `pending` row and stamps a fresh `claim_token`
-- `completeAttempt` / `failAttempt` — token-protected finalization;
-  `complete` promotes the next `waiting` attempt of the same target
+- `enqueueRun` — pre-inserts attempt 1 as `pending`, attempts 2..N as `waiting`
+- `claimNextPending` — `BEGIN IMMEDIATE` + `UPDATE ... RETURNING`; claims the
+  oldest `pending` row and stamps a fresh `claim_token`
+- `completeAttempt` / `failAttempt` — token-protected finalization; `complete`
+  promotes the next `waiting` attempt of the same target to `pending`
 - `retryAttempt` / `resetErrors` — manual error recovery, single or bulk
-- `pauseRun` / `resumeRun` — precise pause with `paused_from`, precise
-  restore
-- `requeueStaleRunningAttempts` — one-shot startup recovery for crashed
-  processes (`running` → `pending`, token cleared)
-- `getRunQueue` / `getRunHistory` — the two dashboard reads
+- `pauseRun` / `resumeRun` — saves `paused_from` on pause; restores exact
+  prior status on resume and bumps `enqueued_at` to re-enter the queue fairly
+- `requeueStaleRunningAttempts` — startup recovery: `running` → `pending`,
+  claim token cleared
+- `getRunQueue` / `getRunHistory` — queue (non-done) and history (done-only)
 
-**Runner** (`packages/runner/benchmark.js`):
+**Runner (`packages/runner/benchmark.js`):**
 
-- No in-process queue array. `enqueueRun` pre-inserts all attempts, then
-  a pool of `workerLoop` workers claim rows atomically from the DB.
-- Follow-up context (attempts 2+) comes from the previous `done` row of
-  the same `(run_id, target_id)`.
-- Resume skips already-completed targets (reuses `resumeRunId`).
-- Fill mode seeds `done` rows with the prior attempt's `lastCode`, then
-  flips the target attempt from `waiting` → `pending`.
-- `processClaim` does a short internal retry for transient adapter
-  errors (default 2, 300ms backoff). `AbortError` and
-  `PolicyViolationError` bypass the retry.
-
-**API** — endpoints listed in the API section above. `POST /cancel`
-always pauses (abort + `pauseRun`); `POST /resume` is the only way a
-run returns to the queue with the same `run_id`.
-
-**Sync** — Supabase only stores `done` rows. `uploadToSupabase` filters
-to `status='done'` and strips the queue-only columns (`status`,
-`claim_token`, `enqueued_at`, `claimed_at`, `paused_from`,
-`error_message`) before upload. `downloadFromSupabase` round-trips them
-back in with `status='done'` as the column default.
-
-**Dashboard** — React Query hooks `useRunQueue` (2s refetch) and
-`useRunHistory`. The Run tab renders the queue with per-attempt status
-badges, Retry / Reset-errors / Resume buttons. The History tab lists
-only done runs; clicking a row filters the attempt table below.
-
-Full original design notes live in
-`C:\Users\Andy\.claude\plans\berlege-dir-eine-vereinfachung-luminous-nebula.md`.
+- No in-process queue array; `enqueueRun` pre-inserts all attempts, then a
+  pool of `workerLoop` workers claim rows atomically from the DB
+- Follow-up context (attempts 2+) is loaded from the previous `done` row of
+  the same `(run_id, target_id)`
+- `processClaim` does a short internal retry for transient errors (default 2,
+  300 ms backoff); `AbortError` and `PolicyViolationError` bypass the retry
 
 ## Ideas / Backlog
 
