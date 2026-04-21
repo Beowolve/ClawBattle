@@ -35,7 +35,7 @@ function RunTargetCard({ card }) {
   );
 }
 
-export default function StartRun({ onStatusChange, resumeTarget, onResumeConsumed }) {
+export default function StartRun({ onStatusChange }) {
   const queryClient = useQueryClient();
   const { data: config } = useConfig();
   const [model, setModel] = useState('');
@@ -47,7 +47,6 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
   const [reasoningEffort, setReasoningEffort] = useState('');
   const [targetFrom, setTargetFrom] = useState('1');
   const [targetTo, setTargetTo] = useState('25');
-  const [resumeRunId, setResumeRunId] = useState(null);
   const [fillMode, setFillMode] = useState(false);
   const [runId, setRunId] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | running | done | cancelled | error
@@ -90,19 +89,6 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
       .catch(() => localStorage.removeItem('clawbattle.activeRunId'));
   }, []);
 
-  // Pre-fill form when resume is triggered from RunHistory
-  useEffect(() => {
-    if (resumeTarget) {
-      console.log('[StartRun] resumeTarget set:', resumeTarget);
-      setModel(resumeTarget.model ?? '');
-      setProvider(resumeTarget.provider ?? 'openrouter');
-      setResumeRunId(resumeTarget.runId);
-      setFillMode(false);
-    } else {
-      setResumeRunId(null);
-    }
-  }, [resumeTarget]);
-
   async function startRun() {
     setTargetCount(0);
     setTargetCards([]);
@@ -118,7 +104,6 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
         reasoningEffort: reasoningEffort || undefined,
         targetFrom: targetFrom !== '' ? Number(targetFrom) : undefined,
         targetTo: targetTo !== '' ? Number(targetTo) : undefined,
-        ...(resumeRunId ? { resumeRunId } : {}),
         ...(fillMode ? { fillMode: true } : {}),
       };
       console.log('[StartRun] POST /api/runs/start', payload);
@@ -134,8 +119,6 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
         return;
       }
       const { runId: id } = await res.json();
-      onResumeConsumed?.();
-      setResumeRunId(null);
       localStorage.setItem('clawbattle.activeRunId', id);
       setRunId(id);
     } catch (err) {
@@ -365,26 +348,17 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
               type="checkbox"
               checked={fillMode}
               onChange={(e) => setFillMode(e.target.checked)}
-              disabled={status === 'running' || !!resumeRunId}
+              disabled={status === 'running'}
             />
             Fill
           </label>
           <button className="runButton" onClick={startRun} disabled={!canStart}>
-            {fillMode ? 'Fill' : resumeRunId ? 'Resume' : status === 'running' ? 'Running...' : 'Run'}
+            {fillMode ? 'Fill' : status === 'running' ? 'Running...' : 'Run'}
           </button>
           {status === 'running' && (
             <button className="cancelButton" onClick={cancelRun}>Cancel</button>
           )}
         </div>
-
-        {resumeRunId && status !== 'running' && (
-          <div className="resumeBanner">
-            Resuming run <code>{resumeRunId.slice(0, 8)}</code> — completed targets will be skipped.{' '}
-            <button className="deleteButton" onClick={() => { setResumeRunId(null); onResumeConsumed?.(); }}>
-              Clear
-            </button>
-          </div>
-        )}
 
         {targetCards.length > 0 && (
           <div className="runProgressGrid">

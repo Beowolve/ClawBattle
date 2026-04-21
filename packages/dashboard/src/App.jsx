@@ -47,7 +47,6 @@ export default function App() {
   const [targetView, setTargetView] = useState('table');
   const [runStatus, setRunStatus] = useState('idle');
   const [selectedTarget, setSelectedTarget] = useState(null);
-  const [resumeTarget, setResumeTarget] = useState(null);
   const [promptFilter, setPromptFilter] = useState(
     () => localStorage.getItem('clawbattle.promptFilter') ?? 'all',
   );
@@ -61,11 +60,6 @@ export default function App() {
     setModelFilter(model);
     setTargetView('table');
     setTab('targets');
-  }
-
-  function handleResume(meta) {
-    setResumeTarget(meta);
-    setTab('run');
   }
 
   // Leaderboard and Insights fetch their own aggregated data eagerly
@@ -246,18 +240,14 @@ export default function App() {
             <div className="panelHeader">
               <h2>Run History</h2>
             </div>
-            <RunHistory onResume={handleResume} />
+            <RunHistory />
           </div>
         )}
 
         {tab === 'sync' && <Sync />}
 
         <div style={{ display: tab === 'run' ? '' : 'none' }}>
-          <StartRun
-            onStatusChange={setRunStatus}
-            resumeTarget={resumeTarget}
-            onResumeConsumed={() => setResumeTarget(null)}
-          />
+          <StartRun onStatusChange={setRunStatus} />
         </div>
       </main>
       <footer className="appFooter">

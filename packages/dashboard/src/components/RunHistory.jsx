@@ -1,6 +1,9 @@
+// History view: lists fully-done runs from runs_summary. Clicking a run
+// filters the attempt table below to that run. Paused/running/error runs
+// live in the Queue tab instead and never appear here.
+
 import { useState, useMemo, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useResultsPage, useResultsCount, useRuns } from '../hooks/useData.js';
+import { useResultsPage, useResultsCount, useRunHistory } from '../hooks/useData.js';
 
 const PAGE_SIZE = 100;
 
@@ -20,8 +23,12 @@ const COLS = [
   { key: 'created_at',      label: 'Created' },
 ];
 
-export default function RunHistory({ onResume }) {
-  const queryClient = useQueryClient();
+function formatTs(ts) {
+  if (!ts) return '';
+  return ts.replace('T', ' ').slice(0, 16);
+}
+
+export default function RunHistory() {
   const [selectedRun, setSelectedRun] = useState('');
   const [sortKey, setSortKey] = useState('created_at');
   const [sortDir, setSortDir] = useState('desc');
@@ -30,8 +37,8 @@ export default function RunHistory({ onResume }) {
   // Reset to page 0 whenever filter/sort changes
   useEffect(() => { setPage(0); }, [selectedRun, sortKey, sortDir]);
 
-  const runsQ = useRuns();
-  const runMeta = runsQ.data ?? [];
+  const runsQ = useRunHistory();
+  const runs = runsQ.data ?? [];
 
   const pageQ = useResultsPage({ page, sort: sortKey, dir: sortDir, runId: selectedRun });
   const countQ = useResultsCount(selectedRun);
@@ -40,11 +47,10 @@ export default function RunHistory({ onResume }) {
   const total = countQ.data?.count ?? 0;
   const pageCount = Math.ceil(total / PAGE_SIZE);
 
-  const metaById = useMemo(() => {
-    const m = {};
-    for (const r of runMeta) m[r.run_id] = r;
-    return m;
-  }, [runMeta]);
+  const selectedMeta = useMemo(
+    () => runs.find(r => r.run_id === selectedRun) ?? null,
+    [runs, selectedRun],
+  );
 
   function handleSort(key) {
     if (key === sortKey) {
@@ -55,66 +61,53 @@ export default function RunHistory({ onResume }) {
     }
   }
 
-  if (!runsQ.isLoading && !runMeta.length && !rows.length) {
-    return <div className="stateBox">No runs yet.</div>;
+  function toggleRun(runId) {
+    setSelectedRun(prev => prev === runId ? '' : runId);
+  }
+
+  if (!runsQ.isLoading && !runs.length && !rows.length) {
+    return <div className="stateBox">No completed runs yet.</div>;
   }
 
   return (
     <div>
-      <div className="filtersBar filtersBar--panel">
-        <span className="filterLabel">Run:</span>
-        <select className="filterSelect" value={selectedRun} onChange={e => setSelectedRun(e.target.value)}>
-          <option value="">All</option>
-          {runMeta.map(meta => {
-            const label = `${meta.model} – ${meta.started_at?.slice(0, 16) ?? meta.run_id}`;
-            const prefix = meta.status === 'running' ? '⏳ ' : meta.status === 'incomplete' ? '⚠️ ' : '';
-            return <option key={meta.run_id} value={meta.run_id}>{prefix}{label}</option>;
-          })}
-        </select>
-        {onResume && (
-          <>
-            {selectedRun && metaById[selectedRun]?.status === 'incomplete' && (
-              <span style={{ color: 'var(--warning-color, #e6a817)', fontSize: '0.82em', display: 'flex', alignItems: 'center', gap: 4 }}>
-                ⚠️ Incomplete — some targets had all attempts fail
-              </span>
-            )}
+      {runs.length > 0 && (
+        <div className="runHistoryList">
+          {runs.map(run => (
             <button
-              className="deleteButton"
-              style={{ color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}
-              disabled={!selectedRun}
-              onClick={() => {
-                const meta = metaById[selectedRun];
-                onResume({ runId: selectedRun, model: meta?.model ?? '', provider: meta?.provider ?? 'openrouter' });
-              }}
+              key={run.run_id}
+              type="button"
+              className={`runHistoryRow${selectedRun === run.run_id ? ' runHistoryRow--selected' : ''}`}
+              onClick={() => toggleRun(run.run_id)}
+              title={run.run_id}
             >
-              Resume
+              <span className="runHistoryModel">
+                {run.model}
+                {run.reasoning_effort ? ` [${run.reasoning_effort}]` : ''}
+              </span>
+              <span className="muted runHistoryPrompt">{run.prompt_version ?? '—'}</span>
+              <span className="muted runHistoryTs">
+                {formatTs(run.finished_at ?? run.started_at)}
+              </span>
+              <span className="muted runHistoryCount">
+                {run.total ?? 0} attempt{run.total === 1 ? '' : 's'}
+              </span>
             </button>
-            {(() => {
-              const meta = metaById[selectedRun];
-              const canDelete = !!selectedRun && meta && Number(meta.attempt_count ?? 0) === 0;
-              return (
-                <button
-                  className="deleteButton"
-                  disabled={!canDelete}
-                  title={!selectedRun ? 'Select a run' : !canDelete ? 'Run has saved attempts — cannot delete' : 'Delete empty run'}
-                  onClick={async () => {
-                    if (!confirm(`Delete empty run ${selectedRun.slice(0, 8)}?`)) return;
-                    const res = await fetch(`/api/runs/${selectedRun}`, { method: 'DELETE' });
-                    if (!res.ok) {
-                      const { error } = await res.json().catch(() => ({}));
-                      alert(`Delete failed: ${error ?? res.status}`);
-                      return;
-                    }
-                    setSelectedRun('');
-                    queryClient.invalidateQueries({ queryKey: ['runs'] });
-                    queryClient.invalidateQueries({ queryKey: ['results'] });
-                  }}
-                >
-                  Delete
-                </button>
-              );
-            })()}
+          ))}
+        </div>
+      )}
+
+      <div className="filtersBar filtersBar--panel">
+        {selectedRun ? (
+          <>
+            <span className="filterLabel">
+              Filtered to run <code>{selectedRun.slice(0, 8)}</code>
+              {selectedMeta && ` — ${selectedMeta.model}`}
+            </span>
+            <button className="deleteButton" onClick={() => setSelectedRun('')}>Clear filter</button>
           </>
+        ) : (
+          <span className="filterLabel muted">All attempts from completed runs</span>
         )}
         {pageCount > 1 && (
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>

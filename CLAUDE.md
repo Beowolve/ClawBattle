@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Language
-* Always use English, both for the code, comments and documentation.
+* Always use English: For the code, comments and documentation.
 
 ## Session Continuity
 

@@ -257,15 +257,6 @@ export function useResults({ enabled = true } = {}) {
   });
 }
 
-export function useRuns() {
-  return useQuery({
-    queryKey: ['runs'],
-    queryFn: IS_PUBLIC
-      ? () => fetchAllFromSupabase('run_state', 'started_at.desc')
-      : () => fetchJson('/runs'),
-  });
-}
-
 // DB-backed queue of all non-done runs (with attempts[] nested) — used by the
 // Run tab to show pending/running/waiting/paused/error rows inline.
 // Refetch interval is short because this is effectively a live queue view.
@@ -278,8 +269,7 @@ export function useRunQueue({ refetchInterval = 2000 } = {}) {
   });
 }
 
-// DB-backed history of fully-done runs only. Replaces useRuns() for the
-// RunHistory component.
+// DB-backed history of fully-done runs only. Source of truth for RunHistory.
 export function useRunHistory() {
   return useQuery({
     queryKey: ['runs', 'history'],
