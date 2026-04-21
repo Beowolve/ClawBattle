@@ -1414,13 +1414,28 @@ td.muted {
   gap: 10px;
   align-items: center;
   padding: 8px 14px;
-  cursor: pointer;
   font-size: 0.85rem;
   user-select: none;
 }
 
-.queueRunHeader:hover {
-  background: rgba(47, 95, 184, 0.04);
+.queueRunHeaderMain {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.queueRunHeaderMain:hover {
+  color: var(--primary-color);
+}
+
+.queueRunActions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .queueRunToggle {
@@ -1537,4 +1552,39 @@ td.muted {
   margin-left: 2px;
   width: 6px;
   height: 6px;
+}
+
+/* ─── Queue action controls ─────────────────────────────────────── */
+.queueRetryBtn {
+  background: var(--bg-color);
+  color: var(--primary-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.queueRetryBtn:hover:not(:disabled) {
+  background: rgba(47, 95, 184, 0.08);
+  border-color: var(--primary-color);
+}
+
+.queueRetryBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.queueActionCell {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.queueActionError {
+  font-size: 0.78rem;
+  color: var(--error-color);
+  margin-left: 12px;
 }
