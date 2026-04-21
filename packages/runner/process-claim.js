@@ -13,8 +13,13 @@ function buildBasePrompt(template, { width, height, colors, chromeVersion }) {
     .replace('{{CHROME_VERSION}}', chromeVersion);
 }
 
-function buildFollowupPrompt(basePrompt, appendix, previousCode) {
-  return basePrompt + '\n' + appendix.replace('{{PREVIOUS_CODE}}', previousCode ?? '');
+function buildFollowupPrompt(basePrompt, appendix, { code = '', match = null, score = null } = {}) {
+  const matchStr = match != null ? match.toFixed(2) + '%' : 'unknown';
+  const scoreStr = score != null ? score.toFixed(2) : 'unknown';
+  return basePrompt + '\n' + appendix
+    .replace('{{PREVIOUS_CODE}}', code)
+    .replace('{{PREVIOUS_MATCH}}', matchStr)
+    .replace('{{PREVIOUS_SCORE}}', scoreStr);
 }
 
 function classifyError(err) {
@@ -64,6 +69,8 @@ export async function processClaim({
   // Load and re-render the direct predecessor for follow-up context.
   let previousCode = null;
   let previousRender = null;
+  let previousMatch = null;
+  let previousScore = null;
   if (claim.attempt > 1) {
     const prev = getPreviousAttempt(db, claim.run_id, claim.target_id, claim.attempt);
     if (prev?.code) {
@@ -72,6 +79,8 @@ export async function processClaim({
         const rendered = await render(sanitized, { signal });
         previousCode = sanitized;
         previousRender = rendered;
+        previousMatch = prev.match ?? null;
+        previousScore = prev.score ?? null;
       } catch (err) {
         if (err?.name === 'AbortError') throw err;
         // Seed failed → fall back to base prompt for this attempt.
@@ -83,7 +92,11 @@ export async function processClaim({
 
   const isFollowup = previousRender !== null;
   const prompt = isFollowup
-    ? buildFollowupPrompt(basePrompt, followupAppendix, previousCode)
+    ? buildFollowupPrompt(basePrompt, followupAppendix, {
+        code: previousCode,
+        match: previousMatch,
+        score: previousScore,
+      })
     : basePrompt;
   const images = isFollowup ? [targetBuffer, previousRender] : [targetBuffer];
 

@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import promptV1 from '../../../../prompts/v1/prompt.md?raw';
 import promptV2 from '../../../../prompts/v2/prompt.md?raw';
+import promptV3 from '../../../../prompts/v3/prompt.md?raw';
 import followupV1 from '../../../../prompts/v1/followup.md?raw';
 import followupV2 from '../../../../prompts/v2/followup.md?raw';
+import followupV3 from '../../../../prompts/v3/followup.md?raw';
 
 const PROMPTS = [
-  { key: 'v2', label: 'v2 (current)', content: promptV2, followup: followupV2 },
+  { key: 'v3', label: 'v3 (current)', content: promptV3, followup: followupV3 },
+  { key: 'v2', label: 'v2', content: promptV2, followup: followupV2 },
   { key: 'v1', label: 'v1', content: promptV1, followup: followupV1 },
 ];
 
 export default function About() {
-  const [activePrompt, setActivePrompt] = useState('v2');
+  const [activePrompt, setActivePrompt] = useState('v3');
   const current = PROMPTS.find(p => p.key === activePrompt);
 
   return (

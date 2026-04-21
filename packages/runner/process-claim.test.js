@@ -18,7 +18,7 @@ const baseOpts = {
 const targetDef = { id: '1', name: 'Target #1', colors: ['#fff', '#000'] };
 const targetBuffer = Buffer.from('fake-target-png');
 const promptTemplate = 'W={{WIDTH}} H={{HEIGHT}} C={{COLORS}} CV={{CHROME_VERSION}}';
-const followupAppendix = 'FOLLOWUP PREV={{PREVIOUS_CODE}}';
+const followupAppendix = 'FOLLOWUP PREV={{PREVIOUS_CODE}} MATCH={{PREVIOUS_MATCH}} SCORE={{PREVIOUS_SCORE}}';
 
 function makeDeps(overrides = {}) {
   return {
@@ -121,6 +121,9 @@ test('processClaim: attempt 2 — previous code is re-rendered and injected into
   await processClaim(baseArgs(db, c2, { deps: { adapter: adapter2, render } }));
 
   assert.ok(capturedPrompt.includes('FOLLOWUP PREV=<p>first</p>'));
+  // Score and match from attempt 1 (computeMatch → 87.5, computeScore → 700)
+  assert.ok(capturedPrompt.includes('MATCH=87.50%'), `expected MATCH=87.50% in prompt, got: ${capturedPrompt}`);
+  assert.ok(capturedPrompt.includes('SCORE=700.00'), `expected SCORE=700.00 in prompt, got: ${capturedPrompt}`);
   assert.equal(capturedImages.length, 2);
   // render called once for previous code + once for current result
   assert.equal(renderCalls, 2);
