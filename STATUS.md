@@ -118,7 +118,7 @@ Phase 2 — Runner & API:
 
 Phase 3 — UI:
 - [x] 3.1 React-Query-Hooks `useRunQueue` / `useRunHistory` angelegt (useData.js); `useRuns` bleibt als deprecated alias bis 3.5
-- [ ] 3.2 Queue-Tabelle im Run-Tab — Status-Badges inkl. `waiting` als "waiting for prev. result", pulsierender Dot auf `running`
+- [x] 3.2 Queue-Tabelle im Run-Tab — `RunQueue.jsx` zeigt alle nicht-`done` Runs mit nested Attempts, pollt alle 2s via `useRunQueue`; Status-Badges für `pending`/`waiting`/`running`/`paused`/`error`/`queued`/`done` inkl. pulsierender Dot auf `running` und `waiting` als "waiting for prev. result"
 - [ ] 3.3 Retry-Button pro `error`-Zeile + "Alle Fehler zurücksetzen"-Button pro Run
 - [ ] 3.4 Resume-Button für `paused`-Runs (ersetzt bestehenden Resume-Pfad per neuer run_id)
 - [ ] 3.5 History-Ansicht auf nur `done` umstellen; Run-Dropdown entfernen

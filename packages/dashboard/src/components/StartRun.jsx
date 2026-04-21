@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useConfig } from '../hooks/useData.js';
+import RunQueue from './RunQueue.jsx';
 
 const PROVIDERS = ['openrouter', 'openai', 'ollama'];
 const REASONING_OPTIONS = ['', 'low', 'medium', 'high', 'xhigh'];
@@ -406,6 +407,8 @@ export default function StartRun({ onStatusChange, resumeTarget, onResumeConsume
             </div>
           </details>
         )}
+
+        <RunQueue />
       </div>
     </div>
   );
