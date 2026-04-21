@@ -131,3 +131,66 @@ test('legacy DB: running migration twice is a no-op on the second call', () => {
   const colsAfterSecond = db.prepare("PRAGMA table_info(runs)").all().length;
   assert.equal(colsAfterSecond, colsAfterFirst);
 });
+
+test('orphan recovery: runs_new without runs is renamed to runs on initSchema', () => {
+  // Simulate an interrupted migration: runs_new was created and populated,
+  // runs was dropped, but the rename never completed.
+  const db = new DatabaseSync(':memory:');
+  db.exec(`
+    CREATE TABLE runs_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      run_id TEXT NOT NULL,
+      benchmark_version TEXT NOT NULL DEFAULT '1.0',
+      model TEXT NOT NULL DEFAULT 'gpt-4o',
+      provider TEXT NOT NULL DEFAULT 'openrouter',
+      prompt_version TEXT,
+      temperature REAL,
+      attempts_per_target INTEGER,
+      started_at TEXT,
+      finished_at TEXT,
+      target_id TEXT NOT NULL DEFAULT '1',
+      target_type TEXT NOT NULL DEFAULT 'battle',
+      attempt INTEGER NOT NULL DEFAULT 1,
+      match REAL,
+      score REAL,
+      tokens_used INTEGER,
+      code TEXT,
+      code_length INTEGER,
+      cost REAL,
+      duration_ms INTEGER,
+      reasoning_effort TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      status TEXT NOT NULL DEFAULT 'done',
+      error_message TEXT,
+      enqueued_at TEXT NOT NULL DEFAULT (datetime('now')),
+      claimed_at TEXT,
+      claim_token TEXT,
+      paused_from TEXT
+    );
+    INSERT INTO runs_new (run_id, target_id) VALUES ('orphan-1', '1');
+  `);
+
+  // No 'runs' table at this point — exactly the interrupted-migration state.
+  initSchema(db);
+
+  // runs_new should be gone, runs should have the data.
+  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(r => r.name);
+  assert.ok(!tables.includes('runs_new'), 'runs_new should not exist after recovery');
+  assert.ok(tables.includes('runs'), 'runs should exist after recovery');
+  const row = db.prepare("SELECT run_id FROM runs WHERE run_id = 'orphan-1'").get();
+  assert.ok(row, 'orphaned row should be present in runs after recovery');
+});
+
+test('orphan recovery: stale runs_new alongside existing runs is dropped', () => {
+  // Simulate a leftover runs_new from a previously completed migration.
+  const db = openDb(':memory:');
+  db.exec("CREATE TABLE runs_new (id INTEGER PRIMARY KEY, run_id TEXT NOT NULL)");
+  db.exec("INSERT INTO runs_new (run_id) VALUES ('stale')");
+
+  // initSchema must not blow up and must remove runs_new.
+  initSchema(db);
+
+  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(r => r.name);
+  assert.ok(!tables.includes('runs_new'), 'stale runs_new should be dropped');
+  assert.ok(tables.includes('runs'), 'runs should still exist');
+});

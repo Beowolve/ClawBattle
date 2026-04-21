@@ -48,8 +48,39 @@ const LEGACY_REUSABLE_COLUMNS = [
   'status', 'error_message', 'enqueued_at', 'claimed_at', 'claim_token', 'paused_from',
 ];
 
+// Views that reference 'runs' — must be dropped before the table can be dropped.
+// initSchema recreates them unconditionally after migration.
+const RUNS_VIEWS = [
+  'attempt_results', 'leaderboard', 'leaderboard_by_version',
+  'target_difficulty', 'model_consistency', 'cost_efficiency',
+  'match_distribution', 'runs_summary',
+];
+
+// Must be called before CREATE TABLE IF NOT EXISTS runs so that an orphaned
+// runs_new from a previous interrupted migration is not shadowed by a fresh
+// empty runs table.
+function recoverOrphanedRunsNew(db) {
+  const runsNewExists = db.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='runs_new'",
+  ).get();
+  if (!runsNewExists) return;
+
+  const runsExists = db.prepare(
+    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='runs'",
+  ).get();
+  if (!runsExists) {
+    // Interrupted mid-migration: runs was dropped but the rename never ran.
+    // Complete the rename now.
+    db.exec('ALTER TABLE runs_new RENAME TO runs');
+  } else {
+    // Both tables exist — runs_new is a stale leftover from a previously
+    // completed migration that was not cleaned up.
+    db.exec('DROP TABLE runs_new');
+  }
+}
+
 function migrateRunsTable(db) {
-  const cols = db.prepare("PRAGMA table_info(runs)").all();
+  const cols = db.prepare('PRAGMA table_info(runs)').all();
   if (cols.length === 0) return;
 
   const names = new Set(cols.map(c => c.name));
@@ -59,17 +90,24 @@ function migrateRunsTable(db) {
 
   if (!matchIsNotNull && !missingNewColumns) return;
 
+  // Drop any views that reference 'runs' so the subsequent DROP TABLE succeeds.
+  // Use individual exec() calls — node:sqlite has quirks with multi-statement
+  // DDL sequences that mix DROP TABLE and ALTER TABLE in a single exec() call.
+  for (const v of RUNS_VIEWS) db.exec(`DROP VIEW IF EXISTS ${v}`);
+
   const carryOver = LEGACY_REUSABLE_COLUMNS.filter(n => names.has(n));
   const carryList = carryOver.join(', ');
-  db.exec(`
-    CREATE TABLE runs_new (${RUNS_COLUMNS_SQL});
-    INSERT INTO runs_new (${carryList}) SELECT ${carryList} FROM runs;
-    DROP TABLE runs;
-    ALTER TABLE runs_new RENAME TO runs;
-  `);
+  db.exec(`CREATE TABLE runs_new (${RUNS_COLUMNS_SQL})`);
+  db.exec(`INSERT INTO runs_new (${carryList}) SELECT ${carryList} FROM runs`);
+  db.exec('DROP TABLE runs');
+  db.exec('ALTER TABLE runs_new RENAME TO runs');
 }
 
 export function initSchema(db) {
+  // Must run before CREATE TABLE IF NOT EXISTS runs to avoid shadowing an
+  // orphaned runs_new with a fresh empty runs table.
+  recoverOrphanedRunsNew(db);
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS runs (${RUNS_COLUMNS_SQL});
 
