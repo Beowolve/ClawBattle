@@ -76,7 +76,7 @@ function AttemptsTable({ attempts, onRetry, busyIds }) {
   );
 }
 
-function QueueRunCard({ run, expanded, onToggle, onRetry, onResetErrors, busyIds, resetting }) {
+function QueueRunCard({ run, expanded, onToggle, onRetry, onResetErrors, onResume, busyIds, resetting, resuming }) {
   const stats = [
     run.running_count ? `${run.running_count} running` : null,
     run.pending_count ? `${run.pending_count} pending` : null,
@@ -103,6 +103,16 @@ function QueueRunCard({ run, expanded, onToggle, onRetry, onResetErrors, busyIds
           <span className="muted queueRunStats">{stats}</span>
         </span>
         <span className="queueRunActions">
+          {run.status === 'paused' && (
+            <button
+              className="queueRetryBtn queueRetryBtn--primary"
+              disabled={resuming}
+              onClick={(e) => { e.stopPropagation(); onResume(run.run_id); }}
+              title="Resume this paused run"
+            >
+              {resuming ? '…' : 'Resume'}
+            </button>
+          )}
           {hasErrors && (
             <button
               className="queueRetryBtn"
@@ -130,6 +140,7 @@ export default function RunQueue() {
   const [expanded, setExpanded] = useState(new Set());
   const [busyIds, setBusyIds] = useState(new Set());
   const [resettingRuns, setResettingRuns] = useState(new Set());
+  const [resumingRuns, setResumingRuns] = useState(new Set());
   const [actionError, setActionError] = useState(null);
 
   function toggle(runId) {
@@ -157,6 +168,23 @@ export default function RunQueue() {
       setBusyIds(prev => {
         const next = new Set(prev);
         next.delete(attemptId);
+        return next;
+      });
+    }
+  }
+
+  async function handleResume(runId) {
+    setActionError(null);
+    setResumingRuns(prev => new Set(prev).add(runId));
+    try {
+      await postJson(`/api/runs/${runId}/resume`);
+      refreshQueue();
+    } catch (err) {
+      setActionError(`Resume failed: ${err.message}`);
+    } finally {
+      setResumingRuns(prev => {
+        const next = new Set(prev);
+        next.delete(runId);
         return next;
       });
     }
@@ -200,8 +228,10 @@ export default function RunQueue() {
             onToggle={() => toggle(run.run_id)}
             onRetry={handleRetry}
             onResetErrors={handleResetErrors}
+            onResume={handleResume}
             busyIds={busyIds}
             resetting={resettingRuns.has(run.run_id)}
+            resuming={resumingRuns.has(run.run_id)}
           />
         ))}
       </div>

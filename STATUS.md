@@ -120,7 +120,7 @@ Phase 3 — UI:
 - [x] 3.1 React-Query-Hooks `useRunQueue` / `useRunHistory` angelegt (useData.js); `useRuns` bleibt als deprecated alias bis 3.5
 - [x] 3.2 Queue-Tabelle im Run-Tab — `RunQueue.jsx` zeigt alle nicht-`done` Runs mit nested Attempts, pollt alle 2s via `useRunQueue`; Status-Badges für `pending`/`waiting`/`running`/`paused`/`error`/`queued`/`done` inkl. pulsierender Dot auf `running` und `waiting` als "waiting for prev. result"
 - [x] 3.3 Retry-Button pro `error`-Zeile + "Alle Fehler zurücksetzen"-Button pro Run — `RunQueue.jsx` hat `postJson`-Helper, Retry-Button je Error-Attempt (deaktiviert während in-flight via `busyIds`), Reset-errors-Button im Card-Header wenn `error_count > 0` (deaktiviert via `resettingRuns`), beide rufen `/api/runs/attempts/:id/retry` bzw. `/api/runs/:runId/reset-errors` und invalidieren den `['runs','queue']`-Query; Fehler werden im Panel-Header als `queueActionError`-Text angezeigt; CSS-Split des Headers in `queueRunHeaderMain` (klickbar für Expand) und `queueRunActions` (Buttons)
-- [ ] 3.4 Resume-Button für `paused`-Runs (ersetzt bestehenden Resume-Pfad per neuer run_id)
+- [x] 3.4 Resume-Button für `paused`-Runs — `RunQueue.jsx` zeigt auf Run-Karten mit `status='paused'` einen primärgefärbten Resume-Button, der `POST /api/runs/:runId/resume` aufruft und damit den bestehenden Run (gleiche `run_id`) fortsetzt statt einen neuen anzulegen; `resumingRuns`-Set sperrt den Button während der Request läuft, Fehler landen im Panel-Header. Der alte Resume-Pfad aus RunHistory (neuer `run_id`) bleibt bis 3.5 parallel nutzbar
 - [ ] 3.5 History-Ansicht auf nur `done` umstellen; Run-Dropdown entfernen
 
 Phase 4 — Cleanup:

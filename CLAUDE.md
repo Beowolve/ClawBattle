@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Language
+* Always use English, both for the code, comments and documentation.
+
 ## Session Continuity
 
 * **Always keep [STATUS.md](STATUS.md) up to date.** After completing a TODO item, mark it done. When a new idea comes up that won't be implemented immediately, add it to the Backlog section. Update the "Last updated" date. This ensures any session can be picked up without losing context.

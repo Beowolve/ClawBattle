@@ -1577,6 +1577,17 @@ td.muted {
   cursor: default;
 }
 
+.queueRetryBtn--primary {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.queueRetryBtn--primary:hover:not(:disabled) {
+  background: var(--primary-color);
+  filter: brightness(1.08);
+}
+
 .queueActionCell {
   text-align: right;
   width: 1%;
