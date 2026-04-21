@@ -18,4 +18,8 @@ export const {
   deleteRunGroup, getCompletedTargetIds,
   getExistingAttempts, deleteRunById,
   upsertRuns, upsertRunStates,
+  getRunQueue, getRunHistory,
+  retryAttempt, resetErrors,
+  pauseRun, resumeRun,
+  requeueStaleRunningAttempts,
 } = mod;

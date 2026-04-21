@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-18
+Last updated: 2026-04-20
 
 ## What's Done
 
@@ -87,6 +87,47 @@ Last updated: 2026-04-18
 - [x] Run benchmarks with v2 prompt, compare results vs v1
 - [ ] Expand baselines/human.json beyond target 12
 - [ ] Compare benchmark results against the human baseline (`baselines/human.json`)
+
+### Run-System-Refactor (DB-Queue, eine Tabelle)
+
+Plan: `C:\Users\Andy\.claude\plans\berlege-dir-eine-vereinfachung-luminous-nebula.md`
+
+Phase 1 — DB-Grundlage:
+- [x] 1.1 Schema-Migration (status, error_message, enqueued_at, claimed_at, claim_token, paused_from; match nullable; idx_runs_queue)
+- [x] 1.2 Views runs_summary + attempt_results (Status-Priorität paused > running > error > queued > done)
+- [x] 1.3 enqueueRun (Pre-Insert pending/waiting, idempotent via INSERT OR IGNORE)
+- [x] 1.4 claimNextPending (atomic FIFO claim via BEGIN IMMEDIATE + UPDATE...RETURNING, unique claim_token per call)
+- [x] 1.5 completeAttempt / failAttempt (claim_token-protected; complete promotes next waiting→pending, fail leaves successors on waiting)
+- [x] 1.6 retryAttempt / resetErrors (single error→pending; bulk reset scoped by runId or global, clears error/claim fields)
+- [x] 1.7 pauseRun / resumeRun (pause wipes partial results + claim fields, stores original status in paused_from; resume restores exactly and bumps enqueued_at)
+- [x] 1.8 requeueStaleRunningAttempts (server-restart recovery: running → pending, claim fields cleared, stale tokens invalidated)
+- [x] 1.9 getRunQueue / getRunHistory (queue returns non-done runs with attempts[] nested; history returns done-only summaries, newest first)
+
+Phase 1 komplett (109 DB-Tests grün).
+
+Phase 2 — Runner & API:
+- [x] 2.1 Runner-Worker auf DB-Queue umstellen (claim → run → complete/fail; kein lokales queue-Array mehr; Follow-up-Kontext aus Attempt n-1 mit status='done')
+  - [x] 2.1a `getPreviousAttempt(db, runId, targetId, attempt)` — DB-Helper für Follow-up-Kontext
+  - [x] 2.1b `processClaim()` — Orchestrierung: Prompt → Adapter → Render → Score → complete/fail
+  - [x] 2.1c `workerLoop(db, deps, signal)` — claim + process im Kreis; emittiert `target_done` wenn letzter offener Attempt eines Targets abschließt
+  - [x] 2.1d `runBenchmark` verdrahten: `enqueueRun` + Worker-Pool; Resume skippt completed Targets, Fill pre-seedet `done`-Rows mit `lastCode` auf Attempt `startAttempt-1`
+- [x] 2.2 Interner Worker-Retry innerhalb eines Claims (transient Netz-/Rate-Fehler); endgültiger Fehler → status='error' + error_message — `processClaim` retried `adapter.generate` bis zu `internalRetries` mal (Default 2, 300ms Backoff); `AbortError` und `PolicyViolationError` umgehen den Retry
+- [x] 2.3 API Queue/History splitten — `GET /api/runs/queue`, `GET /api/runs/history`, `POST /api/runs/:runId/resume`, `POST /api/runs/attempts/:id/retry`, `POST /api/runs/:runId/reset-errors` via `packages/api/routes/runs-queue.js` (8 HTTP-Tests grün); altes `GET /api/runs` bleibt vorerst als deprecated Alias bis UI-Migration in Phase 3, finale Entfernung in Phase 4
+- [x] 2.4 Cancel-Endpoint auf Pause umstellen — `POST /api/runs/:runId/cancel` bricht AbortController ab **und** ruft `pauseRun`, Response: `{ cancelled, paused }`
+- [x] 2.5 Startup-Recovery verdrahten — `requeueStaleRunningAttempts` läuft beim API-Start; geloggt falls > 0 Rows requeued
+
+Phase 3 — UI:
+- [x] 3.1 React-Query-Hooks `useRunQueue` / `useRunHistory` angelegt (useData.js); `useRuns` bleibt als deprecated alias bis 3.5
+- [ ] 3.2 Queue-Tabelle im Run-Tab — Status-Badges inkl. `waiting` als "waiting for prev. result", pulsierender Dot auf `running`
+- [ ] 3.3 Retry-Button pro `error`-Zeile + "Alle Fehler zurücksetzen"-Button pro Run
+- [ ] 3.4 Resume-Button für `paused`-Runs (ersetzt bestehenden Resume-Pfad per neuer run_id)
+- [ ] 3.5 History-Ansicht auf nur `done` umstellen; Run-Dropdown entfernen
+
+Phase 4 — Cleanup:
+- [ ] 4.1 Leaderboard + Insight-Views (`leaderboard`, `leaderboard_by_version`, `target_difficulty`, `model_consistency`, `cost_efficiency`, `match_distribution`) auf `attempt_results` umstellen statt roher `runs`
+- [ ] 4.2 Sync-Policy: nur `status='done'` syncen; `run_state`-Sync aus `packages/db/sync.js` entfernen
+- [ ] 4.3 Alte Shims entfernen (`saveAttempt`, `saveRunStart`, `saveRunEnd`); `run_state`-Tabelle droppen
+- [ ] 4.4 STATUS.md + README.md finalisieren (Refactor-Abschnitt durch Ist-Zustand ersetzen)
 
 ## Ideas / Backlog
 

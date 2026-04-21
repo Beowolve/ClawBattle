@@ -137,6 +137,37 @@ cd packages/dashboard
 npm run build:public   # output → dist-public/
 ```
 
+## Run-System Refactor (work in progress)
+
+The run orchestrator is being migrated from an in-memory queue + split `runs`/`run_state` schema to a single DB-backed attempt queue. Phase 1 (DB primitives) is complete; Phases 2–4 are open.
+
+**Target behaviour when done:**
+
+- Queue is persistent — restart the process and work continues. Every `(target, attempt)` combination is pre-inserted with status `waiting | pending | running | done | error | paused`.
+- Attempt 2/3 only runs after attempt 1 finishes `done`. If attempt 1 ends in `error`, successors stay `waiting` — no automatic skip.
+- Errors are non-terminal. A run stays visible in the queue with a **Retry** button per errored attempt plus **Reset all errors** per run, until every attempt is `done`.
+- Pause/Resume is precise: the pre-pause status is stored per row and fully restored on resume; resumed runs are re-enqueued at the back of the queue.
+- Dashboard splits into a **Queue** view (everything not-yet-done, with live attempt rows) and a **History** view (only fully-completed runs).
+
+**Open work:**
+
+- **Phase 2 — Runner & API**
+  - Replace the in-process queue/worker pool in `packages/runner/benchmark.js` with DB-claim workers (`claimNextPending` → run → `completeAttempt` / `failAttempt`).
+  - Keep the internal transient-error retry inside a claim; only promote to `status='error'` after it's exhausted.
+  - API surface: `POST /api/runs/start`, `POST /api/runs/:runId/cancel` (now pauses), `POST /api/runs/:runId/resume`, `POST /api/runs/attempts/:id/retry`, `POST /api/runs/:runId/reset-errors`, `GET /api/runs/queue`, `GET /api/runs/history`. The unified `GET /api/runs` endpoint goes away.
+  - Run `requeueStaleRunningAttempts` once on server start to recover from crashes.
+- **Phase 3 — Dashboard**
+  - New hooks `useRunQueue` / `useRunHistory`, old `useRuns` removed.
+  - Run tab shows the queue as a table (per-attempt status badges incl. `waiting for prev. result`), with Retry / Reset-errors / Resume buttons.
+  - Run History only shows `done` runs; the active-run dropdown is removed.
+- **Phase 4 — Cleanup**
+  - Leaderboard and insight views read from `attempt_results` (only `status='done'`) instead of raw `runs`.
+  - Supabase sync only uploads `done` rows; queue state stays local. `run_state` sync removed.
+  - Drop the legacy `saveAttempt` / `saveRunStart` / `saveRunEnd` shims and the `run_state` table.
+  - Finalise [STATUS.md](STATUS.md) and this section.
+
+Full design notes live in the plan file referenced from [STATUS.md](STATUS.md).
+
 ## Running Tests
 
 ```bash

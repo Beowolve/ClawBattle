@@ -146,3 +146,10 @@ export async function upsertRuns(_rows) { return 0; }
 export async function upsertRunStates(_rows) { return 0; }
 export async function getExistingAttempts(_opts) { return new Map(); }
 export async function deleteRunById(_runId) {}
+export async function getRunQueue() { return []; }
+export async function getRunHistory() { return []; }
+export async function retryAttempt(_id) { return false; }
+export async function resetErrors(_runId) { return 0; }
+export async function pauseRun(_runId) { return 0; }
+export async function resumeRun(_runId) { return 0; }
+export async function requeueStaleRunningAttempts() { return 0; }

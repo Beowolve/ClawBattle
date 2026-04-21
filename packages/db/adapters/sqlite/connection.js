@@ -9,32 +9,69 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 
-function initSchema(db) {
+const RUNS_COLUMNS_SQL = `
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  run_id TEXT NOT NULL,
+  benchmark_version TEXT NOT NULL,
+  model TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  prompt_version TEXT,
+  temperature REAL,
+  attempts_per_target INTEGER,
+  started_at TEXT,
+  finished_at TEXT,
+  target_id TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  attempt INTEGER NOT NULL,
+  match REAL,
+  score REAL,
+  tokens_used INTEGER,
+  code TEXT,
+  code_length INTEGER,
+  cost REAL,
+  duration_ms INTEGER,
+  reasoning_effort TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  status TEXT NOT NULL DEFAULT 'done',
+  error_message TEXT,
+  enqueued_at TEXT NOT NULL DEFAULT (datetime('now')),
+  claimed_at TEXT,
+  claim_token TEXT,
+  paused_from TEXT
+`;
+
+const LEGACY_REUSABLE_COLUMNS = [
+  'id', 'run_id', 'benchmark_version', 'model', 'provider',
+  'prompt_version', 'temperature', 'attempts_per_target', 'started_at', 'finished_at',
+  'target_id', 'target_type', 'attempt', 'match', 'score', 'tokens_used',
+  'code', 'code_length', 'cost', 'duration_ms', 'reasoning_effort', 'created_at',
+  'status', 'error_message', 'enqueued_at', 'claimed_at', 'claim_token', 'paused_from',
+];
+
+function migrateRunsTable(db) {
+  const cols = db.prepare("PRAGMA table_info(runs)").all();
+  if (cols.length === 0) return;
+
+  const names = new Set(cols.map(c => c.name));
+  const matchCol = cols.find(c => c.name === 'match');
+  const matchIsNotNull = matchCol && matchCol.notnull === 1;
+  const missingNewColumns = ['status', 'enqueued_at', 'paused_from'].some(n => !names.has(n));
+
+  if (!matchIsNotNull && !missingNewColumns) return;
+
+  const carryOver = LEGACY_REUSABLE_COLUMNS.filter(n => names.has(n));
+  const carryList = carryOver.join(', ');
   db.exec(`
-    CREATE TABLE IF NOT EXISTS runs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      run_id TEXT NOT NULL,
-      benchmark_version TEXT NOT NULL,
-      model TEXT NOT NULL,
-      provider TEXT NOT NULL,
-      prompt_version TEXT,
-      temperature REAL,
-      attempts_per_target INTEGER,
-      started_at TEXT,
-      finished_at TEXT,
-      target_id TEXT NOT NULL,
-      target_type TEXT NOT NULL,
-      attempt INTEGER NOT NULL,
-      match REAL NOT NULL,
-      score REAL,
-      tokens_used INTEGER,
-      code TEXT,
-      code_length INTEGER,
-      cost REAL,
-      duration_ms INTEGER,
-      reasoning_effort TEXT,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
+    CREATE TABLE runs_new (${RUNS_COLUMNS_SQL});
+    INSERT INTO runs_new (${carryList}) SELECT ${carryList} FROM runs;
+    DROP TABLE runs;
+    ALTER TABLE runs_new RENAME TO runs;
+  `);
+}
+
+export function initSchema(db) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS runs (${RUNS_COLUMNS_SQL});
 
     CREATE TABLE IF NOT EXISTS run_state (
       run_id           TEXT PRIMARY KEY,
@@ -46,15 +83,6 @@ function initSchema(db) {
       finished_at      TEXT,
       status           TEXT NOT NULL DEFAULT 'running'
     );
-
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_unique
-      ON runs(run_id, target_id, attempt);
-    CREATE INDEX IF NOT EXISTS idx_runs_model
-      ON runs(model);
-    CREATE INDEX IF NOT EXISTS idx_runs_target
-      ON runs(target_id, target_type);
-    CREATE INDEX IF NOT EXISTS idx_runs_created_at
-      ON runs(created_at);
 
     CREATE TABLE IF NOT EXISTS battle_targets (
       id INTEGER PRIMARY KEY,
@@ -75,6 +103,22 @@ function initSchema(db) {
       created_at TEXT,
       updated_at TEXT
     );
+  `);
+
+  migrateRunsTable(db);
+
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_unique
+      ON runs(run_id, target_id, attempt);
+    CREATE INDEX IF NOT EXISTS idx_runs_model
+      ON runs(model);
+    CREATE INDEX IF NOT EXISTS idx_runs_target
+      ON runs(target_id, target_type);
+    CREATE INDEX IF NOT EXISTS idx_runs_created_at
+      ON runs(created_at);
+    CREATE INDEX IF NOT EXISTS idx_runs_queue
+      ON runs(status, enqueued_at, id)
+      WHERE status IN ('pending', 'running', 'paused', 'waiting', 'error');
   `);
 
   db.exec(`
@@ -214,6 +258,43 @@ function initSchema(db) {
       COUNT(*) AS count
     FROM runs WHERE match IS NOT NULL
     GROUP BY model, prompt_version, bucket;
+
+    DROP VIEW IF EXISTS attempt_results;
+    CREATE VIEW attempt_results AS
+    SELECT * FROM runs WHERE status = 'done';
+
+    DROP VIEW IF EXISTS runs_summary;
+    CREATE VIEW runs_summary AS
+    SELECT
+      run_id,
+      MAX(benchmark_version) AS benchmark_version,
+      MAX(model) AS model,
+      MAX(provider) AS provider,
+      MAX(prompt_version) AS prompt_version,
+      MAX(reasoning_effort) AS reasoning_effort,
+      MAX(attempts_per_target) AS attempts_per_target,
+      MIN(started_at) AS started_at,
+      CASE
+        WHEN SUM(CASE WHEN status IN ('pending','running','waiting','paused','error') THEN 1 ELSE 0 END) = 0
+        THEN MAX(finished_at)
+        ELSE NULL
+      END AS finished_at,
+      CASE
+        WHEN SUM(CASE WHEN status = 'paused'  THEN 1 ELSE 0 END) > 0 THEN 'paused'
+        WHEN SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) > 0 THEN 'running'
+        WHEN SUM(CASE WHEN status = 'error'   THEN 1 ELSE 0 END) > 0 THEN 'error'
+        WHEN SUM(CASE WHEN status IN ('pending','waiting') THEN 1 ELSE 0 END) > 0 THEN 'queued'
+        ELSE 'done'
+      END AS status,
+      COUNT(*) AS total,
+      SUM(CASE WHEN status = 'done'    THEN 1 ELSE 0 END) AS done_count,
+      SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
+      SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) AS waiting_count,
+      SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) AS running_count,
+      SUM(CASE WHEN status = 'paused'  THEN 1 ELSE 0 END) AS paused_count,
+      SUM(CASE WHEN status = 'error'   THEN 1 ELSE 0 END) AS error_count
+    FROM runs
+    GROUP BY run_id;
   `);
 }
 

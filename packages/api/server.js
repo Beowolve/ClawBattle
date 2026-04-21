@@ -4,10 +4,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
-import { getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta, getBattleTargets, getDailyTargets, deleteRunGroup, deleteRunById, upsertRuns, upsertRunStates } from '../db/index.js';
+import {
+  getResults, getResultsCount, getLeaderboard, getInsights, getRunMeta,
+  getBattleTargets, getDailyTargets, deleteRunGroup, deleteRunById,
+  upsertRuns, upsertRunStates,
+  getRunQueue, getRunHistory, retryAttempt, resetErrors, pauseRun, resumeRun,
+  requeueStaleRunningAttempts,
+} from '../db/index.js';
 import { uploadToSupabase, uploadTargetsToSupabase, downloadFromSupabase } from '../db/sync.js';
 import { runBenchmark } from '../runner/benchmark.js';
 import { createJob, getJob, isJobActive, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
+import { createRunsQueueRouter } from './routes/runs-queue.js';
 import { closeBrowser } from '../core/renderer.js';
 
 const app = express();
@@ -77,9 +84,47 @@ app.get('/api/results/count', (req, res) => {
   res.json({ count: getResultsCount({ runId: run_id || undefined }) });
 });
 
+// Deprecated: `GET /api/runs` kept until dashboard migrates to useRunHistory
+// in Phase 3. Scheduled for removal in Phase 4.
 app.get('/api/runs', (req, res) => {
   res.json(getRunMeta());
 });
+
+// Queue/history/retry/resume/reset routes.
+// Resume rewires a benchmark run against the now-pending DB rows; the worker
+// pool picks them up via claimNextPending just like a fresh run.
+app.use('/api/runs', createRunsQueueRouter({
+  getRunQueue,
+  getRunHistory,
+  retryAttempt,
+  resetErrors,
+  resumeRun,
+  startResumedRun: (runId) => {
+    const meta = getRunQueue().find(r => r.run_id === runId) ?? getRunMeta().find(r => r.run_id === runId);
+    if (!meta) return;
+    const signal = createJob(runId, {
+      model: meta.model,
+      provider: meta.provider,
+      promptVersion: meta.prompt_version ?? null,
+      reasoningEffort: meta.reasoning_effort ?? null,
+    });
+    runBenchmark({
+      runId,
+      model: meta.model,
+      provider: meta.provider,
+      targetType: 'battle',
+      attempts: meta.attempts_per_target ?? 3,
+      promptVersion: meta.prompt_version,
+      reasoningEffort: meta.reasoning_effort ?? undefined,
+      signal,
+      concurrency: 1, // resumed runs keep whatever concurrency the user wanted next; default conservative
+      onProgress: (event) => pushEvent(runId, event),
+    }).catch((err) => {
+      if (err.name === 'AbortError') pushEvent(runId, { type: 'cancelled' });
+      else pushEvent(runId, { type: 'fatal_error', message: err.message });
+    });
+  },
+}));
 
 app.delete('/api/runs/group', (req, res) => {
   const { model, reasoningEffort = null, promptVersions } = req.body ?? {};
@@ -142,8 +187,11 @@ app.get('/api/runs/active', (req, res) => {
 app.post('/api/runs/:runId/cancel', (req, res) => {
   const { runId } = req.params;
   if (!getJob(runId)) return res.status(404).json({ error: 'run not found' });
+  // Abort in-flight LLM/render calls first so the worker releases the row.
   const cancelled = cancelJob(runId);
-  res.json({ cancelled });
+  // Then flip any remaining queue rows to paused so they're resumable.
+  const paused = pauseRun(runId);
+  res.json({ cancelled, paused });
 });
 
 app.delete('/api/runs/:runId', (req, res) => {
@@ -214,6 +262,15 @@ app.post('/api/sync/download', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Startup recovery: any `running` rows left over from a crashed/killed
+// process had their in-memory workers disappear. Flip them back to `pending`
+// so a fresh worker can re-claim them. Claim tokens get invalidated in the
+// process.
+const recovered = requeueStaleRunningAttempts();
+if (recovered > 0) {
+  console.log(`[API] Startup recovery: requeued ${recovered} stale running attempt(s)`);
+}
 
 const server = app.listen(PORT, () => console.log(`ClawBattle API running on :${PORT}`));
 

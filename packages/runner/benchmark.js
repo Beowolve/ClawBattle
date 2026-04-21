@@ -1,5 +1,8 @@
 // Benchmark orchestrator
-// Iterates targets, calls LLM, scores, saves results
+// Pre-inserts every (target, attempt) as a DB row via enqueueRun,
+// then drives a pool of workerLoop() workers that claim rows atomically
+// and process them through processClaim. Resume/fill are handled by
+// skipping already-completed targets and (for fill) pre-seeding done rows.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,19 +13,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 import { render, getChromeVersion } from '../core/renderer.js';
 import { computeMatch, computeScore, PROXY_PERFECT_MATCH_THRESHOLD } from '../core/scorer.js';
 import { sanitizeCode } from '../core/utils/code.js';
-import { saveAttempt, saveRunStart, saveRunEnd, getBattleTargets, getDailyTargets, getCompletedTargetIds, getExistingAttempts } from '../db/index.js';
-
-function abortPromise(signal) {
-  return new Promise((_, reject) => {
-    if (signal.aborted) return reject(new DOMException('Run cancelled', 'AbortError'));
-    signal.addEventListener('abort', () => reject(new DOMException('Run cancelled', 'AbortError')), { once: true });
-  });
-}
-
-function raceAbort(promise, signal) {
-  if (!signal) return promise;
-  return Promise.race([promise, abortPromise(signal)]);
-}
+import {
+  getBattleTargets, getDailyTargets,
+  getCompletedTargetIds, getExistingAttempts,
+  saveRunStart, saveRunEnd,
+} from '../db/index.js';
+import { getDb } from '../db/adapters/sqlite/connection.js';
+import { enqueueRun } from '../db/adapters/sqlite/queue.js';
+import { workerLoop } from './worker-loop.js';
 
 const BENCHMARK_VERSION = '1.0';
 const TARGET_WIDTH = 400;
@@ -35,7 +33,7 @@ export async function runBenchmark({
   targetId, targetFrom, targetTo,
   attempts = 3,
   concurrency = 1,
-  retries = 0,
+  retries = 0, // kept for signature compatibility; retries now happen per-attempt via UI
   resumeRunId,
   fillMode = false,
   promptVersion,
@@ -44,28 +42,26 @@ export async function runBenchmark({
 }) {
   const runId = providedRunId ?? crypto.randomUUID();
   const startedAt = new Date().toISOString();
-  if (fillMode) retries = 0;
 
   console.log(`\nClawBattle Benchmark`);
   console.log(`  Run ID:              ${runId}`);
   console.log(`  Model:               ${model}`);
   console.log(`  Targets:             ${targetType}`);
   console.log(`  Attempts per target: ${attempts}`);
-  console.log(`  Concurrency:         ${concurrency}`);
-  console.log(`  Retries:             ${retries}\n`);
+  console.log(`  Concurrency:         ${concurrency}\n`);
 
   const promptTemplate = fs.readFileSync(path.join(PROMPTS_DIR, promptVersion, 'prompt.md'), 'utf8');
   const followupAppendix = fs.readFileSync(path.join(PROMPTS_DIR, 'followup.md'), 'utf8');
   const chromeVersion = await getChromeVersion();
+  const db = getDb();
 
-  const adapter = await resolveAdapter(provider);
-  const definitions = loadDefinitions(targetType, targetId, targetFrom, targetTo);
-  const results = [];
+  const adapterModule = await resolveAdapterModule(provider);
+  const allDefs = loadDefinitions(targetType, targetId, targetFrom, targetTo);
 
   const completedIds = resumeRunId ? getCompletedTargetIds(resumeRunId) : new Set();
   if (resumeRunId) {
     console.log(`  Resume from: ${resumeRunId}`);
-    console.log(`  Completed target IDs found: [${[...completedIds].join(', ')}] (${completedIds.size} total)`);
+    console.log(`  Completed target IDs: [${[...completedIds].join(', ')}] (${completedIds.size} total)`);
   }
 
   const existingByTarget = fillMode
@@ -74,191 +70,228 @@ export async function runBenchmark({
         promptVersion: promptVersion ?? null,
         reasoningEffort: reasoningEffort ?? null,
         targetType,
-        targetIds: definitions.map(d => d.id),
+        targetIds: allDefs.map(d => d.id),
       })
     : new Map();
   if (fillMode) {
-    const summary = definitions.map(d => {
+    const summary = allDefs.map(d => {
       const e = existingByTarget.get(String(Math.round(Number(d.id))));
       return `${d.id}:${e?.maxAttempt ?? 0}/${attempts}`;
     }).join(' ');
     console.log(`  Fill mode: target attempt counts → ${summary}`);
   }
 
-  const runMeta = { promptVersion, temperature: null, attemptsPerTarget: attempts, startedAt, reasoningEffort: reasoningEffort ?? null };
-
-  saveRunStart({ runId, model, provider, promptVersion: promptVersion ?? null, reasoningEffort: reasoningEffort ?? null, startedAt });
-
-  onProgress?.({
-    type: 'start', runId, model, targetCount: definitions.length,
-    targets: definitions.map(d => ({ id: d.id, name: d.name })),
-  });
-
-  async function runTarget(def) {
-    const targetImagePath = path.join(TARGETS_DIR, 'images', targetType, `${def.id}.png`);
-    const targetBuffer = fs.readFileSync(targetImagePath);
-
-    // Resume: skip targets already completed in a prior run
+  // Classify targets: enqueue vs. skip. Skipped ones emit immediate target_done.
+  const enqueueDefs = [];
+  const seedOps = []; // { targetId, startAttempt, lastCode }
+  const skippedDefs = [];
+  for (const def of allDefs) {
     if (completedIds.has(String(def.id))) {
-      console.log(`[${def.id}] Skipping (already completed in resumed run)`);
-      onProgress?.({ type: 'target_skipped', targetId: def.id, targetName: def.name });
-      onProgress?.({ type: 'target_done', targetId: def.id, targetName: def.name, bestMatch: null, bestScore: null, allErrors: false, skipped: true });
-      return;
+      skippedDefs.push(def);
+      continue;
     }
-
-    // Fill: skip targets that already have enough attempts
-    const existing = fillMode ? existingByTarget.get(String(Math.round(Number(def.id)))) : null;
-    const startAttempt = fillMode ? ((existing?.maxAttempt ?? 0) + 1) : 1;
-    if (fillMode && startAttempt > attempts) {
-      console.log(`[${def.id}] Fill: already at ${existing.maxAttempt}/${attempts} — skipping`);
-      onProgress?.({ type: 'target_skipped', targetId: def.id, targetName: def.name });
-      onProgress?.({ type: 'target_done', targetId: def.id, targetName: def.name, bestMatch: null, bestScore: null, allErrors: false, skipped: true });
-      return;
-    }
-
-    let retryNum = 0;
-    while (true) {
-      if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError');
-
-      if (retryNum > 0) {
-        console.log(`[${def.id}] Retry ${retryNum}`);
-        onProgress?.({ type: 'target_retry', targetId: def.id, targetName: def.name, retryNum });
-      }
-
-      console.log(`[${def.id}] ${def.name}${fillMode ? ` (fill ${startAttempt}–${attempts})` : ''}`);
-      onProgress?.({ type: 'target', targetId: def.id, targetName: def.name, targetCount: definitions.length });
-
-      const scores = [];
-      let allErrors = true;
-      let previousRender = null;
-      let previousCode = null;
-
-      // Fill: seed follow-up context by re-rendering the last stored attempt's code.
-      if (fillMode && existing?.lastCode && startAttempt > 1) {
-        try {
-          const sanitized = sanitizeCode(existing.lastCode);
-          previousCode = sanitized;
-          previousRender = await raceAbort(render(sanitized, { signal }), signal);
-          console.log(`  [${def.id}] Seeded follow-up context from attempt ${existing.maxAttempt}`);
-        } catch (err) {
-          if (err?.name === 'AbortError') throw err;
-          console.warn(`  [${def.id}] Could not seed previous render: ${err.message} — continuing without follow-up context`);
-          previousRender = null;
-          previousCode = null;
-        }
-      }
-
-      for (let attempt = startAttempt; attempt <= attempts; attempt++) {
-        if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError');
-        const isFollowup = attempt > 1 && previousRender !== null;
-        const prompt = isFollowup
-          ? buildFollowupPrompt(promptTemplate, followupAppendix, def, chromeVersion, previousCode)
-          : buildPrompt(promptTemplate, def, chromeVersion);
-        const images = isFollowup ? [targetBuffer, previousRender] : [targetBuffer];
-
-        try {
-          const t0 = Date.now();
-          const { code: rawCode, tokensUsed, cost } = await raceAbort(
-            adapter.generate({ model, prompt, images, reasoningEffort, signal }),
-            signal,
-          );
-          const durationMs = Date.now() - t0;
-          const code = sanitizeCode(rawCode);
-          const rendered = await raceAbort(render(code, { signal }), signal);
-          const { match, matchPercent, isProxyPerfect } = computeMatch(rendered, targetBuffer);
-          const codeLength = code.length;
-          const cssBattleScore = computeScore(codeLength, match);
-
-          previousRender = rendered;
-          previousCode = code;
-          scores.push(matchPercent);
-          allErrors = false;
-          saveAttempt({
-            runId, benchmarkVersion: BENCHMARK_VERSION, model, provider,
-            ...runMeta,
-            targetId: def.id, targetType, attempt,
-            match: matchPercent, score: cssBattleScore,
-            tokensUsed, cost, durationMs, code, codeLength,
-          });
-
-          console.log(`  [${def.id}] Attempt ${attempt}: ${matchPercent.toFixed(1)}%${isProxyPerfect ? ' (perfect)' : ''}`);
-          onProgress?.({ type: 'attempt', targetId: def.id, attempt, matchPercent, perfect: isProxyPerfect });
-        } catch (err) {
-          if (err?.name === 'AbortError') throw err;
-          const isPolicyViolation = err?.name === 'PolicyViolationError';
-          if (isPolicyViolation) {
-            console.warn(`  [${def.id}] Attempt ${attempt} rejected by policy: ${err.message}`);
-          } else {
-            console.error(`  [${def.id}] Attempt ${attempt} failed: ${err.message}`);
-          }
-          scores.push(0);
-          onProgress?.({
-            type: 'attempt_error',
-            targetId: def.id,
-            attempt,
-            errorType: isPolicyViolation ? 'policy_violation' : 'runtime_error',
-            message: err.message,
-          });
-        }
-      }
-
-      const bestMatch = scores.length ? Math.max(...scores) : 0;
-      const perfect = scores.some(s => s >= PROXY_PERFECT_MATCH_THRESHOLD * 100);
-      const bestScore = bestMatch; // matchPercent as reported in target_done
-
-      onProgress?.({ type: 'target_done', targetId: def.id, targetName: def.name, bestMatch, bestScore, allErrors, skipped: false });
-
-      if (allErrors && retryNum < retries) {
-        retryNum++;
+    if (fillMode) {
+      const existing = existingByTarget.get(String(Math.round(Number(def.id))));
+      const startAttempt = (existing?.maxAttempt ?? 0) + 1;
+      if (startAttempt > attempts) {
+        skippedDefs.push(def);
         continue;
       }
-
-      results.push({ targetId: def.id, bestScore: bestMatch, scores, perfect, allErrors });
-      break;
+      enqueueDefs.push(def);
+      if (startAttempt > 1 && existing?.lastCode) {
+        seedOps.push({ targetId: String(def.id), startAttempt, lastCode: existing.lastCode });
+      }
+    } else {
+      enqueueDefs.push(def);
     }
   }
 
-  const queue = [...definitions];
-  const workers = Array.from(
-    { length: Math.min(concurrency, definitions.length) },
-    async () => {
-      while (queue.length) {
-        if (signal?.aborted) {
-          queue.length = 0;
-          throw new DOMException('Run cancelled', 'AbortError');
-        }
-        await runTarget(queue.shift());
+  onProgress?.({
+    type: 'start', runId, model, targetCount: allDefs.length,
+    targets: allDefs.map(d => ({ id: d.id, name: d.name })),
+  });
+
+  for (const def of skippedDefs) {
+    console.log(`[${def.id}] Skipping (${fillMode ? 'already filled' : 'already completed'})`);
+    onProgress?.({ type: 'target_skipped', targetId: def.id, targetName: def.name });
+    onProgress?.({
+      type: 'target_done', targetId: def.id, targetName: def.name,
+      bestMatch: null, bestScore: null, allErrors: false, skipped: true,
+    });
+  }
+
+  saveRunStart({
+    runId, model, provider,
+    promptVersion: promptVersion ?? null,
+    reasoningEffort: reasoningEffort ?? null,
+    startedAt,
+  });
+
+  if (enqueueDefs.length === 0) {
+    saveRunEnd({ runId, finishedAt: new Date().toISOString(), status: 'done' });
+    const summary = { avgScore: 0, perfectRate: 0, targetCount: 0 };
+    onProgress?.({ type: 'done', runId, summary });
+    return { runId, summary };
+  }
+
+  enqueueRun(db, {
+    runId,
+    benchmarkVersion: BENCHMARK_VERSION,
+    model,
+    provider,
+    promptVersion: promptVersion ?? null,
+    reasoningEffort: reasoningEffort ?? null,
+    attemptsPerTarget: attempts,
+    startedAt,
+    targets: enqueueDefs.map(d => ({ id: d.id, type: targetType })),
+  });
+
+  // Fill mode: mark attempts 1..startAttempt-1 as 'done' so getPreviousAttempt
+  // finds the seed code at attempt startAttempt-1, and flip attempt=startAttempt
+  // from 'waiting' to 'pending' so a worker can claim it immediately.
+  for (const { targetId, startAttempt, lastCode } of seedOps) {
+    db.prepare(`
+      UPDATE runs
+      SET status = 'done', code = NULL
+      WHERE run_id = ? AND target_id = ? AND attempt < ?
+    `).run(runId, targetId, startAttempt);
+    db.prepare(`
+      UPDATE runs
+      SET code = ?
+      WHERE run_id = ? AND target_id = ? AND attempt = ?
+    `).run(lastCode, runId, targetId, startAttempt - 1);
+    db.prepare(`
+      UPDATE runs
+      SET status = 'pending'
+      WHERE run_id = ? AND target_id = ? AND attempt = ? AND status = 'waiting'
+    `).run(runId, targetId, startAttempt);
+  }
+
+  // Target lookup for workers.
+  const defById = new Map(enqueueDefs.map(d => [String(d.id), d]));
+  const bufferByKey = new Map();
+  const resolveTarget = (type, tid) => {
+    const norm = String(Math.round(Number(tid)));
+    const def = defById.get(String(tid))
+      ?? defById.get(norm)
+      ?? [...defById.values()].find(d => String(Math.round(Number(d.id))) === norm);
+    if (!def) throw new Error(`Target not found: type=${type} id=${tid}`);
+    const key = `${type}/${def.id}`;
+    let buffer = bufferByKey.get(key);
+    if (!buffer) {
+      buffer = fs.readFileSync(path.join(TARGETS_DIR, 'images', type, `${def.id}.png`));
+      bufferByKey.set(key, buffer);
+    }
+    return { def, buffer };
+  };
+
+  const resolveAdapter = () => adapterModule;
+  const resolvePromptTemplate = () => promptTemplate;
+
+  // Per-target aggregation — turns raw attempt/attempt_error/target_done events
+  // into the target_done payload the dashboard expects (bestMatch, allErrors, etc).
+  const targetState = new Map();
+  for (const def of enqueueDefs) {
+    targetState.set(String(def.id), { def, scores: [], allErrors: true, emittedDone: false });
+  }
+
+  const progressShim = (evt) => {
+    if (evt.type === 'attempt') {
+      const s = targetState.get(String(evt.targetId));
+      if (s) {
+        s.scores.push(evt.matchPercent);
+        s.allErrors = false;
+      }
+      console.log(`  [${evt.targetId}] Attempt ${evt.attempt}: ${evt.matchPercent.toFixed(1)}%${evt.perfect ? ' (perfect)' : ''}`);
+      onProgress?.(evt);
+      return;
+    }
+    if (evt.type === 'attempt_error') {
+      const s = targetState.get(String(evt.targetId));
+      if (s) s.scores.push(0);
+      if (evt.errorType === 'policy_violation') {
+        console.warn(`  [${evt.targetId}] Attempt ${evt.attempt} rejected by policy: ${evt.message}`);
+      } else {
+        console.error(`  [${evt.targetId}] Attempt ${evt.attempt} failed: ${evt.message}`);
+      }
+      onProgress?.(evt);
+      return;
+    }
+    if (evt.type === 'target_done') {
+      const s = targetState.get(String(evt.targetId));
+      if (s && !s.emittedDone) {
+        s.emittedDone = true;
+        const bestMatch = s.scores.length ? Math.max(...s.scores) : 0;
+        onProgress?.({
+          type: 'target_done',
+          targetId: s.def.id,
+          targetName: s.def.name,
+          bestMatch,
+          bestScore: bestMatch,
+          allErrors: s.allErrors,
+          skipped: false,
+        });
+        return;
       }
     }
-  );
+    onProgress?.(evt);
+  };
 
-  // Drain queue as soon as abort fires so workers can't pick up more targets.
-  signal?.addEventListener('abort', () => { queue.length = 0; }, { once: true });
+  const workerCount = Math.max(1, Math.min(concurrency, enqueueDefs.length));
+  const workers = Array.from({ length: workerCount }, () =>
+    workerLoop({
+      db, signal,
+      resolveTarget, resolveAdapter, resolvePromptTemplate,
+      followupAppendix, chromeVersion,
+      render, computeMatch, computeScore, sanitizeCode,
+      width: TARGET_WIDTH, height: TARGET_HEIGHT,
+      onProgress: progressShim,
+    }),
+  );
 
   let finalStatus = 'done';
   let workerError;
   try {
     await Promise.all(workers);
-    if (results.some(r => r.allErrors)) finalStatus = 'incomplete';
+    const counts = db.prepare(`
+      SELECT
+        SUM(CASE WHEN status IN ('pending','running','waiting') THEN 1 ELSE 0 END) AS open_count,
+        SUM(CASE WHEN status = 'paused' THEN 1 ELSE 0 END) AS paused_count,
+        SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS error_count
+      FROM runs WHERE run_id = ?
+    `).get(runId);
+    if ((counts.paused_count ?? 0) > 0) finalStatus = 'cancelled';
+    else if ((counts.open_count ?? 0) > 0) finalStatus = 'incomplete';
+    else if ((counts.error_count ?? 0) > 0) finalStatus = 'incomplete';
   } catch (err) {
-    finalStatus = err.name === 'AbortError' ? 'cancelled' : 'error';
+    finalStatus = err?.name === 'AbortError' ? 'cancelled' : 'error';
     workerError = err;
   } finally {
     saveRunEnd({ runId, finishedAt: new Date().toISOString(), status: finalStatus });
   }
   if (workerError) throw workerError;
 
-  const summary = buildSummary(results);
-  const finishedAt = new Date().toISOString();
-
+  const summary = buildSummaryFromDb(db, runId);
   console.log(`\nDone`);
   console.log(`  Avg Best Score (per target): ${summary.avgScore.toFixed(1)}%`);
   console.log(`  Perfect Rate: ${(summary.perfectRate * 100).toFixed(1)}%`);
   console.log(`  Run ID:       ${runId}\n`);
 
   onProgress?.({ type: 'done', runId, summary });
-
   return { runId, summary };
+}
+
+function buildSummaryFromDb(db, runId) {
+  const rows = db.prepare(`
+    SELECT target_id, MAX(match) AS best_match
+    FROM runs
+    WHERE run_id = ? AND status = 'done' AND match IS NOT NULL
+    GROUP BY target_id
+  `).all(runId);
+  if (rows.length === 0) return { avgScore: 0, perfectRate: 0, targetCount: 0 };
+  const avgScore = rows.reduce((s, r) => s + r.best_match, 0) / rows.length;
+  const perfectRate = rows.filter(r => r.best_match >= PROXY_PERFECT_MATCH_THRESHOLD * 100).length / rows.length;
+  return { avgScore, perfectRate, targetCount: rows.length };
 }
 
 function loadDefinitions(targetType, targetId, targetFrom, targetTo) {
@@ -276,28 +309,8 @@ function loadDefinitions(targetType, targetId, targetFrom, targetTo) {
   });
 }
 
-function buildPrompt(template, def, chromeVersion) {
-  return template
-    .replace('{{WIDTH}}', TARGET_WIDTH)
-    .replace('{{HEIGHT}}', TARGET_HEIGHT)
-    .replace('{{COLORS}}', def.colors.join(', '))
-    .replace('{{CHROME_VERSION}}', chromeVersion);
-}
-
-function buildFollowupPrompt(template, appendix, def, chromeVersion, previousCode) {
-  const base = buildPrompt(template, def, chromeVersion);
-  return base + '\n' + appendix.replace('{{PREVIOUS_CODE}}', previousCode ?? '');
-}
-
-function buildSummary(results) {
-  if (results.length === 0) return { avgScore: 0, perfectRate: 0, targetCount: 0 };
-  const avgScore = results.reduce((s, r) => s + r.bestScore, 0) / results.length;
-  const perfectRate = results.filter(r => r.perfect).length / results.length;
-  return { avgScore, perfectRate, targetCount: results.length };
-}
-
-async function resolveAdapter(provider) {
+async function resolveAdapterModule(provider) {
   if (provider === 'openai') return import('../core/llm/openai.js');
   if (provider === 'ollama') return import('../core/llm/ollama.js');
-  return import('../core/llm/openrouter.js'); // default
+  return import('../core/llm/openrouter.js');
 }
