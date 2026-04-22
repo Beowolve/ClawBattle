@@ -9,10 +9,11 @@ import {
   getBattleTargets, getDailyTargets, deleteRunGroup,
   upsertRuns,
   getRunQueue, getRunHistory, retryAttempt, resetErrors, pauseRun, resumeRun,
-  requeueStaleRunningAttempts,
+  hasRunPendingWork, requeueStaleRunningAttempts,
+  deleteRun, deleteAttempt,
 } from '../db/index.js';
 import { uploadToSupabase, uploadTargetsToSupabase, downloadFromSupabase } from '../db/sync.js';
-import { runBenchmark } from '../runner/benchmark.js';
+import { runBenchmark, resumeWorkers } from '../runner/benchmark.js';
 import { createJob, getJob, isJobActive, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
 import { createRunsQueueRouter } from './routes/runs-queue.js';
 import { closeBrowser } from '../core/renderer.js';
@@ -37,7 +38,7 @@ app.get('/api/config', (req, res) => {
     .filter(d => fs.statSync(path.join(promptsDir, d)).isDirectory())
     .sort();
   res.json({
-    promptVersion: process.env.PROMPT_VERSION ?? 'v1',
+    promptVersion: process.env.PROMPT_VERSION ?? 'v3',
     availablePromptVersions: available,
   });
 });
@@ -94,6 +95,11 @@ app.use('/api/runs', createRunsQueueRouter({
   retryAttempt,
   resetErrors,
   resumeRun,
+  hasRunPendingWork,
+  isJobActive,
+  cancelJob,
+  deleteRun,
+  deleteAttempt,
   startResumedRun: (runId) => {
     const meta = getRunQueue().find(r => r.run_id === runId);
     if (!meta) return;
@@ -102,17 +108,24 @@ app.use('/api/runs', createRunsQueueRouter({
       provider: meta.provider,
       promptVersion: meta.prompt_version ?? null,
       reasoningEffort: meta.reasoning_effort ?? null,
+      reasoningMaxTokens: meta.reasoning_max_tokens ?? null,
     });
-    runBenchmark({
+    console.log(
+      `[API] Resume run — runId=${runId} model=${meta.model}` +
+      `${meta.reasoning_effort ? ` [${meta.reasoning_effort}]` : ''}` +
+      ` provider=${meta.provider} prompt=${meta.prompt_version ?? '?'}`,
+    );
+    // Use resumeWorkers instead of runBenchmark so we never call enqueueRun.
+    // The run's rows are already in the DB (restored from 'paused' by resumeRun);
+    // calling runBenchmark without target bounds would enqueue ALL battle targets.
+    resumeWorkers({
       runId,
       model: meta.model,
       provider: meta.provider,
-      targetType: 'battle',
-      attempts: meta.attempts_per_target ?? 3,
-      promptVersion: meta.prompt_version,
+      promptVersion: meta.prompt_version ?? process.env.PROMPT_VERSION ?? 'v3',
       reasoningEffort: meta.reasoning_effort ?? undefined,
+      concurrency: 1,
       signal,
-      concurrency: 1, // resumed runs keep whatever concurrency the user wanted next; default conservative
       onProgress: (event) => pushEvent(runId, event),
     }).catch((err) => {
       if (err.name === 'AbortError') pushEvent(runId, { type: 'cancelled' });
@@ -137,22 +150,34 @@ app.delete('/api/runs/group', (req, res) => {
 
 app.post('/api/runs/start', (req, res) => {
   const {
-    model, provider = 'openrouter', attempts = 3, promptVersion = process.env.PROMPT_VERSION ?? 'v1',
+    model, provider = 'openrouter', attempts = 3, promptVersion = process.env.PROMPT_VERSION ?? 'v3',
     targetFrom, targetTo,
     concurrency = 1,
     retries = 0,
     resumeRunId,
     fillMode = false,
     reasoningEffort,
+    reasoningMaxTokens,
   } = req.body ?? {};
   if (!model) return res.status(400).json({ error: 'model required' });
 
   const runId = crypto.randomUUID();
-  const signal = createJob(runId, { model, provider, promptVersion: promptVersion ?? null, reasoningEffort: reasoningEffort ?? null });
+  const signal = createJob(runId, {
+    model, provider,
+    promptVersion: promptVersion ?? null,
+    reasoningEffort: reasoningEffort ?? null,
+    reasoningMaxTokens: reasoningMaxTokens ?? null,
+  });
 
-  if (resumeRunId) {
-    console.log(`[API] Resume requested — resumeRunId: ${resumeRunId}`);
-  }
+  const rangeStr = targetFrom != null || targetTo != null
+    ? `${targetFrom ?? 1}-${targetTo ?? '*'}`
+    : 'all';
+  console.log(
+    `[API] Start run — runId=${runId} model=${model}${reasoningEffort ? ` [${reasoningEffort}]` : ''}` +
+    `${reasoningMaxTokens ? ` reasoningMaxTokens=${reasoningMaxTokens}` : ''}` +
+    ` provider=${provider} prompt=${promptVersion} targets=${rangeStr} attempts=${attempts}` +
+    ` concurrency=${concurrency}${fillMode ? ' fill' : ''}${resumeRunId ? ` resumeFrom=${resumeRunId}` : ''}`,
+  );
 
   runBenchmark({
     runId, model, provider, targetType: 'battle', attempts, promptVersion, signal,
@@ -163,6 +188,7 @@ app.post('/api/runs/start', (req, res) => {
     targetFrom: targetFrom != null ? Number(targetFrom) : undefined,
     targetTo: targetTo != null ? Number(targetTo) : undefined,
     reasoningEffort: reasoningEffort ?? undefined,
+    reasoningMaxTokens: reasoningMaxTokens != null ? Number(reasoningMaxTokens) : undefined,
     onProgress: (event) => pushEvent(runId, event),
   }).catch((err) => {
     if (err.name === 'AbortError') {

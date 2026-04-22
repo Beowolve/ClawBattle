@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import express from 'express';
 import { openDb } from '../../db/adapters/sqlite/connection.js';
 import {
-  enqueueRun, claimNextPending, failAttempt, pauseRun,
+  enqueueRun, claimNextPending, completeAttempt, failAttempt, pauseRun,
   getRunQueue, getRunHistory, retryAttempt, resetErrors, resumeRun,
+  hasRunPendingWork,
 } from '../../db/adapters/sqlite/queue.js';
 import { createRunsQueueRouter } from './runs-queue.js';
 
@@ -28,6 +29,7 @@ async function startServer(db, extra = {}) {
     retryAttempt: (id) => retryAttempt(db, id),
     resetErrors: (runId) => resetErrors(db, runId),
     resumeRun: (runId) => resumeRun(db, runId),
+    hasRunPendingWork: (runId) => hasRunPendingWork(db, runId),
     ...extra,
   }));
   const server = await new Promise((resolve) => {
@@ -157,13 +159,54 @@ test('POST /api/runs/:runId/resume restores paused rows and calls startResumedRu
   }
 });
 
-test('POST /api/runs/:runId/resume returns 409 when nothing is paused', async () => {
+test('POST /api/runs/:runId/resume starts workers on a non-paused run with pending rows', async () => {
+  // Scenario: workers exited without pausing (e.g. credits ran out, server
+  // restart). Rows are pending/waiting, not paused. Resume should still
+  // kick off workers.
   const db = openDb(':memory:');
   enqueueRun(db, baseOpts);
+  let resumedFor = null;
+  const { url, close } = await startServer(db, {
+    startResumedRun: (runId) => { resumedFor = runId; },
+  });
+  try {
+    const res = await fetch(`${url}/api/runs/run-http-1/resume`, { method: 'POST' });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.resumed, true);
+    assert.equal(body.count, 0); // nothing restored — nothing was paused
+    assert.equal(resumedFor, 'run-http-1');
+  } finally {
+    await close();
+  }
+});
+
+test('POST /api/runs/:runId/resume returns 409 when run has no outstanding work', async () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, { ...baseOpts, targets: [{ id: '1', type: 'battle' }], attemptsPerTarget: 1 });
+  const claim = claimNextPending(db);
+  completeAttempt(db, claim.id, claim.claim_token, { match: 100, score: 50 });
   const { url, close } = await startServer(db);
   try {
     const res = await fetch(`${url}/api/runs/run-http-1/resume`, { method: 'POST' });
     assert.equal(res.status, 409);
+  } finally {
+    await close();
+  }
+});
+
+test('POST /api/runs/:runId/resume returns 409 when a worker is already active', async () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, baseOpts);
+  let resumedCalls = 0;
+  const { url, close } = await startServer(db, {
+    isJobActive: () => true,
+    startResumedRun: () => { resumedCalls++; },
+  });
+  try {
+    const res = await fetch(`${url}/api/runs/run-http-1/resume`, { method: 'POST' });
+    assert.equal(res.status, 409);
+    assert.equal(resumedCalls, 0);
   } finally {
     await close();
   }

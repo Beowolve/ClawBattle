@@ -37,6 +37,7 @@ export async function runBenchmark({
   fillMode = false,
   promptVersion,
   reasoningEffort,
+  reasoningMaxTokens,
   runId: providedRunId, onProgress, signal,
 }) {
   const runId = providedRunId ?? crypto.randomUUID();
@@ -132,6 +133,7 @@ export async function runBenchmark({
     provider,
     promptVersion: promptVersion ?? null,
     reasoningEffort: reasoningEffort ?? null,
+    reasoningMaxTokens: reasoningMaxTokens ?? null,
     attemptsPerTarget: attempts,
     startedAt,
     targets: enqueueDefs.map(d => ({ id: d.id, type: targetType })),
@@ -179,54 +181,7 @@ export async function runBenchmark({
   const resolveAdapter = () => adapterModule;
   const resolvePromptTemplate = () => promptTemplate;
 
-  // Per-target aggregation — turns raw attempt/attempt_error/target_done events
-  // into the target_done payload the dashboard expects (bestMatch, allErrors, etc).
-  const targetState = new Map();
-  for (const def of enqueueDefs) {
-    targetState.set(String(def.id), { def, scores: [], allErrors: true, emittedDone: false });
-  }
-
-  const progressShim = (evt) => {
-    if (evt.type === 'attempt') {
-      const s = targetState.get(String(evt.targetId));
-      if (s) {
-        s.scores.push(evt.matchPercent);
-        s.allErrors = false;
-      }
-      console.log(`  [${evt.targetId}] Attempt ${evt.attempt}: ${evt.matchPercent.toFixed(1)}%${evt.perfect ? ' (perfect)' : ''}`);
-      onProgress?.(evt);
-      return;
-    }
-    if (evt.type === 'attempt_error') {
-      const s = targetState.get(String(evt.targetId));
-      if (s) s.scores.push(0);
-      if (evt.errorType === 'policy_violation') {
-        console.warn(`  [${evt.targetId}] Attempt ${evt.attempt} rejected by policy: ${evt.message}`);
-      } else {
-        console.error(`  [${evt.targetId}] Attempt ${evt.attempt} failed: ${evt.message}`);
-      }
-      onProgress?.(evt);
-      return;
-    }
-    if (evt.type === 'target_done') {
-      const s = targetState.get(String(evt.targetId));
-      if (s && !s.emittedDone) {
-        s.emittedDone = true;
-        const bestMatch = s.scores.length ? Math.max(...s.scores) : 0;
-        onProgress?.({
-          type: 'target_done',
-          targetId: s.def.id,
-          targetName: s.def.name,
-          bestMatch,
-          bestScore: bestMatch,
-          allErrors: s.allErrors,
-          skipped: false,
-        });
-        return;
-      }
-    }
-    onProgress?.(evt);
-  };
+  const progressShim = createProgressShim(defById, onProgress);
 
   const workerCount = Math.max(1, Math.min(concurrency, enqueueDefs.length));
   const workers = Array.from({ length: workerCount }, () =>
@@ -252,6 +207,62 @@ export async function runBenchmark({
 
   onProgress?.({ type: 'done', runId, summary });
   return { runId, summary };
+}
+
+// Wraps raw worker events with per-target aggregation + console logging.
+// Shared between fresh runs (runBenchmark) and resumed runs (resumeWorkers),
+// so both paths log every attempt start/result/error identically.
+function createProgressShim(defById, onProgress) {
+  const targetState = new Map();
+  function ensureState(targetId) {
+    const key = String(targetId);
+    if (!targetState.has(key)) {
+      const def = defById.get(String(targetId))
+        ?? defById.get(String(Math.round(Number(targetId))))
+        ?? { id: targetId, name: String(targetId) };
+      targetState.set(key, { def, scores: [], allErrors: true, emittedDone: false });
+    }
+    return targetState.get(key);
+  }
+  return (evt) => {
+    if (evt.type === 'attempt_start') {
+      const tag = evt.isFollowup ? ' (follow-up)' : '';
+      console.log(`  [${evt.targetId}] Attempt ${evt.attempt} starting — ${evt.model}${tag}`);
+      onProgress?.(evt);
+      return;
+    }
+    if (evt.type === 'attempt') {
+      const s = ensureState(evt.targetId);
+      s.scores.push(evt.matchPercent);
+      s.allErrors = false;
+      console.log(`  [${evt.targetId}] Attempt ${evt.attempt}: ${evt.matchPercent.toFixed(1)}%${evt.perfect ? ' (perfect)' : ''}`);
+      onProgress?.(evt);
+      return;
+    }
+    if (evt.type === 'attempt_error') {
+      ensureState(evt.targetId).scores.push(0);
+      if (evt.errorType === 'policy_violation') {
+        console.warn(`  [${evt.targetId}] Attempt ${evt.attempt} rejected by policy: ${evt.message}`);
+      } else {
+        console.error(`  [${evt.targetId}] Attempt ${evt.attempt} failed: ${evt.message}`);
+      }
+      onProgress?.(evt);
+      return;
+    }
+    if (evt.type === 'target_done') {
+      const s = ensureState(evt.targetId);
+      if (!s.emittedDone) {
+        s.emittedDone = true;
+        const bestMatch = s.scores.length ? Math.max(...s.scores) : 0;
+        onProgress?.({
+          type: 'target_done', targetId: s.def.id, targetName: s.def.name,
+          bestMatch, bestScore: bestMatch, allErrors: s.allErrors, skipped: false,
+        });
+      }
+      return;
+    }
+    onProgress?.(evt);
+  };
 }
 
 function buildSummaryFromDb(db, runId) {
@@ -280,6 +291,76 @@ function loadDefinitions(targetType, targetId, targetFrom, targetTo) {
     if (targetTo != null && id > targetTo) return false;
     return true;
   });
+}
+
+// Resumes an already-enqueued run by starting workers against the existing DB
+// rows — no enqueueRun call. Use this when the run was paused/cancelled and
+// its rows are already in the correct state (pending/waiting/error).
+export async function resumeWorkers({
+  runId, model, provider, promptVersion, reasoningEffort,
+  concurrency = 1, signal, onProgress,
+}) {
+  const promptTemplate = fs.readFileSync(path.join(PROMPTS_DIR, promptVersion, 'prompt.md'), 'utf8');
+  const followupAppendix = fs.readFileSync(path.join(PROMPTS_DIR, promptVersion, 'followup.md'), 'utf8');
+  const chromeVersion = await getChromeVersion();
+  const adapterModule = await resolveAdapterModule(provider);
+  const db = getDb();
+
+  const counts = db.prepare(`
+    SELECT status, COUNT(*) AS n FROM runs WHERE run_id = ? GROUP BY status
+  `).all(runId);
+  const range = db.prepare(`
+    SELECT MIN(CAST(target_id AS REAL)) AS lo, MAX(CAST(target_id AS REAL)) AS hi,
+           COUNT(DISTINCT target_id) AS n
+    FROM runs WHERE run_id = ?
+  `).get(runId);
+  const statusSummary = counts.map(c => `${c.status}:${c.n}`).join(' ') || '(empty)';
+  console.log(`\nClawBattle Resume`);
+  console.log(`  Run ID:      ${runId}`);
+  console.log(`  Model:       ${model}${reasoningEffort ? ` [${reasoningEffort}]` : ''}`);
+  console.log(`  Provider:    ${provider}`);
+  console.log(`  Prompt:      ${promptVersion}`);
+  console.log(`  Targets:     ${range?.n ?? 0} (id ${range?.lo ?? '?'}–${range?.hi ?? '?'})`);
+  console.log(`  Concurrency: ${concurrency}`);
+  console.log(`  Status:      ${statusSummary}\n`);
+
+  const allDefs = getBattleTargets().map(t => ({ id: t.id, name: t.name, colors: t.colors }));
+  const defById = new Map(allDefs.map(d => [String(d.id), d]));
+  const bufferByKey = new Map();
+
+  const resolveTarget = (type, tid) => {
+    const norm = String(Math.round(Number(tid)));
+    const def = defById.get(String(tid)) ?? defById.get(norm) ??
+      [...defById.values()].find(d => String(Math.round(Number(d.id))) === norm);
+    if (!def) throw new Error(`Target not found: type=${type} id=${tid}`);
+    const key = `${type}/${def.id}`;
+    if (!bufferByKey.has(key)) {
+      bufferByKey.set(key, fs.readFileSync(path.join(TARGETS_DIR, 'images', type, `${def.id}.png`)));
+    }
+    return { def, buffer: bufferByKey.get(key) };
+  };
+
+  const progressShim = createProgressShim(defById, onProgress);
+
+  const workerCount = Math.max(1, concurrency);
+  const workers = Array.from({ length: workerCount }, () =>
+    workerLoop({
+      db, signal,
+      resolveTarget,
+      resolveAdapter: () => adapterModule,
+      resolvePromptTemplate: () => promptTemplate,
+      followupAppendix, chromeVersion,
+      render, computeMatch, computeScore, sanitizeCode,
+      width: TARGET_WIDTH, height: TARGET_HEIGHT,
+      onProgress: progressShim,
+    }),
+  );
+
+  await Promise.all(workers);
+
+  const summary = buildSummaryFromDb(db, runId);
+  onProgress?.({ type: 'done', runId, summary });
+  return { runId, summary };
 }
 
 async function resolveAdapterModule(provider) {

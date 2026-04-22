@@ -42,7 +42,14 @@ function computeKpisFromLeaderboard(data) {
 }
 
 export default function App() {
-  const [tab, setTab] = useState('leaderboard');
+  const [tab, setTabState] = useState(() => {
+    const saved = localStorage.getItem('clawbattle.tab');
+    return TABS.some(t => t.id === saved) ? saved : 'leaderboard';
+  });
+  function setTab(next) {
+    setTabState(next);
+    localStorage.setItem('clawbattle.tab', next);
+  }
   const [targetType] = useState('battle');
   const [targetView, setTargetView] = useState('table');
   const [runStatus, setRunStatus] = useState('idle');

@@ -13,7 +13,7 @@ const { values } = parseArgs({
     targets:    { type: 'string', default: 'battle' },
     'target-id': { type: 'string' },
     attempts:     { type: 'string', default: '3' },
-    prompt:     { type: 'string', default: process.env.PROMPT_VERSION ?? 'v1' },
+    prompt:     { type: 'string', default: process.env.PROMPT_VERSION ?? 'v3' },
     concurrency: { type: 'string', default: '1' },
     retries:     { type: 'string', default: '0' },
     reasoning:   { type: 'string' },   // low | medium | high

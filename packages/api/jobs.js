@@ -34,7 +34,7 @@ function appendJobEvent(job, event) {
   }
 }
 
-export function createJob(runId, { model, provider, promptVersion, reasoningEffort } = {}) {
+export function createJob(runId, { model, provider, promptVersion, reasoningEffort, reasoningMaxTokens } = {}) {
   clearJobCleanup(jobs.get(runId));
 
   const controller = new AbortController();
@@ -44,6 +44,7 @@ export function createJob(runId, { model, provider, promptVersion, reasoningEffo
     provider,
     promptVersion,
     reasoningEffort,
+    reasoningMaxTokens,
     events: [],
     subscribers: new Set(),
     controller,

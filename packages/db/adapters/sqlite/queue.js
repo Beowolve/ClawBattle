@@ -12,6 +12,7 @@ export function enqueueRun(db, opts) {
     provider,
     promptVersion = null,
     reasoningEffort = null,
+    reasoningMaxTokens = null,
     attemptsPerTarget,
     startedAt = null,
     targets,
@@ -31,9 +32,10 @@ export function enqueueRun(db, opts) {
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO runs
       (run_id, benchmark_version, model, provider,
-       prompt_version, reasoning_effort, attempts_per_target, started_at,
+       prompt_version, reasoning_effort, reasoning_max_tokens,
+       attempts_per_target, started_at,
        target_id, target_type, attempt, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   db.exec('BEGIN');
@@ -46,7 +48,8 @@ export function enqueueRun(db, opts) {
         const status = attempt === 1 ? 'pending' : 'waiting';
         const { changes } = stmt.run(
           runId, benchmarkVersion, model, provider,
-          promptVersion, reasoningEffort, attemptsPerTarget, startedAt,
+          promptVersion, reasoningEffort, reasoningMaxTokens,
+          attemptsPerTarget, startedAt,
           targetId, targetType, attempt, status,
         );
         inserted += changes;
@@ -129,7 +132,7 @@ export function getRunQueue(db) {
   `).all().map(toPlain);
   if (summaries.length === 0) return [];
   const attemptsStmt = db.prepare(`
-    SELECT * FROM runs WHERE run_id = ? ORDER BY target_id, attempt
+    SELECT * FROM runs WHERE run_id = ? ORDER BY CAST(target_id AS REAL), attempt
   `);
   return summaries.map(s => ({ ...s, attempts: attemptsStmt.all(s.run_id).map(toPlain) }));
 }
@@ -140,6 +143,18 @@ export function getRunHistory(db) {
     WHERE status = 'done'
     ORDER BY finished_at DESC, run_id DESC
   `).all().map(toPlain);
+}
+
+// Does this run still have work that a worker pool could process? Used by the
+// Resume endpoint to decide whether starting workers makes sense, even when
+// there are no 'paused' rows to restore (e.g. credits-out left orphaned
+// 'pending'/'waiting' rows, or the server restarted mid-run).
+export function hasRunPendingWork(db, runId) {
+  const row = db.prepare(`
+    SELECT COUNT(*) AS n FROM runs
+    WHERE run_id = ? AND status IN ('pending', 'waiting', 'running')
+  `).get(runId);
+  return row.n > 0;
 }
 
 export function requeueStaleRunningAttempts(db) {
@@ -216,6 +231,23 @@ export function resetErrors(db, runId = null) {
   `;
   const { changes } = runId ? db.prepare(sql).run(runId) : db.prepare(sql).run();
   return changes;
+}
+
+// Deletes every attempt row belonging to the run. Caller is responsible for
+// aborting any live worker pool first (otherwise stale workers may harmlessly
+// try to write to now-deleted rows — completeAttempt/failAttempt are
+// claim-token-protected and will no-op).
+export function deleteRun(db, runId) {
+  const { changes } = db.prepare('DELETE FROM runs WHERE run_id = ?').run(runId);
+  return changes;
+}
+
+// Deletes a single attempt row by its primary key. If the row was in 'running'
+// state, the worker's completeAttempt/failAttempt will no-op (claim-token-
+// protected) — no crash. Returns true if a row was deleted.
+export function deleteAttempt(db, id) {
+  const { changes } = db.prepare('DELETE FROM runs WHERE id = ?').run(id);
+  return changes > 0;
 }
 
 export function claimNextPending(db) {

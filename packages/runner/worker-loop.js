@@ -9,9 +9,12 @@ import { processClaim } from './process-claim.js';
 const IDLE_POLL_MS = 50;
 
 function hasMoreWork(db) {
+  // 'waiting' rows only transition to 'pending' when a 'running' predecessor
+  // calls completeAttempt. If no pending/running rows exist, no promotion can
+  // happen and the workers should stop (orphaned 'waiting' rows from errors).
   const row = db.prepare(`
     SELECT COUNT(*) AS n FROM runs
-    WHERE status IN ('pending', 'running', 'waiting')
+    WHERE status IN ('pending', 'running')
   `).get();
   return row.n > 0;
 }
@@ -55,7 +58,9 @@ export async function workerLoop({
       await processClaim({
         db, claim,
         adapter, render, computeMatch, computeScore, sanitizeCode,
-        model: claim.model, reasoningEffort: claim.reasoning_effort,
+        model: claim.model,
+        reasoningEffort: claim.reasoning_effort,
+        reasoningMaxTokens: claim.reasoning_max_tokens,
         promptTemplate, followupAppendix,
         targetDef: def, targetBuffer: buffer,
         width, height, chromeVersion,

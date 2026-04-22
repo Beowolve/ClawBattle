@@ -54,7 +54,7 @@ async function generateWithRetry(adapter, args, retries, delayMs) {
 export async function processClaim({
   db, claim,
   adapter, render, computeMatch, computeScore, sanitizeCode,
-  model, reasoningEffort,
+  model, reasoningEffort, reasoningMaxTokens,
   promptTemplate, followupAppendix,
   targetDef, targetBuffer,
   width, height, chromeVersion,
@@ -100,12 +100,20 @@ export async function processClaim({
     : basePrompt;
   const images = isFollowup ? [targetBuffer, previousRender] : [targetBuffer];
 
+  onProgress?.({
+    type: 'attempt_start',
+    targetId: claim.target_id,
+    attempt: claim.attempt,
+    model: claim.model,
+    isFollowup,
+  });
+
   const t0 = Date.now();
   let raw;
   try {
     raw = await generateWithRetry(
       adapter,
-      { model, prompt, images, reasoningEffort, signal },
+      { model, prompt, images, reasoningEffort, reasoningMaxTokens, signal },
       internalRetries,
       internalRetryDelayMs,
     );

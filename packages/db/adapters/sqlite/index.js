@@ -25,7 +25,10 @@ import {
   resetErrors as _resetErrors,
   pauseRun as _pauseRun,
   resumeRun as _resumeRun,
+  hasRunPendingWork as _hasRunPendingWork,
   requeueStaleRunningAttempts as _requeueStaleRunningAttempts,
+  deleteRun as _deleteRun,
+  deleteAttempt as _deleteAttempt,
 } from './queue.js';
 
 export const getCompletedTargetIds = (runId)         => _getCompletedTargetIds(getDb(), runId);
@@ -46,4 +49,7 @@ export const retryAttempt          = (id)            => _retryAttempt(getDb(), i
 export const resetErrors           = (runId)         => _resetErrors(getDb(), runId);
 export const pauseRun              = (runId)         => _pauseRun(getDb(), runId);
 export const resumeRun             = (runId)         => _resumeRun(getDb(), runId);
+export const hasRunPendingWork     = (runId)         => _hasRunPendingWork(getDb(), runId);
 export const requeueStaleRunningAttempts = ()        => _requeueStaleRunningAttempts(getDb());
+export const deleteRun             = (runId)         => _deleteRun(getDb(), runId);
+export const deleteAttempt         = (id)            => _deleteAttempt(getDb(), id);

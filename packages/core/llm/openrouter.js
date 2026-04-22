@@ -2,11 +2,17 @@
 import { extractCode } from './extract-code.js';
 import { buildUserMessage } from './build-message.js';
 
-export async function generate({ model, prompt, images, reasoningEffort, signal }) {
+export async function generate({ model, prompt, images, reasoningEffort, reasoningMaxTokens, signal }) {
+  // OpenRouter accepts a unified `reasoning` object for reasoning models.
+  // max_tokens caps thinking budget (the actual pain point for Kimi K2 etc.);
+  // effort is an alternative shorthand the model translates internally.
+  const reasoning = {};
+  if (reasoningEffort) reasoning.effort = reasoningEffort;
+  if (reasoningMaxTokens != null) reasoning.max_tokens = Number(reasoningMaxTokens);
   const body = {
     model,
     messages: [{ role: 'user', content: buildUserMessage(prompt, images) }],
-    ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
+    ...(Object.keys(reasoning).length ? { reasoning } : {}),
   };
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',

@@ -18,6 +18,7 @@ export const {
   upsertRuns,
   getRunQueue, getRunHistory,
   retryAttempt, resetErrors,
-  pauseRun, resumeRun,
+  pauseRun, resumeRun, hasRunPendingWork,
   requeueStaleRunningAttempts,
+  deleteRun, deleteAttempt,
 } = mod;

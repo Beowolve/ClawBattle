@@ -9,32 +9,6 @@ const ATTEMPT_OPTIONS = [1, 2, 3, 5];
 const CONCURRENCY_OPTIONS = [1, 2, 3, 4, 5, 8, 10];
 const RETRY_OPTIONS = [0, 1, 2, 3];
 
-function RunTargetCard({ card }) {
-  const { status = 'pending', name, bestMatch, retryNum, currentAttempt, latestMatch } = card;
-
-  // Score display: finalised cards show bestMatch, running cards show latestMatch or "Attempt N…"
-  let scoreText = null;
-  if (status === 'done' || status === 'error') {
-    scoreText = bestMatch != null ? bestMatch.toFixed(1) + '%' : null;
-  } else if (status === 'running') {
-    if (latestMatch != null) scoreText = latestMatch.toFixed(1) + '%';
-    else if (currentAttempt != null) scoreText = `Attempt ${currentAttempt}…`;
-  }
-
-  return (
-    <div className={`runTargetCard runTargetCard--${status}`}>
-      <div className="runTargetCardHeader">
-        <span className="runTargetCardName" title={name}>{name ?? '…'}</span>
-        {status === 'running' && <span className="runDot runDot--card" />}
-      </div>
-      {scoreText && <span className="runTargetCardScore">{scoreText}</span>}
-      {status === 'running' && retryNum > 0 && (
-        <span className="runTargetCardRetry">retry {retryNum}</span>
-      )}
-    </div>
-  );
-}
-
 export default function StartRun({ onStatusChange }) {
   const queryClient = useQueryClient();
   const { data: config } = useConfig();
@@ -42,19 +16,16 @@ export default function StartRun({ onStatusChange }) {
   const [provider, setProvider] = useState('openrouter');
   const [promptVersion, setPromptVersion] = useState('');
   const [attempts, setAttempts] = useState(3);
-  const [concurrency, setConcurrency] = useState(1);
-  const [retries, setRetries] = useState(0);
+  const [concurrency, setConcurrency] = useState(5);
+  const [retries, setRetries] = useState(1);
   const [reasoningEffort, setReasoningEffort] = useState('');
+  const [reasoningMaxTokens, setReasoningMaxTokens] = useState('8000');
   const [targetFrom, setTargetFrom] = useState('1');
   const [targetTo, setTargetTo] = useState('25');
   const [fillMode, setFillMode] = useState(false);
   const [runId, setRunId] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | running | done | cancelled | error
 
-  // Target-grid state
-  const [targetCount, setTargetCount] = useState(0);
-  const [targetCards, setTargetCards] = useState([]); // ordered list of targetIds
-  const [targetMap, setTargetMap] = useState(new Map()); // targetId → card data
   const [logLines, setLogLines] = useState([]);
 
   const logRef = useRef(null);
@@ -90,9 +61,6 @@ export default function StartRun({ onStatusChange }) {
   }, []);
 
   async function startRun() {
-    setTargetCount(0);
-    setTargetCards([]);
-    setTargetMap(new Map());
     setLogLines([]);
     updateStatus('running');
     setRunId(null);
@@ -102,6 +70,7 @@ export default function StartRun({ onStatusChange }) {
         promptVersion: promptVersion || undefined,
         concurrency, retries,
         reasoningEffort: reasoningEffort || undefined,
+        reasoningMaxTokens: reasoningMaxTokens !== '' ? Number(reasoningMaxTokens) : undefined,
         targetFrom: targetFrom !== '' ? Number(targetFrom) : undefined,
         targetTo: targetTo !== '' ? Number(targetTo) : undefined,
         ...(fillMode ? { fillMode: true } : {}),
@@ -134,45 +103,23 @@ export default function StartRun({ onStatusChange }) {
       const event = JSON.parse(e.data);
 
       switch (event.type) {
-        case 'start': {
-          setTargetCount(event.targetCount);
-          // Pre-populate all cards as pending with their names
-          const ids = (event.targets ?? []).map(t => t.id);
-          const map = new Map((event.targets ?? []).map(t => [t.id, { status: 'pending', name: t.name }]));
-          setTargetCards(ids);
-          setTargetMap(map);
+        case 'start':
           addLog(`Run started — model: ${event.model}  targets: ${event.targetCount}`);
-          break;
-        }
-        case 'target':
-          updateCard(event.targetId, { status: 'running', name: event.targetName, retryNum: 0, currentAttempt: null, latestMatch: null });
           break;
 
         case 'target_skipped':
-          updateCard(event.targetId, { status: 'skipped', name: event.targetName });
           addLog(`[${event.targetId}] skipped (already done)`);
           break;
 
         case 'target_retry':
-          updateCard(event.targetId, { status: 'running', retryNum: event.retryNum, currentAttempt: null, latestMatch: null });
           addLog(`[${event.targetId}] retry ${event.retryNum}`);
           break;
 
-        case 'target_done':
-          updateCard(event.targetId, {
-            status: event.skipped ? 'skipped' : event.allErrors ? 'error' : 'done',
-            name: event.targetName,
-            bestMatch: event.bestMatch,
-          });
-          break;
-
         case 'attempt':
-          updateCard(event.targetId, { currentAttempt: event.attempt, latestMatch: event.matchPercent });
           addLog(`[${event.targetId}] attempt ${event.attempt}: ${event.matchPercent.toFixed(1)}%${event.perfect ? ' ✓' : ''}`);
           break;
 
         case 'attempt_error':
-          updateCard(event.targetId, { currentAttempt: event.attempt });
           addLog(
             event.errorType === 'policy_violation'
               ? `[${event.targetId}] attempt ${event.attempt} rejected by policy: ${event.message}`
@@ -212,16 +159,6 @@ export default function StartRun({ onStatusChange }) {
       es.close();
     };
     return () => es.close();
-
-    function updateCard(targetId, patch) {
-      setTargetMap(prev => {
-        const next = new Map(prev);
-        next.set(targetId, { ...next.get(targetId), ...patch });
-        return next;
-      });
-      // Ensure card appears in ordered list (for skipped / late arrivals)
-      setTargetCards(prev => prev.includes(targetId) ? prev : [...prev, targetId]);
-    }
 
     function addLog(line) {
       setLogLines(prev => [...prev.slice(-200), line]);
@@ -279,6 +216,18 @@ export default function StartRun({ onStatusChange }) {
               <option key={v} value={v}>{v === '' ? 'default' : v}</option>
             ))}
           </select>
+          <input
+            className="targetRangeInput"
+            type="number"
+            min="0"
+            step="1000"
+            placeholder="reason. max tokens"
+            value={reasoningMaxTokens}
+            onChange={(e) => setReasoningMaxTokens(e.target.value)}
+            disabled={status === 'running'}
+            title="Cap on reasoning/thinking tokens (OpenRouter). Leave empty for model default."
+            style={{ width: 130 }}
+          />
           <select
             className="filterSelect"
             value={promptVersion}
@@ -359,17 +308,6 @@ export default function StartRun({ onStatusChange }) {
             <button className="cancelButton" onClick={cancelRun}>Cancel</button>
           )}
         </div>
-
-        {targetCards.length > 0 && (
-          <div className="runProgressGrid">
-            {targetCards.map(tid => (
-              <RunTargetCard key={tid} card={targetMap.get(tid) ?? { status: 'pending' }} />
-            ))}
-            {Array.from({ length: Math.max(0, targetCount - targetCards.length) }, (_, i) => (
-              <div key={`p-${i}`} className="runTargetCard runTargetCard--pending">…</div>
-            ))}
-          </div>
-        )}
 
         {logLines.length > 0 && (
           <details className="runLogDetails">

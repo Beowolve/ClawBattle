@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Session Continuity
 
 * **Always keep [STATUS.md](STATUS.md) up to date.** After completing a TODO item, mark it done. When a new idea comes up that won't be implemented immediately, add it to the Backlog section. Update the "Last updated" date. This ensures any session can be picked up without losing context.
+* **STATUS.md describes current capabilities, not history.** Only list what the project can do right now — features, components, behaviors. Do **not** record bugfixes, incident notes, or "we used to do X, now we do Y" entries; that belongs in git history. If a fix changes a capability, update the capability line itself instead of adding a fix entry.
 * **Always keep [README.md](README.md) up to date as well.**
 
 ### Key Design Rules

@@ -31,6 +31,7 @@ const RUNS_COLUMNS_SQL = `
   cost REAL,
   duration_ms INTEGER,
   reasoning_effort TEXT,
+  reasoning_max_tokens INTEGER,
   created_at TEXT DEFAULT (datetime('now')),
   status TEXT NOT NULL DEFAULT 'done',
   error_message TEXT,
@@ -44,8 +45,8 @@ const LEGACY_REUSABLE_COLUMNS = [
   'id', 'run_id', 'benchmark_version', 'model', 'provider',
   'prompt_version', 'temperature', 'attempts_per_target', 'started_at', 'finished_at',
   'target_id', 'target_type', 'attempt', 'match', 'score', 'tokens_used',
-  'code', 'code_length', 'cost', 'duration_ms', 'reasoning_effort', 'created_at',
-  'status', 'error_message', 'enqueued_at', 'claimed_at', 'claim_token', 'paused_from',
+  'code', 'code_length', 'cost', 'duration_ms', 'reasoning_effort', 'reasoning_max_tokens',
+  'created_at', 'status', 'error_message', 'enqueued_at', 'claimed_at', 'claim_token', 'paused_from',
 ];
 
 // Views that reference 'runs' — must be dropped before the table can be dropped.
@@ -137,6 +138,12 @@ export function initSchema(db) {
   `);
 
   migrateRunsTable(db);
+
+  // Additive column migrations for existing DBs (no rebuild needed).
+  const currentCols = new Set(db.prepare('PRAGMA table_info(runs)').all().map(c => c.name));
+  if (!currentCols.has('reasoning_max_tokens')) {
+    db.exec('ALTER TABLE runs ADD COLUMN reasoning_max_tokens INTEGER');
+  }
 
   db.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_unique
@@ -303,6 +310,7 @@ export function initSchema(db) {
       MAX(provider) AS provider,
       MAX(prompt_version) AS prompt_version,
       MAX(reasoning_effort) AS reasoning_effort,
+      MAX(reasoning_max_tokens) AS reasoning_max_tokens,
       MAX(attempts_per_target) AS attempts_per_target,
       MIN(started_at) AS started_at,
       CASE

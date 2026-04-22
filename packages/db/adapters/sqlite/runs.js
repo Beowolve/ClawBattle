@@ -194,7 +194,7 @@ export function getInsights(db, promptVersion) {
     ? db.prepare('SELECT bucket, SUM(count) AS count FROM match_distribution WHERE prompt_version = ? GROUP BY bucket').all(promptVersion)
     : db.prepare('SELECT bucket, SUM(count) AS count FROM match_distribution GROUP BY bucket').all();
 
-  const models = db.prepare('SELECT DISTINCT model FROM attempt_results ORDER BY model').all().map(r => r.model);
+  const models = [...new Set(distRows.map(r => r.model))].sort();
 
   return {
     difficulty: mapDifficulty(diffRows),
