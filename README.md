@@ -96,6 +96,7 @@ scripts/
   download-results.js     Download results Supabase → local SQLite
   upload-targets.js       Seed battle/daily targets in Supabase
   sync-targets.js         Sync target definitions + images from Supabase
+  export-human-stats.js   Export compact human baseline stats from Supabase leaderboard rows
   recalculate-scores.js   Recompute match% + scores for all stored runs
 ```
 
@@ -108,6 +109,24 @@ npm run upload          # local SQLite → Supabase (only rows with status='done
 npm run download        # Supabase → local SQLite
 npm run upload-targets  # seed battle_targets / daily_targets in Supabase
 npm run sync            # sync targets + images from Supabase locally
+npm run export-human-stats  # export baselines/human_stats.json from Supabase leaderboard rows
+```
+
+### Export Human Baseline Stats
+
+Generate `baselines/human_stats.json` from a Supabase leaderboard relation:
+
+```bash
+npm run export-human-stats
+```
+
+Optional overrides:
+
+```bash
+node --env-file=.env scripts/export-human-stats.js \
+  --source=battle_target_leaderboard_current_entries \
+  --output=baselines/human_stats.json \
+  --max-per-target=100
 ```
 
 Queue state (pending / running / waiting / paused / error attempts) never

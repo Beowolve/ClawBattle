@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-24
+Last updated: 2026-04-23
 
 ## What's Done
 
@@ -65,6 +65,7 @@ Last updated: 2026-04-24
 - [x] `scripts/download-results.js` — downloads runs from Supabase into local SQLite
 - [x] `scripts/upload-targets.js` — seeds battle_targets / daily_targets in Supabase
 - [x] `scripts/sync-targets.js` — syncs targets + images from Supabase into local SQLite
+- [x] `scripts/export-human-stats.js` — exports compact `baselines/human_stats.json` from Supabase target leaderboard rows (`top1`, `top10Avg`, `p50`, `p90`, each as score+charCount pairs)
 - [x] Supabase DB adapter — `packages/db/adapters/supabase.js` (read-only for the public dashboard; writes are local-only by design)
 - [x] Supabase schema (`packages/db/schema.sql`) — idempotent, RLS, `run_state` dropped
 - [x] Bidirectional sync UI (Sync tab) — Upload Targets, Upload Results, Download from Supabase
@@ -74,11 +75,13 @@ Last updated: 2026-04-24
 
 ### Baselines
 - [x] `baselines/human.json` — top1 scores for battle targets 1–12
+- [x] `baselines/human_stats.json` — enriched per-target human leaderboard stats from scraped Supabase data (`n`, `top1`, `top10Avg`, `p50`, `p90` with score+charCount pairs)
 
-## Next TODOs
+## Backlog / TODOs
 
-- [ ] Expand baselines/human.json beyond target 12
-- [ ] Compare benchmark results against the human baseline (`baselines/human.json`)
+- [ ] Compare benchmark results against the enriched human baseline (`baselines/human_stats.json`)
+- [ ] Daily targets — code paths exist but untested end-to-end.
+- [ ] Linting + CI — no ESLint or GitHub Actions yet.
 
 ## Architecture Notes
 
@@ -145,9 +148,3 @@ persistent attempt queue. One row per `(run_id, target_id, attempt)`.
 - Tracks which run IDs have a live worker pool in this process
 - `isJobActive(runId)` is surfaced via `worker_active` on `/api/runs/queue`
   so the dashboard reflects true worker state, independent of DB row status
-
-## Ideas / Backlog
-
-- **Richer baselines** — scrape top 100 scores per target (top10avg, min, max, percentile bands) for more meaningful model comparison.
-- **Daily targets** — code paths exist but untested end-to-end.
-- **Linting + CI** — no ESLint or GitHub Actions yet.

@@ -8,6 +8,7 @@
     "upload": "node --env-file=.env scripts/upload-results.js",
     "upload-targets": "node --env-file=.env scripts/upload-targets.js",
     "download": "node --env-file=.env scripts/download-results.js",
+    "export-human-stats": "node --env-file=.env scripts/export-human-stats.js",
     "test": "node --test packages/**/*.test.js"
   }
 }

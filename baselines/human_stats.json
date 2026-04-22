@@ -1,0 +1,4965 @@
+{
+  "schemaVersion": "2.1.0",
+  "updatedAt": "2026-04-22T22:55:12.763Z",
+  "targets": {
+    "1": {
+      "n": 100,
+      "top1": {
+        "score": 839.08,
+        "charCount": 54
+      },
+      "top10Avg": {
+        "score": 839.08,
+        "charCount": 54
+      },
+      "p50": {
+        "score": 839.08,
+        "charCount": 54
+      },
+      "p90": {
+        "score": 839.08,
+        "charCount": 54
+      }
+    },
+    "2": {
+      "n": 100,
+      "top1": {
+        "score": 817.34,
+        "charCount": 64
+      },
+      "top10Avg": {
+        "score": 815.29,
+        "charCount": 65
+      },
+      "p50": {
+        "score": 783.08,
+        "charCount": 82
+      },
+      "p90": {
+        "score": 809.21,
+        "charCount": 68
+      }
+    },
+    "3": {
+      "n": 100,
+      "top1": {
+        "score": 742.9,
+        "charCount": 108
+      },
+      "top10Avg": {
+        "score": 742.9,
+        "charCount": 108
+      },
+      "p50": {
+        "score": 738.87,
+        "charCount": 111
+      },
+      "p90": {
+        "score": 742.9,
+        "charCount": 108
+      }
+    },
+    "4": {
+      "n": 100,
+      "top1": {
+        "score": 781.34,
+        "charCount": 83
+      },
+      "top10Avg": {
+        "score": 769.61,
+        "charCount": 90.7
+      },
+      "p50": {
+        "score": 723.86,
+        "charCount": 123
+      },
+      "p90": {
+        "score": 727.45,
+        "charCount": 120
+      }
+    },
+    "5": {
+      "n": 100,
+      "top1": {
+        "score": 733.67,
+        "charCount": 115
+      },
+      "top10Avg": {
+        "score": 729.08,
+        "charCount": 118.8
+      },
+      "p50": {
+        "score": 693.06,
+        "charCount": 153
+      },
+      "p90": {
+        "score": 715.87,
+        "charCount": 130
+      }
+    },
+    "6": {
+      "n": 100,
+      "top1": {
+        "score": 748.45,
+        "charCount": 104
+      },
+      "top10Avg": {
+        "score": 741.35,
+        "charCount": 109.2
+      },
+      "p50": {
+        "score": 723.86,
+        "charCount": 123
+      },
+      "p90": {
+        "score": 734.95,
+        "charCount": 114
+      }
+    },
+    "7": {
+      "n": 100,
+      "top1": {
+        "score": 733.67,
+        "charCount": 115
+      },
+      "top10Avg": {
+        "score": 733.67,
+        "charCount": 115
+      },
+      "p50": {
+        "score": 733.67,
+        "charCount": 115
+      },
+      "p90": {
+        "score": 733.67,
+        "charCount": 115
+      }
+    },
+    "8": {
+      "n": 100,
+      "top1": {
+        "score": 713.68,
+        "charCount": 132
+      },
+      "top10Avg": {
+        "score": 696.47,
+        "charCount": 149.8
+      },
+      "p50": {
+        "score": 658.33,
+        "charCount": 202
+      },
+      "p90": {
+        "score": 683.8,
+        "charCount": 164
+      }
+    },
+    "9": {
+      "n": 100,
+      "top1": {
+        "score": 741.54,
+        "charCount": 109
+      },
+      "top10Avg": {
+        "score": 741.27,
+        "charCount": 109.2
+      },
+      "p50": {
+        "score": 706.34,
+        "charCount": 139
+      },
+      "p90": {
+        "score": 738.87,
+        "charCount": 111
+      }
+    },
+    "10": {
+      "n": 100,
+      "top1": {
+        "score": 674.03,
+        "charCount": 177
+      },
+      "top10Avg": {
+        "score": 670.41,
+        "charCount": 182.4
+      },
+      "p50": {
+        "score": 644.67,
+        "charCount": 230
+      },
+      "p90": {
+        "score": 662.36,
+        "charCount": 195
+      }
+    },
+    "11": {
+      "n": 100,
+      "top1": {
+        "score": 710.47,
+        "charCount": 135
+      },
+      "top10Avg": {
+        "score": 709.74,
+        "charCount": 135.7
+      },
+      "p50": {
+        "score": 657.23,
+        "charCount": 204
+      },
+      "p90": {
+        "score": 707.36,
+        "charCount": 138
+      }
+    },
+    "12": {
+      "n": 100,
+      "top1": {
+        "score": 755.69,
+        "charCount": 99
+      },
+      "top10Avg": {
+        "score": 742.33,
+        "charCount": 108.8
+      },
+      "p50": {
+        "score": 666.03,
+        "charCount": 189
+      },
+      "p90": {
+        "score": 720.37,
+        "charCount": 126
+      }
+    },
+    "13": {
+      "n": 100,
+      "top1": {
+        "score": 839.08,
+        "charCount": 54
+      },
+      "top10Avg": {
+        "score": 837.95,
+        "charCount": 54.5
+      },
+      "p50": {
+        "score": 830.13,
+        "charCount": 58
+      },
+      "p90": {
+        "score": 834.56,
+        "charCount": 56
+      }
+    },
+    "14": {
+      "n": 100,
+      "top1": {
+        "score": 748.45,
+        "charCount": 104
+      },
+      "top10Avg": {
+        "score": 745.04,
+        "charCount": 106.5
+      },
+      "p50": {
+        "score": 666.03,
+        "charCount": 189
+      },
+      "p90": {
+        "score": 723.86,
+        "charCount": 123
+      }
+    },
+    "15": {
+      "n": 100,
+      "top1": {
+        "score": 748.45,
+        "charCount": 104
+      },
+      "top10Avg": {
+        "score": 746.49,
+        "charCount": 105.4
+      },
+      "p50": {
+        "score": 741.54,
+        "charCount": 109
+      },
+      "p90": {
+        "score": 744.26,
+        "charCount": 107
+      }
+    },
+    "16": {
+      "n": 100,
+      "top1": {
+        "score": 706.34,
+        "charCount": 139
+      },
+      "top10Avg": {
+        "score": 705.94,
+        "charCount": 139.4
+      },
+      "p50": {
+        "score": 692.17,
+        "charCount": 154
+      },
+      "p90": {
+        "score": 702.36,
+        "charCount": 143
+      }
+    },
+    "17": {
+      "n": 100,
+      "top1": {
+        "score": 688.73,
+        "charCount": 158
+      },
+      "top10Avg": {
+        "score": 682.8,
+        "charCount": 165.5
+      },
+      "p50": {
+        "score": 653.03,
+        "charCount": 212
+      },
+      "p90": {
+        "score": 673.33,
+        "charCount": 178
+      }
+    },
+    "18": {
+      "n": 100,
+      "top1": {
+        "score": 704.33,
+        "charCount": 141
+      },
+      "top10Avg": {
+        "score": 704.33,
+        "charCount": 141
+      },
+      "p50": {
+        "score": 702.36,
+        "charCount": 143
+      },
+      "p90": {
+        "score": 704.33,
+        "charCount": 141
+      }
+    },
+    "19": {
+      "n": 100,
+      "top1": {
+        "score": 732.41,
+        "charCount": 116
+      },
+      "top10Avg": {
+        "score": 723.17,
+        "charCount": 124.1
+      },
+      "p50": {
+        "score": 684.6,
+        "charCount": 163
+      },
+      "p90": {
+        "score": 700.43,
+        "charCount": 145
+      }
+    },
+    "20": {
+      "n": 100,
+      "top1": {
+        "score": 720.37,
+        "charCount": 126
+      },
+      "top10Avg": {
+        "score": 711.56,
+        "charCount": 135.1
+      },
+      "p50": {
+        "score": 668.6,
+        "charCount": 185
+      },
+      "p90": {
+        "score": 679.14,
+        "charCount": 170
+      }
+    },
+    "21": {
+      "n": 100,
+      "top1": {
+        "score": 708.39,
+        "charCount": 137
+      },
+      "top10Avg": {
+        "score": 698.39,
+        "charCount": 147.6
+      },
+      "p50": {
+        "score": 655.62,
+        "charCount": 207
+      },
+      "p90": {
+        "score": 687.05,
+        "charCount": 160
+      }
+    },
+    "22": {
+      "n": 100,
+      "top1": {
+        "score": 771.26,
+        "charCount": 89
+      },
+      "top10Avg": {
+        "score": 751.2,
+        "charCount": 102.6
+      },
+      "p50": {
+        "score": 705.33,
+        "charCount": 140
+      },
+      "p90": {
+        "score": 725.05,
+        "charCount": 122
+      }
+    },
+    "23": {
+      "n": 100,
+      "top1": {
+        "score": 769.64,
+        "charCount": 90
+      },
+      "top10Avg": {
+        "score": 763.98,
+        "charCount": 93.6
+      },
+      "p50": {
+        "score": 757.19,
+        "charCount": 98
+      },
+      "p90": {
+        "score": 760.21,
+        "charCount": 96
+      }
+    },
+    "24": {
+      "n": 100,
+      "top1": {
+        "score": 734.95,
+        "charCount": 114
+      },
+      "top10Avg": {
+        "score": 725.03,
+        "charCount": 122.6
+      },
+      "p50": {
+        "score": 675.45,
+        "charCount": 175
+      },
+      "p90": {
+        "score": 700.43,
+        "charCount": 145
+      }
+    },
+    "25": {
+      "n": 100,
+      "top1": {
+        "score": 693.06,
+        "charCount": 153
+      },
+      "top10Avg": {
+        "score": 692.45,
+        "charCount": 153.7
+      },
+      "p50": {
+        "score": 660.03,
+        "charCount": 199
+      },
+      "p90": {
+        "score": 681.43,
+        "charCount": 167
+      }
+    },
+    "26": {
+      "n": 100,
+      "top1": {
+        "score": 744.26,
+        "charCount": 107
+      },
+      "top10Avg": {
+        "score": 734.09,
+        "charCount": 114.9
+      },
+      "p50": {
+        "score": 687.05,
+        "charCount": 160
+      },
+      "p90": {
+        "score": 723.86,
+        "charCount": 123
+      }
+    },
+    "27": {
+      "n": 100,
+      "top1": {
+        "score": 729.91,
+        "charCount": 118
+      },
+      "top10Avg": {
+        "score": 729.91,
+        "charCount": 118
+      },
+      "p50": {
+        "score": 697.6,
+        "charCount": 148
+      },
+      "p90": {
+        "score": 729.91,
+        "charCount": 118
+      }
+    },
+    "28": {
+      "n": 100,
+      "top1": {
+        "score": 714.77,
+        "charCount": 131
+      },
+      "top10Avg": {
+        "score": 700.37,
+        "charCount": 147.4
+      },
+      "p50": {
+        "score": 660.03,
+        "charCount": 199
+      },
+      "p90": {
+        "score": 660.03,
+        "charCount": 199
+      }
+    },
+    "29": {
+      "n": 100,
+      "top1": {
+        "score": 769.64,
+        "charCount": 90
+      },
+      "top10Avg": {
+        "score": 769,
+        "charCount": 90.4
+      },
+      "p50": {
+        "score": 745.65,
+        "charCount": 106
+      },
+      "p90": {
+        "score": 766.44,
+        "charCount": 92
+      }
+    },
+    "30": {
+      "n": 100,
+      "top1": {
+        "score": 783.08,
+        "charCount": 82
+      },
+      "top10Avg": {
+        "score": 782.73,
+        "charCount": 82.2
+      },
+      "p50": {
+        "score": 774.56,
+        "charCount": 87
+      },
+      "p90": {
+        "score": 779.62,
+        "charCount": 84
+      }
+    },
+    "31": {
+      "n": 100,
+      "top1": {
+        "score": 777.92,
+        "charCount": 85
+      },
+      "top10Avg": {
+        "score": 774.09,
+        "charCount": 87.3
+      },
+      "p50": {
+        "score": 734.95,
+        "charCount": 114
+      },
+      "p90": {
+        "score": 771.26,
+        "charCount": 89
+      }
+    },
+    "32": {
+      "n": 100,
+      "top1": {
+        "score": 748.45,
+        "charCount": 104
+      },
+      "top10Avg": {
+        "score": 744.47,
+        "charCount": 106.9
+      },
+      "p50": {
+        "score": 705.33,
+        "charCount": 140
+      },
+      "p90": {
+        "score": 731.15,
+        "charCount": 117
+      }
+    },
+    "33": {
+      "n": 100,
+      "top1": {
+        "score": 715.87,
+        "charCount": 130
+      },
+      "top10Avg": {
+        "score": 704.05,
+        "charCount": 141.7
+      },
+      "p50": {
+        "score": 659.46,
+        "charCount": 200
+      },
+      "p90": {
+        "score": 691.3,
+        "charCount": 155
+      }
+    },
+    "34": {
+      "n": 100,
+      "top1": {
+        "score": 755.69,
+        "charCount": 99
+      },
+      "top10Avg": {
+        "score": 754.81,
+        "charCount": 99.6
+      },
+      "p50": {
+        "score": 713.68,
+        "charCount": 132
+      },
+      "p90": {
+        "score": 747.04,
+        "charCount": 105
+      }
+    },
+    "35": {
+      "n": 100,
+      "top1": {
+        "score": 707.36,
+        "charCount": 138
+      },
+      "top10Avg": {
+        "score": 697.74,
+        "charCount": 148
+      },
+      "p50": {
+        "score": 665.4,
+        "charCount": 190
+      },
+      "p90": {
+        "score": 690.43,
+        "charCount": 156
+      }
+    },
+    "36": {
+      "n": 100,
+      "top1": {
+        "score": 740.2,
+        "charCount": 110
+      },
+      "top10Avg": {
+        "score": 736.38,
+        "charCount": 113
+      },
+      "p50": {
+        "score": 701.39,
+        "charCount": 144
+      },
+      "p90": {
+        "score": 720.37,
+        "charCount": 126
+      }
+    },
+    "37": {
+      "n": 100,
+      "top1": {
+        "score": 742.9,
+        "charCount": 108
+      },
+      "top10Avg": {
+        "score": 737.92,
+        "charCount": 111.8
+      },
+      "p50": {
+        "score": 696.67,
+        "charCount": 149
+      },
+      "p90": {
+        "score": 731.15,
+        "charCount": 117
+      }
+    },
+    "38": {
+      "n": 100,
+      "top1": {
+        "score": 754.22,
+        "charCount": 100
+      },
+      "top10Avg": {
+        "score": 748.96,
+        "charCount": 103.8
+      },
+      "p50": {
+        "score": 729.91,
+        "charCount": 118
+      },
+      "p90": {
+        "score": 736.25,
+        "charCount": 113
+      }
+    },
+    "39": {
+      "n": 100,
+      "top1": {
+        "score": 721.52,
+        "charCount": 125
+      },
+      "top10Avg": {
+        "score": 717.03,
+        "charCount": 129.1
+      },
+      "p50": {
+        "score": 672.63,
+        "charCount": 179
+      },
+      "p90": {
+        "score": 702.36,
+        "charCount": 143
+      }
+    },
+    "40": {
+      "n": 100,
+      "top1": {
+        "score": 744.26,
+        "charCount": 107
+      },
+      "top10Avg": {
+        "score": 743.17,
+        "charCount": 107.8
+      },
+      "p50": {
+        "score": 726.24,
+        "charCount": 121
+      },
+      "p90": {
+        "score": 741.54,
+        "charCount": 109
+      }
+    },
+    "41": {
+      "n": 100,
+      "top1": {
+        "score": 703.34,
+        "charCount": 142
+      },
+      "top10Avg": {
+        "score": 703.24,
+        "charCount": 142.1
+      },
+      "p50": {
+        "score": 671.94,
+        "charCount": 180
+      },
+      "p90": {
+        "score": 700.43,
+        "charCount": 145
+      }
+    },
+    "42": {
+      "n": 100,
+      "top1": {
+        "score": 683.8,
+        "charCount": 164
+      },
+      "top10Avg": {
+        "score": 672.05,
+        "charCount": 181.4
+      },
+      "p50": {
+        "score": 637.99,
+        "charCount": 247
+      },
+      "p90": {
+        "score": 653.03,
+        "charCount": 212
+      }
+    },
+    "43": {
+      "n": 100,
+      "top1": {
+        "score": 737.55,
+        "charCount": 112
+      },
+      "top10Avg": {
+        "score": 722.27,
+        "charCount": 124.9
+      },
+      "p50": {
+        "score": 698.53,
+        "charCount": 147
+      },
+      "p90": {
+        "score": 708.39,
+        "charCount": 137
+      }
+    },
+    "44": {
+      "n": 100,
+      "top1": {
+        "score": 757.19,
+        "charCount": 98
+      },
+      "top10Avg": {
+        "score": 742.83,
+        "charCount": 108.4
+      },
+      "p50": {
+        "score": 708.39,
+        "charCount": 137
+      },
+      "p90": {
+        "score": 727.45,
+        "charCount": 120
+      }
+    },
+    "45": {
+      "n": 100,
+      "top1": {
+        "score": 705.33,
+        "charCount": 140
+      },
+      "top10Avg": {
+        "score": 698.64,
+        "charCount": 147
+      },
+      "p50": {
+        "score": 674.03,
+        "charCount": 177
+      },
+      "p90": {
+        "score": 690.43,
+        "charCount": 156
+      }
+    },
+    "46": {
+      "n": 100,
+      "top1": {
+        "score": 761.74,
+        "charCount": 95
+      },
+      "top10Avg": {
+        "score": 756.48,
+        "charCount": 98.5
+      },
+      "p50": {
+        "score": 696.67,
+        "charCount": 149
+      },
+      "p90": {
+        "score": 742.9,
+        "charCount": 108
+      }
+    },
+    "47": {
+      "n": 100,
+      "top1": {
+        "score": 664.78,
+        "charCount": 191
+      },
+      "top10Avg": {
+        "score": 655.06,
+        "charCount": 209.8
+      },
+      "p50": {
+        "score": 619.68,
+        "charCount": 316
+      },
+      "p90": {
+        "score": 634.87,
+        "charCount": 256
+      }
+    },
+    "48": {
+      "n": 100,
+      "top1": {
+        "score": 721.52,
+        "charCount": 125
+      },
+      "top10Avg": {
+        "score": 720.72,
+        "charCount": 125.7
+      },
+      "p50": {
+        "score": 705.33,
+        "charCount": 140
+      },
+      "p90": {
+        "score": 718.1,
+        "charCount": 128
+      }
+    },
+    "49": {
+      "n": 100,
+      "top1": {
+        "score": 683,
+        "charCount": 165
+      },
+      "top10Avg": {
+        "score": 677.27,
+        "charCount": 172.8
+      },
+      "p50": {
+        "score": 625.7,
+        "charCount": 288
+      },
+      "p90": {
+        "score": 667.3,
+        "charCount": 187
+      }
+    },
+    "50": {
+      "n": 100,
+      "top1": {
+        "score": 630.22,
+        "charCount": 271
+      },
+      "top10Avg": {
+        "score": 624.4,
+        "charCount": 294.5
+      },
+      "p50": {
+        "score": 610.1,
+        "charCount": 386
+      },
+      "p90": {
+        "score": 619.68,
+        "charCount": 316
+      }
+    },
+    "51": {
+      "n": 100,
+      "top1": {
+        "score": 660.6,
+        "charCount": 198
+      },
+      "top10Avg": {
+        "score": 654.36,
+        "charCount": 209.8
+      },
+      "p50": {
+        "score": 625.7,
+        "charCount": 288
+      },
+      "p90": {
+        "score": 644.67,
+        "charCount": 230
+      }
+    },
+    "52": {
+      "n": 100,
+      "top1": {
+        "score": 687.89,
+        "charCount": 159
+      },
+      "top10Avg": {
+        "score": 671.63,
+        "charCount": 183.9
+      },
+      "p50": {
+        "score": 643.41,
+        "charCount": 233
+      },
+      "p90": {
+        "score": 644.67,
+        "charCount": 230
+      }
+    },
+    "53": {
+      "n": 100,
+      "top1": {
+        "score": 723.86,
+        "charCount": 123
+      },
+      "top10Avg": {
+        "score": 723.51,
+        "charCount": 123.3
+      },
+      "p50": {
+        "score": 698.53,
+        "charCount": 147
+      },
+      "p90": {
+        "score": 721.52,
+        "charCount": 125
+      }
+    },
+    "54": {
+      "n": 100,
+      "top1": {
+        "score": 658.89,
+        "charCount": 201
+      },
+      "top10Avg": {
+        "score": 649.11,
+        "charCount": 221.2
+      },
+      "p50": {
+        "score": 613.7,
+        "charCount": 354
+      },
+      "p90": {
+        "score": 633.56,
+        "charCount": 260
+      }
+    },
+    "55": {
+      "n": 100,
+      "top1": {
+        "score": 709.43,
+        "charCount": 136
+      },
+      "top10Avg": {
+        "score": 705.17,
+        "charCount": 140.4
+      },
+      "p50": {
+        "score": 667.3,
+        "charCount": 187
+      },
+      "p90": {
+        "score": 690.43,
+        "charCount": 156
+      }
+    },
+    "56": {
+      "n": 100,
+      "top1": {
+        "score": 678.39,
+        "charCount": 171
+      },
+      "top10Avg": {
+        "score": 675.19,
+        "charCount": 175.4
+      },
+      "p50": {
+        "score": 618.24,
+        "charCount": 324
+      },
+      "p90": {
+        "score": 666.66,
+        "charCount": 188
+      }
+    },
+    "57": {
+      "n": 100,
+      "top1": {
+        "score": 667.3,
+        "charCount": 187
+      },
+      "top10Avg": {
+        "score": 664.29,
+        "charCount": 191.9
+      },
+      "p50": {
+        "score": 639.09,
+        "charCount": 244
+      },
+      "p90": {
+        "score": 658.89,
+        "charCount": 201
+      }
+    },
+    "58": {
+      "n": 100,
+      "top1": {
+        "score": 649.14,
+        "charCount": 220
+      },
+      "top10Avg": {
+        "score": 644.07,
+        "charCount": 232
+      },
+      "p50": {
+        "score": 619.13,
+        "charCount": 319
+      },
+      "p90": {
+        "score": 634.54,
+        "charCount": 257
+      }
+    },
+    "59": {
+      "n": 100,
+      "top1": {
+        "score": 698.53,
+        "charCount": 147
+      },
+      "top10Avg": {
+        "score": 682.26,
+        "charCount": 167
+      },
+      "p50": {
+        "score": 636.22,
+        "charCount": 252
+      },
+      "p90": {
+        "score": 667.3,
+        "charCount": 187
+      }
+    },
+    "60": {
+      "n": 100,
+      "top1": {
+        "score": 755.69,
+        "charCount": 99
+      },
+      "top10Avg": {
+        "score": 755.69,
+        "charCount": 99
+      },
+      "p50": {
+        "score": 674.03,
+        "charCount": 177
+      },
+      "p90": {
+        "score": 755.69,
+        "charCount": 99
+      }
+    },
+    "61": {
+      "n": 100,
+      "top1": {
+        "score": 669.25,
+        "charCount": 184
+      },
+      "top10Avg": {
+        "score": 667.55,
+        "charCount": 186.7
+      },
+      "p50": {
+        "score": 615.96,
+        "charCount": 338
+      },
+      "p90": {
+        "score": 657.78,
+        "charCount": 203
+      }
+    },
+    "62": {
+      "n": 100,
+      "top1": {
+        "score": 686.23,
+        "charCount": 161
+      },
+      "top10Avg": {
+        "score": 685.74,
+        "charCount": 161.6
+      },
+      "p50": {
+        "score": 684.6,
+        "charCount": 163
+      },
+      "p90": {
+        "score": 685.41,
+        "charCount": 162
+      }
+    },
+    "63": {
+      "n": 100,
+      "top1": {
+        "score": 693.95,
+        "charCount": 152
+      },
+      "top10Avg": {
+        "score": 687.76,
+        "charCount": 159.3
+      },
+      "p50": {
+        "score": 673.33,
+        "charCount": 178
+      },
+      "p90": {
+        "score": 680.66,
+        "charCount": 168
+      }
+    },
+    "64": {
+      "n": 100,
+      "top1": {
+        "score": 699.48,
+        "charCount": 146
+      },
+      "top10Avg": {
+        "score": 694.43,
+        "charCount": 151.5
+      },
+      "p50": {
+        "score": 655.62,
+        "charCount": 207
+      },
+      "p90": {
+        "score": 688.73,
+        "charCount": 158
+      }
+    },
+    "65": {
+      "n": 100,
+      "top1": {
+        "score": 657.23,
+        "charCount": 204
+      },
+      "top10Avg": {
+        "score": 656.69,
+        "charCount": 205
+      },
+      "p50": {
+        "score": 628,
+        "charCount": 279
+      },
+      "p90": {
+        "score": 654.57,
+        "charCount": 209
+      }
+    },
+    "66": {
+      "n": 100,
+      "top1": {
+        "score": 696.67,
+        "charCount": 149
+      },
+      "top10Avg": {
+        "score": 695.49,
+        "charCount": 150.3
+      },
+      "p50": {
+        "score": 627.21,
+        "charCount": 282
+      },
+      "p90": {
+        "score": 692.17,
+        "charCount": 154
+      }
+    },
+    "67": {
+      "n": 100,
+      "top1": {
+        "score": 737.55,
+        "charCount": 112
+      },
+      "top10Avg": {
+        "score": 735.73,
+        "charCount": 113.4
+      },
+      "p50": {
+        "score": 693.95,
+        "charCount": 152
+      },
+      "p90": {
+        "score": 733.67,
+        "charCount": 115
+      }
+    },
+    "68": {
+      "n": 100,
+      "top1": {
+        "score": 705.33,
+        "charCount": 140
+      },
+      "top10Avg": {
+        "score": 702.6,
+        "charCount": 142.8
+      },
+      "p50": {
+        "score": 679.9,
+        "charCount": 169
+      },
+      "p90": {
+        "score": 697.6,
+        "charCount": 148
+      }
+    },
+    "69": {
+      "n": 100,
+      "top1": {
+        "score": 656.15,
+        "charCount": 206
+      },
+      "top10Avg": {
+        "score": 656.15,
+        "charCount": 206
+      },
+      "p50": {
+        "score": 656.15,
+        "charCount": 206
+      },
+      "p90": {
+        "score": 656.15,
+        "charCount": 206
+      }
+    },
+    "70": {
+      "n": 100,
+      "top1": {
+        "score": 653.54,
+        "charCount": 211
+      },
+      "top10Avg": {
+        "score": 648.13,
+        "charCount": 222.8
+      },
+      "p50": {
+        "score": 626.7,
+        "charCount": 284
+      },
+      "p90": {
+        "score": 638.35,
+        "charCount": 246
+      }
+    },
+    "71": {
+      "n": 100,
+      "top1": {
+        "score": 615.07,
+        "charCount": 344
+      },
+      "top10Avg": {
+        "score": 615.07,
+        "charCount": 344
+      },
+      "p50": {
+        "score": 615.07,
+        "charCount": 344
+      },
+      "p90": {
+        "score": 615.07,
+        "charCount": 344
+      }
+    },
+    "72": {
+      "n": 100,
+      "top1": {
+        "score": 667.94,
+        "charCount": 186
+      },
+      "top10Avg": {
+        "score": 666.39,
+        "charCount": 188.5
+      },
+      "p50": {
+        "score": 615.22,
+        "charCount": 343
+      },
+      "p90": {
+        "score": 660.6,
+        "charCount": 198
+      }
+    },
+    "73": {
+      "n": 100,
+      "top1": {
+        "score": 619.13,
+        "charCount": 319
+      },
+      "top10Avg": {
+        "score": 619.13,
+        "charCount": 319
+      },
+      "p50": {
+        "score": 618.94,
+        "charCount": 320
+      },
+      "p90": {
+        "score": 619.13,
+        "charCount": 319
+      }
+    },
+    "74": {
+      "n": 100,
+      "top1": {
+        "score": 619.87,
+        "charCount": 315
+      },
+      "top10Avg": {
+        "score": 616.27,
+        "charCount": 336.7
+      },
+      "p50": {
+        "score": 605.33,
+        "charCount": 453
+      },
+      "p90": {
+        "score": 613.06,
+        "charCount": 359
+      }
+    },
+    "75": {
+      "n": 100,
+      "top1": {
+        "score": 629.93,
+        "charCount": 272
+      },
+      "top10Avg": {
+        "score": 627.05,
+        "charCount": 282.8
+      },
+      "p50": {
+        "score": 605.04,
+        "charCount": 459
+      },
+      "p90": {
+        "score": 625.7,
+        "charCount": 288
+      }
+    },
+    "76": {
+      "n": 100,
+      "top1": {
+        "score": 687.05,
+        "charCount": 160
+      },
+      "top10Avg": {
+        "score": 671.24,
+        "charCount": 186.6
+      },
+      "p50": {
+        "score": 625.22,
+        "charCount": 290
+      },
+      "p90": {
+        "score": 635.88,
+        "charCount": 253
+      }
+    },
+    "77": {
+      "n": 100,
+      "top1": {
+        "score": 671.26,
+        "charCount": 181
+      },
+      "top10Avg": {
+        "score": 666.56,
+        "charCount": 188.3
+      },
+      "p50": {
+        "score": 654.57,
+        "charCount": 209
+      },
+      "p90": {
+        "score": 661.77,
+        "charCount": 196
+      }
+    },
+    "78": {
+      "n": 100,
+      "top1": {
+        "score": 637.63,
+        "charCount": 248
+      },
+      "top10Avg": {
+        "score": 634.67,
+        "charCount": 257.1
+      },
+      "p50": {
+        "score": 614.37,
+        "charCount": 349
+      },
+      "p90": {
+        "score": 628.27,
+        "charCount": 278
+      }
+    },
+    "79": {
+      "n": 100,
+      "top1": {
+        "score": 651.05,
+        "charCount": 216
+      },
+      "top10Avg": {
+        "score": 646.57,
+        "charCount": 226.9
+      },
+      "p50": {
+        "score": 617.39,
+        "charCount": 329
+      },
+      "p90": {
+        "score": 629.93,
+        "charCount": 272
+      }
+    },
+    "80": {
+      "n": 100,
+      "top1": {
+        "score": 690.43,
+        "charCount": 156
+      },
+      "top10Avg": {
+        "score": 677.79,
+        "charCount": 174
+      },
+      "p50": {
+        "score": 632,
+        "charCount": 265
+      },
+      "p90": {
+        "score": 651.05,
+        "charCount": 216
+      }
+    },
+    "81": {
+      "n": 100,
+      "top1": {
+        "score": 734.95,
+        "charCount": 114
+      },
+      "top10Avg": {
+        "score": 715.52,
+        "charCount": 132.3
+      },
+      "p50": {
+        "score": 658.33,
+        "charCount": 202
+      },
+      "p90": {
+        "score": 674.74,
+        "charCount": 176
+      }
+    },
+    "82": {
+      "n": 100,
+      "top1": {
+        "score": 718.1,
+        "charCount": 128
+      },
+      "top10Avg": {
+        "score": 714.06,
+        "charCount": 131.7
+      },
+      "p50": {
+        "score": 694.85,
+        "charCount": 151
+      },
+      "p90": {
+        "score": 708.39,
+        "charCount": 137
+      }
+    },
+    "83": {
+      "n": 100,
+      "top1": {
+        "score": 715.87,
+        "charCount": 130
+      },
+      "top10Avg": {
+        "score": 710.43,
+        "charCount": 135.1
+      },
+      "p50": {
+        "score": 651.54,
+        "charCount": 215
+      },
+      "p90": {
+        "score": 705.33,
+        "charCount": 140
+      }
+    },
+    "84": {
+      "n": 100,
+      "top1": {
+        "score": 760.21,
+        "charCount": 96
+      },
+      "top10Avg": {
+        "score": 760.21,
+        "charCount": 96
+      },
+      "p50": {
+        "score": 760.21,
+        "charCount": 96
+      },
+      "p90": {
+        "score": 760.21,
+        "charCount": 96
+      }
+    },
+    "85": {
+      "n": 100,
+      "top1": {
+        "score": 721.52,
+        "charCount": 125
+      },
+      "top10Avg": {
+        "score": 716.32,
+        "charCount": 129.7
+      },
+      "p50": {
+        "score": 676.91,
+        "charCount": 173
+      },
+      "p90": {
+        "score": 708.39,
+        "charCount": 137
+      }
+    },
+    "86": {
+      "n": 100,
+      "top1": {
+        "score": 726.24,
+        "charCount": 121
+      },
+      "top10Avg": {
+        "score": 718.27,
+        "charCount": 128
+      },
+      "p50": {
+        "score": 674.74,
+        "charCount": 176
+      },
+      "p90": {
+        "score": 707.36,
+        "charCount": 138
+      }
+    },
+    "87": {
+      "n": 100,
+      "top1": {
+        "score": 712.6,
+        "charCount": 133
+      },
+      "top10Avg": {
+        "score": 705.07,
+        "charCount": 140.4
+      },
+      "p50": {
+        "score": 643.41,
+        "charCount": 233
+      },
+      "p90": {
+        "score": 696.67,
+        "charCount": 149
+      }
+    },
+    "88": {
+      "n": 100,
+      "top1": {
+        "score": 779.62,
+        "charCount": 84
+      },
+      "top10Avg": {
+        "score": 765.69,
+        "charCount": 93.3
+      },
+      "p50": {
+        "score": 683.8,
+        "charCount": 164
+      },
+      "p90": {
+        "score": 722.68,
+        "charCount": 124
+      }
+    },
+    "89": {
+      "n": 100,
+      "top1": {
+        "score": 720.37,
+        "charCount": 126
+      },
+      "top10Avg": {
+        "score": 717.48,
+        "charCount": 128.6
+      },
+      "p50": {
+        "score": 690.43,
+        "charCount": 156
+      },
+      "p90": {
+        "score": 712.6,
+        "charCount": 133
+      }
+    },
+    "90": {
+      "n": 100,
+      "top1": {
+        "score": 720.37,
+        "charCount": 126
+      },
+      "top10Avg": {
+        "score": 716.68,
+        "charCount": 129.3
+      },
+      "p50": {
+        "score": 700.43,
+        "charCount": 145
+      },
+      "p90": {
+        "score": 710.47,
+        "charCount": 135
+      }
+    },
+    "91": {
+      "n": 100,
+      "top1": {
+        "score": 721.52,
+        "charCount": 125
+      },
+      "top10Avg": {
+        "score": 721.52,
+        "charCount": 125
+      },
+      "p50": {
+        "score": 721.52,
+        "charCount": 125
+      },
+      "p90": {
+        "score": 721.52,
+        "charCount": 125
+      }
+    },
+    "92": {
+      "n": 100,
+      "top1": {
+        "score": 742.9,
+        "charCount": 108
+      },
+      "top10Avg": {
+        "score": 739.28,
+        "charCount": 110.7
+      },
+      "p50": {
+        "score": 676.91,
+        "charCount": 173
+      },
+      "p90": {
+        "score": 734.95,
+        "charCount": 114
+      }
+    },
+    "93": {
+      "n": 100,
+      "top1": {
+        "score": 662.36,
+        "charCount": 195
+      },
+      "top10Avg": {
+        "score": 652.81,
+        "charCount": 214
+      },
+      "p50": {
+        "score": 615.81,
+        "charCount": 339
+      },
+      "p90": {
+        "score": 631.7,
+        "charCount": 266
+      }
+    },
+    "94": {
+      "n": 100,
+      "top1": {
+        "score": 693.06,
+        "charCount": 153
+      },
+      "top10Avg": {
+        "score": 691.66,
+        "charCount": 154.6
+      },
+      "p50": {
+        "score": 679.14,
+        "charCount": 170
+      },
+      "p90": {
+        "score": 689.58,
+        "charCount": 157
+      }
+    },
+    "95": {
+      "n": 100,
+      "top1": {
+        "score": 700.43,
+        "charCount": 145
+      },
+      "top10Avg": {
+        "score": 698.92,
+        "charCount": 146.6
+      },
+      "p50": {
+        "score": 675.45,
+        "charCount": 175
+      },
+      "p90": {
+        "score": 693.95,
+        "charCount": 152
+      }
+    },
+    "96": {
+      "n": 100,
+      "top1": {
+        "score": 706.34,
+        "charCount": 139
+      },
+      "top10Avg": {
+        "score": 706.34,
+        "charCount": 139
+      },
+      "p50": {
+        "score": 680.66,
+        "charCount": 168
+      },
+      "p90": {
+        "score": 705.33,
+        "charCount": 140
+      }
+    },
+    "97": {
+      "n": 100,
+      "top1": {
+        "score": 649.61,
+        "charCount": 219
+      },
+      "top10Avg": {
+        "score": 641.75,
+        "charCount": 237.6
+      },
+      "p50": {
+        "score": 608.51,
+        "charCount": 404
+      },
+      "p90": {
+        "score": 629.65,
+        "charCount": 273
+      }
+    },
+    "98": {
+      "n": 100,
+      "top1": {
+        "score": 682.21,
+        "charCount": 166
+      },
+      "top10Avg": {
+        "score": 677.43,
+        "charCount": 172.8
+      },
+      "p50": {
+        "score": 631.7,
+        "charCount": 266
+      },
+      "p90": {
+        "score": 660.6,
+        "charCount": 198
+      }
+    },
+    "99": {
+      "n": 100,
+      "top1": {
+        "score": 692.17,
+        "charCount": 154
+      },
+      "top10Avg": {
+        "score": 690.28,
+        "charCount": 156.2
+      },
+      "p50": {
+        "score": 672.63,
+        "charCount": 179
+      },
+      "p90": {
+        "score": 684.6,
+        "charCount": 163
+      }
+    },
+    "100": {
+      "n": 100,
+      "top1": {
+        "score": 640.23,
+        "charCount": 241
+      },
+      "top10Avg": {
+        "score": 640.04,
+        "charCount": 241.5
+      },
+      "p50": {
+        "score": 639.84,
+        "charCount": 242
+      },
+      "p90": {
+        "score": 639.84,
+        "charCount": 242
+      }
+    },
+    "101": {
+      "n": 100,
+      "top1": {
+        "score": 693.06,
+        "charCount": 153
+      },
+      "top10Avg": {
+        "score": 685.63,
+        "charCount": 162.1
+      },
+      "p50": {
+        "score": 653.54,
+        "charCount": 211
+      },
+      "p90": {
+        "score": 667.3,
+        "charCount": 187
+      }
+    },
+    "102": {
+      "n": 100,
+      "top1": {
+        "score": 659.46,
+        "charCount": 200
+      },
+      "top10Avg": {
+        "score": 649.16,
+        "charCount": 221
+      },
+      "p50": {
+        "score": 601.98,
+        "charCount": 557
+      },
+      "p90": {
+        "score": 634.21,
+        "charCount": 258
+      }
+    },
+    "103": {
+      "n": 100,
+      "top1": {
+        "score": 642.59,
+        "charCount": 235
+      },
+      "top10Avg": {
+        "score": 639.3,
+        "charCount": 243.6
+      },
+      "p50": {
+        "score": 605.38,
+        "charCount": 452
+      },
+      "p90": {
+        "score": 628.27,
+        "charCount": 278
+      }
+    },
+    "104": {
+      "n": 100,
+      "top1": {
+        "score": 658.89,
+        "charCount": 201
+      },
+      "top10Avg": {
+        "score": 647.77,
+        "charCount": 226.7
+      },
+      "p50": {
+        "score": 611.65,
+        "charCount": 371
+      },
+      "p90": {
+        "score": 623.81,
+        "charCount": 296
+      }
+    },
+    "105": {
+      "n": 100,
+      "top1": {
+        "score": 632.93,
+        "charCount": 262
+      },
+      "top10Avg": {
+        "score": 631.92,
+        "charCount": 265.3
+      },
+      "p50": {
+        "score": 607.23,
+        "charCount": 421
+      },
+      "p90": {
+        "score": 625.46,
+        "charCount": 289
+      }
+    },
+    "106": {
+      "n": 100,
+      "top1": {
+        "score": 714.77,
+        "charCount": 131
+      },
+      "top10Avg": {
+        "score": 714.12,
+        "charCount": 131.6
+      },
+      "p50": {
+        "score": 713.68,
+        "charCount": 132
+      },
+      "p90": {
+        "score": 713.68,
+        "charCount": 132
+      }
+    },
+    "107": {
+      "n": 100,
+      "top1": {
+        "score": 627.47,
+        "charCount": 281
+      },
+      "top10Avg": {
+        "score": 626.03,
+        "charCount": 287
+      },
+      "p50": {
+        "score": 603.16,
+        "charCount": 508
+      },
+      "p90": {
+        "score": 617.89,
+        "charCount": 326
+      }
+    },
+    "108": {
+      "n": 100,
+      "top1": {
+        "score": 625.95,
+        "charCount": 287
+      },
+      "top10Avg": {
+        "score": 624.49,
+        "charCount": 293.1
+      },
+      "p50": {
+        "score": 610.9,
+        "charCount": 378
+      },
+      "p90": {
+        "score": 623.36,
+        "charCount": 298
+      }
+    },
+    "109": {
+      "n": 100,
+      "top1": {
+        "score": 803.32,
+        "charCount": 71
+      },
+      "top10Avg": {
+        "score": 803.32,
+        "charCount": 71
+      },
+      "p50": {
+        "score": 771.26,
+        "charCount": 89
+      },
+      "p90": {
+        "score": 803.32,
+        "charCount": 71
+      }
+    },
+    "110": {
+      "n": 100,
+      "top1": {
+        "score": 737.55,
+        "charCount": 112
+      },
+      "top10Avg": {
+        "score": 735.36,
+        "charCount": 113.7
+      },
+      "p50": {
+        "score": 679.9,
+        "charCount": 169
+      },
+      "p90": {
+        "score": 713.68,
+        "charCount": 132
+      }
+    },
+    "111": {
+      "n": 100,
+      "top1": {
+        "score": 734.95,
+        "charCount": 114
+      },
+      "top10Avg": {
+        "score": 734.95,
+        "charCount": 114
+      },
+      "p50": {
+        "score": 734.95,
+        "charCount": 114
+      },
+      "p90": {
+        "score": 734.95,
+        "charCount": 114
+      }
+    },
+    "112": {
+      "n": 100,
+      "top1": {
+        "score": 788.39,
+        "charCount": 79
+      },
+      "top10Avg": {
+        "score": 788.39,
+        "charCount": 79
+      },
+      "p50": {
+        "score": 690.43,
+        "charCount": 156
+      },
+      "p90": {
+        "score": 786.6,
+        "charCount": 80
+      }
+    },
+    "113": {
+      "n": 100,
+      "top1": {
+        "score": 825.79,
+        "charCount": 60
+      },
+      "top10Avg": {
+        "score": 825.79,
+        "charCount": 60
+      },
+      "p50": {
+        "score": 792.02,
+        "charCount": 77
+      },
+      "p90": {
+        "score": 821.53,
+        "charCount": 62
+      }
+    },
+    "114": {
+      "n": 100,
+      "top1": {
+        "score": 779.62,
+        "charCount": 84
+      },
+      "top10Avg": {
+        "score": 779.62,
+        "charCount": 84
+      },
+      "p50": {
+        "score": 742.9,
+        "charCount": 108
+      },
+      "p90": {
+        "score": 771.26,
+        "charCount": 89
+      }
+    },
+    "115": {
+      "n": 100,
+      "top1": {
+        "score": 720.37,
+        "charCount": 126
+      },
+      "top10Avg": {
+        "score": 719.46,
+        "charCount": 126.8
+      },
+      "p50": {
+        "score": 652.53,
+        "charCount": 213
+      },
+      "p90": {
+        "score": 716.98,
+        "charCount": 129
+      }
+    },
+    "116": {
+      "n": 100,
+      "top1": {
+        "score": 699.48,
+        "charCount": 146
+      },
+      "top10Avg": {
+        "score": 698.19,
+        "charCount": 147.4
+      },
+      "p50": {
+        "score": 652.53,
+        "charCount": 213
+      },
+      "p90": {
+        "score": 691.3,
+        "charCount": 155
+      }
+    },
+    "117": {
+      "n": 100,
+      "top1": {
+        "score": 693.95,
+        "charCount": 152
+      },
+      "top10Avg": {
+        "score": 676.45,
+        "charCount": 176.7
+      },
+      "p50": {
+        "score": 619.68,
+        "charCount": 316
+      },
+      "p90": {
+        "score": 653.03,
+        "charCount": 212
+      }
+    },
+    "118": {
+      "n": 100,
+      "top1": {
+        "score": 699.48,
+        "charCount": 146
+      },
+      "top10Avg": {
+        "score": 695.69,
+        "charCount": 150.2
+      },
+      "p50": {
+        "score": 647.75,
+        "charCount": 223
+      },
+      "p90": {
+        "score": 683,
+        "charCount": 165
+      }
+    },
+    "119": {
+      "n": 100,
+      "top1": {
+        "score": 702.36,
+        "charCount": 143
+      },
+      "top10Avg": {
+        "score": 687.93,
+        "charCount": 161.3
+      },
+      "p50": {
+        "score": 620.06,
+        "charCount": 314
+      },
+      "p90": {
+        "score": 654.57,
+        "charCount": 209
+      }
+    },
+    "120": {
+      "n": 100,
+      "top1": {
+        "score": 650.56,
+        "charCount": 217
+      },
+      "top10Avg": {
+        "score": 650.56,
+        "charCount": 217
+      },
+      "p50": {
+        "score": 650.08,
+        "charCount": 218
+      },
+      "p90": {
+        "score": 650.56,
+        "charCount": 217
+      }
+    },
+    "121": {
+      "n": 100,
+      "top1": {
+        "score": 691.3,
+        "charCount": 155
+      },
+      "top10Avg": {
+        "score": 679.71,
+        "charCount": 170.3
+      },
+      "p50": {
+        "score": 635.88,
+        "charCount": 253
+      },
+      "p90": {
+        "score": 660.6,
+        "charCount": 198
+      }
+    },
+    "122": {
+      "n": 100,
+      "top1": {
+        "score": 660.6,
+        "charCount": 198
+      },
+      "top10Avg": {
+        "score": 658.81,
+        "charCount": 201.2
+      },
+      "p50": {
+        "score": 619.13,
+        "charCount": 319
+      },
+      "p90": {
+        "score": 656.15,
+        "charCount": 206
+      }
+    },
+    "123": {
+      "n": 100,
+      "top1": {
+        "score": 713.68,
+        "charCount": 132
+      },
+      "top10Avg": {
+        "score": 710.22,
+        "charCount": 135.3
+      },
+      "p50": {
+        "score": 633.24,
+        "charCount": 261
+      },
+      "p90": {
+        "score": 687.89,
+        "charCount": 159
+      }
+    },
+    "124": {
+      "n": 100,
+      "top1": {
+        "score": 655.62,
+        "charCount": 207
+      },
+      "top10Avg": {
+        "score": 647.66,
+        "charCount": 224.6
+      },
+      "p50": {
+        "score": 616.42,
+        "charCount": 335
+      },
+      "p90": {
+        "score": 634.54,
+        "charCount": 257
+      }
+    },
+    "125": {
+      "n": 100,
+      "top1": {
+        "score": 685.41,
+        "charCount": 162
+      },
+      "top10Avg": {
+        "score": 683.9,
+        "charCount": 163.9
+      },
+      "p50": {
+        "score": 642.19,
+        "charCount": 236
+      },
+      "p90": {
+        "score": 678.39,
+        "charCount": 171
+      }
+    },
+    "126": {
+      "n": 100,
+      "top1": {
+        "score": 697.6,
+        "charCount": 148
+      },
+      "top10Avg": {
+        "score": 691.33,
+        "charCount": 155.3
+      },
+      "p50": {
+        "score": 626.2,
+        "charCount": 286
+      },
+      "p90": {
+        "score": 675.45,
+        "charCount": 175
+      }
+    },
+    "127": {
+      "n": 100,
+      "top1": {
+        "score": 719.23,
+        "charCount": 127
+      },
+      "top10Avg": {
+        "score": 701.45,
+        "charCount": 145
+      },
+      "p50": {
+        "score": 633.88,
+        "charCount": 259
+      },
+      "p90": {
+        "score": 673.33,
+        "charCount": 178
+      }
+    },
+    "128": {
+      "n": 100,
+      "top1": {
+        "score": 768.03,
+        "charCount": 91
+      },
+      "top10Avg": {
+        "score": 759.21,
+        "charCount": 97.2
+      },
+      "p50": {
+        "score": 669.25,
+        "charCount": 184
+      },
+      "p90": {
+        "score": 696.67,
+        "charCount": 149
+      }
+    },
+    "129": {
+      "n": 100,
+      "top1": {
+        "score": 705.33,
+        "charCount": 140
+      },
+      "top10Avg": {
+        "score": 701.55,
+        "charCount": 143.9
+      },
+      "p50": {
+        "score": 673.33,
+        "charCount": 178
+      },
+      "p90": {
+        "score": 687.89,
+        "charCount": 159
+      }
+    },
+    "130": {
+      "n": 100,
+      "top1": {
+        "score": 728.67,
+        "charCount": 119
+      },
+      "top10Avg": {
+        "score": 728.67,
+        "charCount": 119
+      },
+      "p50": {
+        "score": 728.67,
+        "charCount": 119
+      },
+      "p90": {
+        "score": 728.67,
+        "charCount": 119
+      }
+    },
+    "131": {
+      "n": 100,
+      "top1": {
+        "score": 684.6,
+        "charCount": 163
+      },
+      "top10Avg": {
+        "score": 680.47,
+        "charCount": 168.3
+      },
+      "p50": {
+        "score": 664.78,
+        "charCount": 191
+      },
+      "p90": {
+        "score": 676.91,
+        "charCount": 173
+      }
+    },
+    "132": {
+      "n": 100,
+      "top1": {
+        "score": 693.06,
+        "charCount": 153
+      },
+      "top10Avg": {
+        "score": 692.04,
+        "charCount": 154.2
+      },
+      "p50": {
+        "score": 642.59,
+        "charCount": 235
+      },
+      "p90": {
+        "score": 681.43,
+        "charCount": 167
+      }
+    },
+    "133": {
+      "n": 100,
+      "top1": {
+        "score": 687.05,
+        "charCount": 160
+      },
+      "top10Avg": {
+        "score": 687.05,
+        "charCount": 160
+      },
+      "p50": {
+        "score": 622.92,
+        "charCount": 300
+      },
+      "p90": {
+        "score": 687.05,
+        "charCount": 160
+      }
+    },
+    "134": {
+      "n": 100,
+      "top1": {
+        "score": 766.44,
+        "charCount": 92
+      },
+      "top10Avg": {
+        "score": 755.57,
+        "charCount": 99.4
+      },
+      "p50": {
+        "score": 727.45,
+        "charCount": 120
+      },
+      "p90": {
+        "score": 733.67,
+        "charCount": 115
+      }
+    },
+    "135": {
+      "n": 100,
+      "top1": {
+        "score": 755.69,
+        "charCount": 99
+      },
+      "top10Avg": {
+        "score": 742.98,
+        "charCount": 108.5
+      },
+      "p50": {
+        "score": 666.03,
+        "charCount": 189
+      },
+      "p90": {
+        "score": 709.43,
+        "charCount": 136
+      }
+    },
+    "136": {
+      "n": 100,
+      "top1": {
+        "score": 725.05,
+        "charCount": 122
+      },
+      "top10Avg": {
+        "score": 721.92,
+        "charCount": 124.7
+      },
+      "p50": {
+        "score": 715.87,
+        "charCount": 130
+      },
+      "p90": {
+        "score": 716.98,
+        "charCount": 129
+      }
+    },
+    "137": {
+      "n": 100,
+      "top1": {
+        "score": 783.08,
+        "charCount": 82
+      },
+      "top10Avg": {
+        "score": 783.08,
+        "charCount": 82
+      },
+      "p50": {
+        "score": 783.08,
+        "charCount": 82
+      },
+      "p90": {
+        "score": 783.08,
+        "charCount": 82
+      }
+    },
+    "138": {
+      "n": 100,
+      "top1": {
+        "score": 705.33,
+        "charCount": 140
+      },
+      "top10Avg": {
+        "score": 697.85,
+        "charCount": 147.9
+      },
+      "p50": {
+        "score": 664.78,
+        "charCount": 191
+      },
+      "p90": {
+        "score": 688.73,
+        "charCount": 158
+      }
+    },
+    "139": {
+      "n": 100,
+      "top1": {
+        "score": 758.69,
+        "charCount": 97
+      },
+      "top10Avg": {
+        "score": 753.77,
+        "charCount": 100.5
+      },
+      "p50": {
+        "score": 698.53,
+        "charCount": 147
+      },
+      "p90": {
+        "score": 727.45,
+        "charCount": 120
+      }
+    },
+    "140": {
+      "n": 100,
+      "top1": {
+        "score": 779.62,
+        "charCount": 84
+      },
+      "top10Avg": {
+        "score": 775.41,
+        "charCount": 86.5
+      },
+      "p50": {
+        "score": 699.48,
+        "charCount": 146
+      },
+      "p90": {
+        "score": 772.9,
+        "charCount": 88
+      }
+    },
+    "141": {
+      "n": 100,
+      "top1": {
+        "score": 736.25,
+        "charCount": 113
+      },
+      "top10Avg": {
+        "score": 724.33,
+        "charCount": 123.3
+      },
+      "p50": {
+        "score": 665.4,
+        "charCount": 190
+      },
+      "p90": {
+        "score": 703.34,
+        "charCount": 142
+      }
+    },
+    "142": {
+      "n": 100,
+      "top1": {
+        "score": 755.69,
+        "charCount": 99
+      },
+      "top10Avg": {
+        "score": 755.69,
+        "charCount": 99
+      },
+      "p50": {
+        "score": 755.69,
+        "charCount": 99
+      },
+      "p90": {
+        "score": 755.69,
+        "charCount": 99
+      }
+    },
+    "143": {
+      "n": 100,
+      "top1": {
+        "score": 836.81,
+        "charCount": 55
+      },
+      "top10Avg": {
+        "score": 836.81,
+        "charCount": 55
+      },
+      "p50": {
+        "score": 819.42,
+        "charCount": 63
+      },
+      "p90": {
+        "score": 836.81,
+        "charCount": 55
+      }
+    },
+    "144": {
+      "n": 100,
+      "top1": {
+        "score": 764.86,
+        "charCount": 93
+      },
+      "top10Avg": {
+        "score": 744.72,
+        "charCount": 107.6
+      },
+      "p50": {
+        "score": 696.67,
+        "charCount": 149
+      },
+      "p90": {
+        "score": 723.86,
+        "charCount": 123
+      }
+    },
+    "145": {
+      "n": 100,
+      "top1": {
+        "score": 783.08,
+        "charCount": 82
+      },
+      "top10Avg": {
+        "score": 760.48,
+        "charCount": 96.6
+      },
+      "p50": {
+        "score": 707.36,
+        "charCount": 138
+      },
+      "p90": {
+        "score": 731.15,
+        "charCount": 117
+      }
+    },
+    "146": {
+      "n": 100,
+      "top1": {
+        "score": 760.21,
+        "charCount": 96
+      },
+      "top10Avg": {
+        "score": 759.61,
+        "charCount": 96.4
+      },
+      "p50": {
+        "score": 711.53,
+        "charCount": 134
+      },
+      "p90": {
+        "score": 755.69,
+        "charCount": 99
+      }
+    },
+    "147": {
+      "n": 100,
+      "top1": {
+        "score": 741.54,
+        "charCount": 109
+      },
+      "top10Avg": {
+        "score": 737.17,
+        "charCount": 112.4
+      },
+      "p50": {
+        "score": 690.43,
+        "charCount": 156
+      },
+      "p90": {
+        "score": 720.37,
+        "charCount": 126
+      }
+    },
+    "148": {
+      "n": 100,
+      "top1": {
+        "score": 754.22,
+        "charCount": 100
+      },
+      "top10Avg": {
+        "score": 754.22,
+        "charCount": 100
+      },
+      "p50": {
+        "score": 754.22,
+        "charCount": 100
+      },
+      "p90": {
+        "score": 754.22,
+        "charCount": 100
+      }
+    },
+    "149": {
+      "n": 100,
+      "top1": {
+        "score": 697.6,
+        "charCount": 148
+      },
+      "top10Avg": {
+        "score": 690.57,
+        "charCount": 156.2
+      },
+      "p50": {
+        "score": 641.79,
+        "charCount": 237
+      },
+      "p90": {
+        "score": 674.03,
+        "charCount": 177
+      }
+    },
+    "150": {
+      "n": 100,
+      "top1": {
+        "score": 777.92,
+        "charCount": 85
+      },
+      "top10Avg": {
+        "score": 758.39,
+        "charCount": 98.1
+      },
+      "p50": {
+        "score": 697.6,
+        "charCount": 148
+      },
+      "p90": {
+        "score": 721.52,
+        "charCount": 125
+      }
+    },
+    "151": {
+      "n": 100,
+      "top1": {
+        "score": 663.56,
+        "charCount": 193
+      },
+      "top10Avg": {
+        "score": 653.07,
+        "charCount": 214.6
+      },
+      "p50": {
+        "score": 622.92,
+        "charCount": 300
+      },
+      "p90": {
+        "score": 631.7,
+        "charCount": 266
+      }
+    },
+    "152": {
+      "n": 100,
+      "top1": {
+        "score": 643,
+        "charCount": 234
+      },
+      "top10Avg": {
+        "score": 629.8,
+        "charCount": 280.1
+      },
+      "p50": {
+        "score": 608.35,
+        "charCount": 406
+      },
+      "p90": {
+        "score": 615.51,
+        "charCount": 341
+      }
+    },
+    "153": {
+      "n": 100,
+      "top1": {
+        "score": 695.76,
+        "charCount": 150
+      },
+      "top10Avg": {
+        "score": 690.82,
+        "charCount": 156
+      },
+      "p50": {
+        "score": 652.53,
+        "charCount": 213
+      },
+      "p90": {
+        "score": 668.6,
+        "charCount": 185
+      }
+    },
+    "154": {
+      "n": 100,
+      "top1": {
+        "score": 682.21,
+        "charCount": 166
+      },
+      "top10Avg": {
+        "score": 681.06,
+        "charCount": 167.5
+      },
+      "p50": {
+        "score": 618.77,
+        "charCount": 321
+      },
+      "p90": {
+        "score": 672.63,
+        "charCount": 179
+      }
+    },
+    "155": {
+      "n": 100,
+      "top1": {
+        "score": 752.75,
+        "charCount": 101
+      },
+      "top10Avg": {
+        "score": 748.95,
+        "charCount": 103.8
+      },
+      "p50": {
+        "score": 682.21,
+        "charCount": 166
+      },
+      "p90": {
+        "score": 719.23,
+        "charCount": 127
+      }
+    },
+    "156": {
+      "n": 100,
+      "top1": {
+        "score": 726.24,
+        "charCount": 121
+      },
+      "top10Avg": {
+        "score": 722.72,
+        "charCount": 124
+      },
+      "p50": {
+        "score": 652.53,
+        "charCount": 213
+      },
+      "p90": {
+        "score": 718.1,
+        "charCount": 128
+      }
+    },
+    "157": {
+      "n": 100,
+      "top1": {
+        "score": 655.09,
+        "charCount": 208
+      },
+      "top10Avg": {
+        "score": 643.39,
+        "charCount": 237
+      },
+      "p50": {
+        "score": 614.1,
+        "charCount": 351
+      },
+      "p90": {
+        "score": 623.59,
+        "charCount": 297
+      }
+    },
+    "158": {
+      "n": 100,
+      "top1": {
+        "score": 712.6,
+        "charCount": 133
+      },
+      "top10Avg": {
+        "score": 709.41,
+        "charCount": 136.1
+      },
+      "p50": {
+        "score": 668.6,
+        "charCount": 185
+      },
+      "p90": {
+        "score": 695.76,
+        "charCount": 150
+      }
+    },
+    "159": {
+      "n": 100,
+      "top1": {
+        "score": 793.85,
+        "charCount": 76
+      },
+      "top10Avg": {
+        "score": 793.85,
+        "charCount": 76
+      },
+      "p50": {
+        "score": 774.56,
+        "charCount": 87
+      },
+      "p90": {
+        "score": 793.85,
+        "charCount": 76
+      }
+    },
+    "160": {
+      "n": 100,
+      "top1": {
+        "score": 741.54,
+        "charCount": 109
+      },
+      "top10Avg": {
+        "score": 741.54,
+        "charCount": 109
+      },
+      "p50": {
+        "score": 741.54,
+        "charCount": 109
+      },
+      "p90": {
+        "score": 741.54,
+        "charCount": 109
+      }
+    },
+    "161": {
+      "n": 100,
+      "top1": {
+        "score": 769.64,
+        "charCount": 90
+      },
+      "top10Avg": {
+        "score": 769.64,
+        "charCount": 90
+      },
+      "p50": {
+        "score": 731.15,
+        "charCount": 117
+      },
+      "p90": {
+        "score": 766.44,
+        "charCount": 92
+      }
+    },
+    "162": {
+      "n": 100,
+      "top1": {
+        "score": 752.75,
+        "charCount": 101
+      },
+      "top10Avg": {
+        "score": 752.75,
+        "charCount": 101
+      },
+      "p50": {
+        "score": 744.26,
+        "charCount": 107
+      },
+      "p90": {
+        "score": 752.75,
+        "charCount": 101
+      }
+    },
+    "163": {
+      "n": 100,
+      "top1": {
+        "score": 705.33,
+        "charCount": 140
+      },
+      "top10Avg": {
+        "score": 704.34,
+        "charCount": 141
+      },
+      "p50": {
+        "score": 675.45,
+        "charCount": 175
+      },
+      "p90": {
+        "score": 697.6,
+        "charCount": 148
+      }
+    },
+    "164": {
+      "n": 100,
+      "top1": {
+        "score": 654.05,
+        "charCount": 210
+      },
+      "top10Avg": {
+        "score": 652.1,
+        "charCount": 213.9
+      },
+      "p50": {
+        "score": 634.54,
+        "charCount": 257
+      },
+      "p90": {
+        "score": 649.61,
+        "charCount": 219
+      }
+    },
+    "165": {
+      "n": 100,
+      "top1": {
+        "score": 684.6,
+        "charCount": 163
+      },
+      "top10Avg": {
+        "score": 674.63,
+        "charCount": 177
+      },
+      "p50": {
+        "score": 643.83,
+        "charCount": 232
+      },
+      "p90": {
+        "score": 661.18,
+        "charCount": 197
+      }
+    },
+    "166": {
+      "n": 100,
+      "top1": {
+        "score": 652.53,
+        "charCount": 213
+      },
+      "top10Avg": {
+        "score": 648.5,
+        "charCount": 221.6
+      },
+      "p50": {
+        "score": 621.65,
+        "charCount": 306
+      },
+      "p90": {
+        "score": 641.79,
+        "charCount": 237
+      }
+    },
+    "167": {
+      "n": 100,
+      "top1": {
+        "score": 674.03,
+        "charCount": 177
+      },
+      "top10Avg": {
+        "score": 668.31,
+        "charCount": 185.6
+      },
+      "p50": {
+        "score": 651.05,
+        "charCount": 216
+      },
+      "p90": {
+        "score": 662.96,
+        "charCount": 194
+      }
+    },
+    "168": {
+      "n": 100,
+      "top1": {
+        "score": 744.26,
+        "charCount": 107
+      },
+      "top10Avg": {
+        "score": 743.72,
+        "charCount": 107.4
+      },
+      "p50": {
+        "score": 701.39,
+        "charCount": 144
+      },
+      "p90": {
+        "score": 741.54,
+        "charCount": 109
+      }
+    },
+    "169": {
+      "n": 100,
+      "top1": {
+        "score": 639.09,
+        "charCount": 244
+      },
+      "top10Avg": {
+        "score": 635.03,
+        "charCount": 256.2
+      },
+      "p50": {
+        "score": 613.83,
+        "charCount": 353
+      },
+      "p90": {
+        "score": 626.7,
+        "charCount": 284
+      }
+    },
+    "170": {
+      "n": 100,
+      "top1": {
+        "score": 689.58,
+        "charCount": 157
+      },
+      "top10Avg": {
+        "score": 685.11,
+        "charCount": 162.5
+      },
+      "p50": {
+        "score": 666.03,
+        "charCount": 189
+      },
+      "p90": {
+        "score": 679.14,
+        "charCount": 170
+      }
+    },
+    "171": {
+      "n": 100,
+      "top1": {
+        "score": 701.39,
+        "charCount": 144
+      },
+      "top10Avg": {
+        "score": 673.66,
+        "charCount": 181.3
+      },
+      "p50": {
+        "score": 633.88,
+        "charCount": 259
+      },
+      "p90": {
+        "score": 649.61,
+        "charCount": 219
+      }
+    },
+    "172": {
+      "n": 100,
+      "top1": {
+        "score": 702.36,
+        "charCount": 143
+      },
+      "top10Avg": {
+        "score": 691.24,
+        "charCount": 156.1
+      },
+      "p50": {
+        "score": 636.22,
+        "charCount": 252
+      },
+      "p90": {
+        "score": 666.66,
+        "charCount": 188
+      }
+    },
+    "173": {
+      "n": 100,
+      "top1": {
+        "score": 704.33,
+        "charCount": 141
+      },
+      "top10Avg": {
+        "score": 692.93,
+        "charCount": 153.5
+      },
+      "p50": {
+        "score": 639.47,
+        "charCount": 243
+      },
+      "p90": {
+        "score": 676.91,
+        "charCount": 173
+      }
+    },
+    "174": {
+      "n": 100,
+      "top1": {
+        "score": 654.05,
+        "charCount": 210
+      },
+      "top10Avg": {
+        "score": 647.3,
+        "charCount": 225.1
+      },
+      "p50": {
+        "score": 619.87,
+        "charCount": 315
+      },
+      "p90": {
+        "score": 637.63,
+        "charCount": 248
+      }
+    },
+    "175": {
+      "n": 100,
+      "top1": {
+        "score": 635.88,
+        "charCount": 253
+      },
+      "top10Avg": {
+        "score": 619.68,
+        "charCount": 326.4
+      },
+      "p50": {
+        "score": 603.57,
+        "charCount": 495
+      },
+      "p90": {
+        "score": 610,
+        "charCount": 387
+      }
+    },
+    "176": {
+      "n": 100,
+      "top1": {
+        "score": 643,
+        "charCount": 234
+      },
+      "top10Avg": {
+        "score": 638.11,
+        "charCount": 247.9
+      },
+      "p50": {
+        "score": 609.09,
+        "charCount": 397
+      },
+      "p90": {
+        "score": 626.7,
+        "charCount": 284
+      }
+    },
+    "177": {
+      "n": 100,
+      "top1": {
+        "score": 627.47,
+        "charCount": 281
+      },
+      "top10Avg": {
+        "score": 616.94,
+        "charCount": 338.2
+      },
+      "p50": {
+        "score": 601.68,
+        "charCount": 574
+      },
+      "p90": {
+        "score": 608.43,
+        "charCount": 405
+      }
+    },
+    "178": {
+      "n": 100,
+      "top1": {
+        "score": 668.6,
+        "charCount": 185
+      },
+      "top10Avg": {
+        "score": 664.69,
+        "charCount": 191.4
+      },
+      "p50": {
+        "score": 624.74,
+        "charCount": 292
+      },
+      "p90": {
+        "score": 653.03,
+        "charCount": 212
+      }
+    },
+    "179": {
+      "n": 100,
+      "top1": {
+        "score": 763.29,
+        "charCount": 94
+      },
+      "top10Avg": {
+        "score": 760.29,
+        "charCount": 96
+      },
+      "p50": {
+        "score": 744.26,
+        "charCount": 107
+      },
+      "p90": {
+        "score": 744.26,
+        "charCount": 107
+      }
+    },
+    "180": {
+      "n": 100,
+      "top1": {
+        "score": 792.02,
+        "charCount": 77
+      },
+      "top10Avg": {
+        "score": 792.02,
+        "charCount": 77
+      },
+      "p50": {
+        "score": 792.02,
+        "charCount": 77
+      },
+      "p90": {
+        "score": 792.02,
+        "charCount": 77
+      }
+    },
+    "181": {
+      "n": 100,
+      "top1": {
+        "score": 771.26,
+        "charCount": 89
+      },
+      "top10Avg": {
+        "score": 771.26,
+        "charCount": 89
+      },
+      "p50": {
+        "score": 714.77,
+        "charCount": 131
+      },
+      "p90": {
+        "score": 764.86,
+        "charCount": 93
+      }
+    },
+    "182": {
+      "n": 100,
+      "top1": {
+        "score": 792.02,
+        "charCount": 77
+      },
+      "top10Avg": {
+        "score": 792.02,
+        "charCount": 77
+      },
+      "p50": {
+        "score": 774.56,
+        "charCount": 87
+      },
+      "p90": {
+        "score": 792.02,
+        "charCount": 77
+      }
+    },
+    "183": {
+      "n": 100,
+      "top1": {
+        "score": 693.06,
+        "charCount": 153
+      },
+      "top10Avg": {
+        "score": 683.6,
+        "charCount": 164.6
+      },
+      "p50": {
+        "score": 650.08,
+        "charCount": 218
+      },
+      "p90": {
+        "score": 675.45,
+        "charCount": 175
+      }
+    },
+    "184": {
+      "n": 100,
+      "top1": {
+        "score": 674.03,
+        "charCount": 177
+      },
+      "top10Avg": {
+        "score": 668.67,
+        "charCount": 185.2
+      },
+      "p50": {
+        "score": 640.61,
+        "charCount": 240
+      },
+      "p90": {
+        "score": 658.89,
+        "charCount": 201
+      }
+    },
+    "185": {
+      "n": 100,
+      "top1": {
+        "score": 619.31,
+        "charCount": 318
+      },
+      "top10Avg": {
+        "score": 613.24,
+        "charCount": 360.6
+      },
+      "p50": {
+        "score": 607.37,
+        "charCount": 419
+      },
+      "p90": {
+        "score": 609.63,
+        "charCount": 391
+      }
+    },
+    "186": {
+      "n": 100,
+      "top1": {
+        "score": 688.73,
+        "charCount": 158
+      },
+      "top10Avg": {
+        "score": 677.08,
+        "charCount": 173.7
+      },
+      "p50": {
+        "score": 641.39,
+        "charCount": 238
+      },
+      "p90": {
+        "score": 664.17,
+        "charCount": 192
+      }
+    },
+    "187": {
+      "n": 100,
+      "top1": {
+        "score": 714.77,
+        "charCount": 131
+      },
+      "top10Avg": {
+        "score": 702.42,
+        "charCount": 143.2
+      },
+      "p50": {
+        "score": 661.18,
+        "charCount": 197
+      },
+      "p90": {
+        "score": 687.05,
+        "charCount": 160
+      }
+    },
+    "188": {
+      "n": 100,
+      "top1": {
+        "score": 688.73,
+        "charCount": 158
+      },
+      "top10Avg": {
+        "score": 684.42,
+        "charCount": 163.3
+      },
+      "p50": {
+        "score": 652.03,
+        "charCount": 214
+      },
+      "p90": {
+        "score": 678.39,
+        "charCount": 171
+      }
+    },
+    "189": {
+      "n": 100,
+      "top1": {
+        "score": 686.23,
+        "charCount": 161
+      },
+      "top10Avg": {
+        "score": 684.94,
+        "charCount": 162.6
+      },
+      "p50": {
+        "score": 646.41,
+        "charCount": 226
+      },
+      "p90": {
+        "score": 680.66,
+        "charCount": 168
+      }
+    },
+    "190": {
+      "n": 100,
+      "top1": {
+        "score": 682.21,
+        "charCount": 166
+      },
+      "top10Avg": {
+        "score": 677.34,
+        "charCount": 172.7
+      },
+      "p50": {
+        "score": 647.3,
+        "charCount": 224
+      },
+      "p90": {
+        "score": 663.56,
+        "charCount": 193
+      }
+    },
+    "191": {
+      "n": 100,
+      "top1": {
+        "score": 689.58,
+        "charCount": 157
+      },
+      "top10Avg": {
+        "score": 679.98,
+        "charCount": 169.3
+      },
+      "p50": {
+        "score": 649.14,
+        "charCount": 220
+      },
+      "p90": {
+        "score": 669.25,
+        "charCount": 184
+      }
+    },
+    "192": {
+      "n": 100,
+      "top1": {
+        "score": 705.33,
+        "charCount": 140
+      },
+      "top10Avg": {
+        "score": 702.48,
+        "charCount": 142.9
+      },
+      "p50": {
+        "score": 685.41,
+        "charCount": 162
+      },
+      "p90": {
+        "score": 700.43,
+        "charCount": 145
+      }
+    },
+    "193": {
+      "n": 100,
+      "top1": {
+        "score": 652.53,
+        "charCount": 213
+      },
+      "top10Avg": {
+        "score": 642.53,
+        "charCount": 237.3
+      },
+      "p50": {
+        "score": 612.46,
+        "charCount": 364
+      },
+      "p90": {
+        "score": 629.93,
+        "charCount": 272
+      }
+    },
+    "194": {
+      "n": 100,
+      "top1": {
+        "score": 667.94,
+        "charCount": 186
+      },
+      "top10Avg": {
+        "score": 659.65,
+        "charCount": 200.1
+      },
+      "p50": {
+        "score": 620.45,
+        "charCount": 312
+      },
+      "p90": {
+        "score": 652.03,
+        "charCount": 214
+      }
+    },
+    "195": {
+      "n": 100,
+      "top1": {
+        "score": 627.47,
+        "charCount": 281
+      },
+      "top10Avg": {
+        "score": 616.96,
+        "charCount": 339.2
+      },
+      "p50": {
+        "score": 597.26,
+        "charCount": 470
+      },
+      "p90": {
+        "score": 608.67,
+        "charCount": 402
+      }
+    },
+    "196": {
+      "n": 100,
+      "top1": {
+        "score": 679.14,
+        "charCount": 170
+      },
+      "top10Avg": {
+        "score": 679.14,
+        "charCount": 170
+      },
+      "p50": {
+        "score": 636.22,
+        "charCount": 252
+      },
+      "p90": {
+        "score": 679.14,
+        "charCount": 170
+      }
+    },
+    "197": {
+      "n": 100,
+      "top1": {
+        "score": 654.57,
+        "charCount": 209
+      },
+      "top10Avg": {
+        "score": 648.92,
+        "charCount": 221.5
+      },
+      "p50": {
+        "score": 604.85,
+        "charCount": 463
+      },
+      "p90": {
+        "score": 635.2,
+        "charCount": 255
+      }
+    },
+    "198": {
+      "n": 100,
+      "top1": {
+        "score": 681.43,
+        "charCount": 167
+      },
+      "top10Avg": {
+        "score": 678.9,
+        "charCount": 170.4
+      },
+      "p50": {
+        "score": 638.35,
+        "charCount": 246
+      },
+      "p90": {
+        "score": 673.33,
+        "charCount": 178
+      }
+    },
+    "199": {
+      "n": 100,
+      "top1": {
+        "score": 661.18,
+        "charCount": 197
+      },
+      "top10Avg": {
+        "score": 648.88,
+        "charCount": 222.5
+      },
+      "p50": {
+        "score": 614.93,
+        "charCount": 345
+      },
+      "p90": {
+        "score": 636.57,
+        "charCount": 251
+      }
+    },
+    "200": {
+      "n": 100,
+      "top1": {
+        "score": 757.19,
+        "charCount": 98
+      },
+      "top10Avg": {
+        "score": 743.76,
+        "charCount": 108.1
+      },
+      "p50": {
+        "score": 671.26,
+        "charCount": 181
+      },
+      "p90": {
+        "score": 719.23,
+        "charCount": 127
+      }
+    },
+    "201": {
+      "n": 100,
+      "top1": {
+        "score": 694.85,
+        "charCount": 151
+      },
+      "top10Avg": {
+        "score": 683.71,
+        "charCount": 164.9
+      },
+      "p50": {
+        "score": 643.83,
+        "charCount": 232
+      },
+      "p90": {
+        "score": 671.26,
+        "charCount": 181
+      }
+    },
+    "202": {
+      "n": 100,
+      "top1": {
+        "score": 670.59,
+        "charCount": 182
+      },
+      "top10Avg": {
+        "score": 656.75,
+        "charCount": 206.7
+      },
+      "p50": {
+        "score": 616.27,
+        "charCount": 336
+      },
+      "p90": {
+        "score": 640.23,
+        "charCount": 241
+      }
+    },
+    "203": {
+      "n": 100,
+      "top1": {
+        "score": 630.8,
+        "charCount": 269
+      },
+      "top10Avg": {
+        "score": 624.5,
+        "charCount": 296
+      },
+      "p50": {
+        "score": 607.66,
+        "charCount": 415
+      },
+      "p90": {
+        "score": 613.06,
+        "charCount": 359
+      }
+    },
+    "204": {
+      "n": 100,
+      "top1": {
+        "score": 683.8,
+        "charCount": 164
+      },
+      "top10Avg": {
+        "score": 673.92,
+        "charCount": 177.6
+      },
+      "p50": {
+        "score": 627.74,
+        "charCount": 280
+      },
+      "p90": {
+        "score": 662.96,
+        "charCount": 194
+      }
+    },
+    "205": {
+      "n": 100,
+      "top1": {
+        "score": 662.36,
+        "charCount": 195
+      },
+      "top10Avg": {
+        "score": 656.08,
+        "charCount": 207
+      },
+      "p50": {
+        "score": 618.94,
+        "charCount": 320
+      },
+      "p90": {
+        "score": 641.79,
+        "charCount": 237
+      }
+    },
+    "206": {
+      "n": 100,
+      "top1": {
+        "score": 643.83,
+        "charCount": 232
+      },
+      "top10Avg": {
+        "score": 632.74,
+        "charCount": 267.7
+      },
+      "p50": {
+        "score": 607.73,
+        "charCount": 414
+      },
+      "p90": {
+        "score": 617.22,
+        "charCount": 330
+      }
+    },
+    "207": {
+      "n": 100,
+      "top1": {
+        "score": 716.98,
+        "charCount": 129
+      },
+      "top10Avg": {
+        "score": 714.35,
+        "charCount": 131.4
+      },
+      "p50": {
+        "score": 688.73,
+        "charCount": 158
+      },
+      "p90": {
+        "score": 708.39,
+        "charCount": 137
+      }
+    },
+    "208": {
+      "n": 100,
+      "top1": {
+        "score": 657.78,
+        "charCount": 203
+      },
+      "top10Avg": {
+        "score": 646.59,
+        "charCount": 228
+      },
+      "p50": {
+        "score": 620.45,
+        "charCount": 312
+      },
+      "p90": {
+        "score": 632.62,
+        "charCount": 263
+      }
+    },
+    "209": {
+      "n": 100,
+      "top1": {
+        "score": 640.61,
+        "charCount": 240
+      },
+      "top10Avg": {
+        "score": 632.83,
+        "charCount": 264.1
+      },
+      "p50": {
+        "score": 609.63,
+        "charCount": 391
+      },
+      "p90": {
+        "score": 621.44,
+        "charCount": 307
+      }
+    },
+    "210": {
+      "n": 100,
+      "top1": {
+        "score": 710.47,
+        "charCount": 135
+      },
+      "top10Avg": {
+        "score": 708.08,
+        "charCount": 137.3
+      },
+      "p50": {
+        "score": 680.66,
+        "charCount": 168
+      },
+      "p90": {
+        "score": 706.34,
+        "charCount": 139
+      }
+    },
+    "211": {
+      "n": 100,
+      "top1": {
+        "score": 647.3,
+        "charCount": 224
+      },
+      "top10Avg": {
+        "score": 639.83,
+        "charCount": 243.4
+      },
+      "p50": {
+        "score": 620.25,
+        "charCount": 313
+      },
+      "p90": {
+        "score": 631.1,
+        "charCount": 268
+      }
+    },
+    "212": {
+      "n": 100,
+      "top1": {
+        "score": 672.63,
+        "charCount": 179
+      },
+      "top10Avg": {
+        "score": 670.46,
+        "charCount": 182.2
+      },
+      "p50": {
+        "score": 623.14,
+        "charCount": 299
+      },
+      "p90": {
+        "score": 668.6,
+        "charCount": 185
+      }
+    },
+    "213": {
+      "n": 100,
+      "top1": {
+        "score": 673.33,
+        "charCount": 178
+      },
+      "top10Avg": {
+        "score": 672.08,
+        "charCount": 179.8
+      },
+      "p50": {
+        "score": 625.46,
+        "charCount": 289
+      },
+      "p90": {
+        "score": 671.94,
+        "charCount": 180
+      }
+    },
+    "214": {
+      "n": 100,
+      "top1": {
+        "score": 667.3,
+        "charCount": 187
+      },
+      "top10Avg": {
+        "score": 656.18,
+        "charCount": 207.2
+      },
+      "p50": {
+        "score": 618.06,
+        "charCount": 325
+      },
+      "p90": {
+        "score": 638.72,
+        "charCount": 245
+      }
+    },
+    "215": {
+      "n": 100,
+      "top1": {
+        "score": 697.6,
+        "charCount": 148
+      },
+      "top10Avg": {
+        "score": 691.82,
+        "charCount": 154.8
+      },
+      "p50": {
+        "score": 646.85,
+        "charCount": 225
+      },
+      "p90": {
+        "score": 674.74,
+        "charCount": 176
+      }
+    },
+    "216": {
+      "n": 100,
+      "top1": {
+        "score": 664.17,
+        "charCount": 192
+      },
+      "top10Avg": {
+        "score": 655.15,
+        "charCount": 209.2
+      },
+      "p50": {
+        "score": 624.27,
+        "charCount": 294
+      },
+      "p90": {
+        "score": 638.35,
+        "charCount": 246
+      }
+    },
+    "217": {
+      "n": 100,
+      "top1": {
+        "score": 728.67,
+        "charCount": 119
+      },
+      "top10Avg": {
+        "score": 725.8,
+        "charCount": 121.4
+      },
+      "p50": {
+        "score": 693.95,
+        "charCount": 152
+      },
+      "p90": {
+        "score": 721.52,
+        "charCount": 125
+      }
+    },
+    "218": {
+      "n": 100,
+      "top1": {
+        "score": 683.8,
+        "charCount": 164
+      },
+      "top10Avg": {
+        "score": 674.8,
+        "charCount": 176.6
+      },
+      "p50": {
+        "score": 636.57,
+        "charCount": 251
+      },
+      "p90": {
+        "score": 659.46,
+        "charCount": 200
+      }
+    },
+    "219": {
+      "n": 100,
+      "top1": {
+        "score": 686.23,
+        "charCount": 161
+      },
+      "top10Avg": {
+        "score": 684.1,
+        "charCount": 163.7
+      },
+      "p50": {
+        "score": 629.09,
+        "charCount": 275
+      },
+      "p90": {
+        "score": 677.64,
+        "charCount": 172
+      }
+    },
+    "220": {
+      "n": 100,
+      "top1": {
+        "score": 709.43,
+        "charCount": 136
+      },
+      "top10Avg": {
+        "score": 702.9,
+        "charCount": 143
+      },
+      "p50": {
+        "score": 635.54,
+        "charCount": 254
+      },
+      "p90": {
+        "score": 683,
+        "charCount": 165
+      }
+    },
+    "221": {
+      "n": 100,
+      "top1": {
+        "score": 718.1,
+        "charCount": 128
+      },
+      "top10Avg": {
+        "score": 713.7,
+        "charCount": 132.1
+      },
+      "p50": {
+        "score": 670.59,
+        "charCount": 182
+      },
+      "p90": {
+        "score": 701.39,
+        "charCount": 144
+      }
+    },
+    "222": {
+      "n": 100,
+      "top1": {
+        "score": 671.26,
+        "charCount": 181
+      },
+      "top10Avg": {
+        "score": 664.05,
+        "charCount": 192.7
+      },
+      "p50": {
+        "score": 635.88,
+        "charCount": 253
+      },
+      "p90": {
+        "score": 655.09,
+        "charCount": 208
+      }
+    },
+    "223": {
+      "n": 100,
+      "top1": {
+        "score": 693.95,
+        "charCount": 152
+      },
+      "top10Avg": {
+        "score": 684.56,
+        "charCount": 163.8
+      },
+      "p50": {
+        "score": 631.1,
+        "charCount": 268
+      },
+      "p90": {
+        "score": 667.3,
+        "charCount": 187
+      }
+    },
+    "224": {
+      "n": 100,
+      "top1": {
+        "score": 704.33,
+        "charCount": 141
+      },
+      "top10Avg": {
+        "score": 696.46,
+        "charCount": 149.7
+      },
+      "p50": {
+        "score": 643.83,
+        "charCount": 232
+      },
+      "p90": {
+        "score": 677.64,
+        "charCount": 172
+      }
+    },
+    "225": {
+      "n": 100,
+      "top1": {
+        "score": 685.41,
+        "charCount": 162
+      },
+      "top10Avg": {
+        "score": 677.32,
+        "charCount": 172.9
+      },
+      "p50": {
+        "score": 641.79,
+        "charCount": 237
+      },
+      "p90": {
+        "score": 663.56,
+        "charCount": 193
+      }
+    },
+    "226": {
+      "n": 100,
+      "top1": {
+        "score": 745.65,
+        "charCount": 106
+      },
+      "top10Avg": {
+        "score": 737.28,
+        "charCount": 112.4
+      },
+      "p50": {
+        "score": 684.6,
+        "charCount": 163
+      },
+      "p90": {
+        "score": 720.37,
+        "charCount": 126
+      }
+    },
+    "227": {
+      "n": 100,
+      "top1": {
+        "score": 688.73,
+        "charCount": 158
+      },
+      "top10Avg": {
+        "score": 686.05,
+        "charCount": 161.3
+      },
+      "p50": {
+        "score": 656.69,
+        "charCount": 205
+      },
+      "p90": {
+        "score": 678.39,
+        "charCount": 171
+      }
+    },
+    "228": {
+      "n": 100,
+      "top1": {
+        "score": 707.36,
+        "charCount": 138
+      },
+      "top10Avg": {
+        "score": 701.34,
+        "charCount": 144.4
+      },
+      "p50": {
+        "score": 633.24,
+        "charCount": 261
+      },
+      "p90": {
+        "score": 686.23,
+        "charCount": 161
+      }
+    },
+    "229": {
+      "n": 100,
+      "top1": {
+        "score": 696.67,
+        "charCount": 149
+      },
+      "top10Avg": {
+        "score": 690.74,
+        "charCount": 155.9
+      },
+      "p50": {
+        "score": 666.03,
+        "charCount": 189
+      },
+      "p90": {
+        "score": 680.66,
+        "charCount": 168
+      }
+    },
+    "230": {
+      "n": 100,
+      "top1": {
+        "score": 685.41,
+        "charCount": 162
+      },
+      "top10Avg": {
+        "score": 680.53,
+        "charCount": 168.4
+      },
+      "p50": {
+        "score": 648.67,
+        "charCount": 221
+      },
+      "p90": {
+        "score": 669.92,
+        "charCount": 183
+      }
+    },
+    "231": {
+      "n": 100,
+      "top1": {
+        "score": 708.39,
+        "charCount": 137
+      },
+      "top10Avg": {
+        "score": 699.46,
+        "charCount": 146.4
+      },
+      "p50": {
+        "score": 637.27,
+        "charCount": 249
+      },
+      "p90": {
+        "score": 688.73,
+        "charCount": 158
+      }
+    },
+    "232": {
+      "n": 100,
+      "top1": {
+        "score": 653.03,
+        "charCount": 212
+      },
+      "top10Avg": {
+        "score": 646.88,
+        "charCount": 225.8
+      },
+      "p50": {
+        "score": 616.74,
+        "charCount": 333
+      },
+      "p90": {
+        "score": 636.57,
+        "charCount": 251
+      }
+    },
+    "233": {
+      "n": 100,
+      "top1": {
+        "score": 692.17,
+        "charCount": 154
+      },
+      "top10Avg": {
+        "score": 677.59,
+        "charCount": 173.4
+      },
+      "p50": {
+        "score": 628.27,
+        "charCount": 278
+      },
+      "p90": {
+        "score": 661.77,
+        "charCount": 196
+      }
+    },
+    "234": {
+      "n": 100,
+      "top1": {
+        "score": 669.25,
+        "charCount": 184
+      },
+      "top10Avg": {
+        "score": 657.71,
+        "charCount": 204.7
+      },
+      "p50": {
+        "score": 613.44,
+        "charCount": 356
+      },
+      "p90": {
+        "score": 640.61,
+        "charCount": 240
+      }
+    },
+    "235": {
+      "n": 100,
+      "top1": {
+        "score": 664.78,
+        "charCount": 191
+      },
+      "top10Avg": {
+        "score": 657.67,
+        "charCount": 204.1
+      },
+      "p50": {
+        "score": 623.59,
+        "charCount": 297
+      },
+      "p90": {
+        "score": 645.97,
+        "charCount": 227
+      }
+    },
+    "236": {
+      "n": 100,
+      "top1": {
+        "score": 722.68,
+        "charCount": 124
+      },
+      "top10Avg": {
+        "score": 719.32,
+        "charCount": 127
+      },
+      "p50": {
+        "score": 674.03,
+        "charCount": 177
+      },
+      "p90": {
+        "score": 708.39,
+        "charCount": 137
+      }
+    },
+    "237": {
+      "n": 100,
+      "top1": {
+        "score": 681.43,
+        "charCount": 167
+      },
+      "top10Avg": {
+        "score": 679.05,
+        "charCount": 170.2
+      },
+      "p50": {
+        "score": 637.63,
+        "charCount": 248
+      },
+      "p90": {
+        "score": 674.03,
+        "charCount": 177
+      }
+    },
+    "238": {
+      "n": 100,
+      "top1": {
+        "score": 699.48,
+        "charCount": 146
+      },
+      "top10Avg": {
+        "score": 695.21,
+        "charCount": 150.8
+      },
+      "p50": {
+        "score": 658.33,
+        "charCount": 202
+      },
+      "p90": {
+        "score": 683.8,
+        "charCount": 164
+      }
+    },
+    "239": {
+      "n": 100,
+      "top1": {
+        "score": 695.76,
+        "charCount": 150
+      },
+      "top10Avg": {
+        "score": 685.76,
+        "charCount": 162.8
+      },
+      "p50": {
+        "score": 632.93,
+        "charCount": 262
+      },
+      "p90": {
+        "score": 667.3,
+        "charCount": 187
+      }
+    },
+    "240": {
+      "n": 100,
+      "top1": {
+        "score": 669.92,
+        "charCount": 183
+      },
+      "top10Avg": {
+        "score": 654.46,
+        "charCount": 213.3
+      },
+      "p50": {
+        "score": 619.13,
+        "charCount": 319
+      },
+      "p90": {
+        "score": 634.87,
+        "charCount": 256
+      }
+    },
+    "241": {
+      "n": 100,
+      "top1": {
+        "score": 683.8,
+        "charCount": 164
+      },
+      "top10Avg": {
+        "score": 677.65,
+        "charCount": 172.4
+      },
+      "p50": {
+        "score": 636.92,
+        "charCount": 250
+      },
+      "p90": {
+        "score": 665.4,
+        "charCount": 190
+      }
+    },
+    "242": {
+      "n": 100,
+      "top1": {
+        "score": 685.41,
+        "charCount": 162
+      },
+      "top10Avg": {
+        "score": 684.93,
+        "charCount": 162.6
+      },
+      "p50": {
+        "score": 597.72,
+        "charCount": 241
+      },
+      "p90": {
+        "score": 679.9,
+        "charCount": 169
+      }
+    },
+    "243": {
+      "n": 100,
+      "top1": {
+        "score": 643,
+        "charCount": 234
+      },
+      "top10Avg": {
+        "score": 637.22,
+        "charCount": 250.6
+      },
+      "p50": {
+        "score": 610.49,
+        "charCount": 382
+      },
+      "p90": {
+        "score": 627.74,
+        "charCount": 280
+      }
+    },
+    "244": {
+      "n": 100,
+      "top1": {
+        "score": 643.83,
+        "charCount": 232
+      },
+      "top10Avg": {
+        "score": 639.76,
+        "charCount": 242.9
+      },
+      "p50": {
+        "score": 611.32,
+        "charCount": 374
+      },
+      "p90": {
+        "score": 631.7,
+        "charCount": 266
+      }
+    },
+    "245": {
+      "n": 100,
+      "top1": {
+        "score": 763.29,
+        "charCount": 94
+      },
+      "top10Avg": {
+        "score": 737.14,
+        "charCount": 113.7
+      },
+      "p50": {
+        "score": 660.6,
+        "charCount": 198
+      },
+      "p90": {
+        "score": 712.6,
+        "charCount": 133
+      }
+    },
+    "246": {
+      "n": 100,
+      "top1": {
+        "score": 695.76,
+        "charCount": 150
+      },
+      "top10Avg": {
+        "score": 688.61,
+        "charCount": 158.4
+      },
+      "p50": {
+        "score": 641.39,
+        "charCount": 238
+      },
+      "p90": {
+        "score": 675.45,
+        "charCount": 175
+      }
+    },
+    "247": {
+      "n": 100,
+      "top1": {
+        "score": 744.26,
+        "charCount": 107
+      },
+      "top10Avg": {
+        "score": 736.79,
+        "charCount": 112.7
+      },
+      "p50": {
+        "score": 626.96,
+        "charCount": 283
+      },
+      "p90": {
+        "score": 721.52,
+        "charCount": 125
+      }
+    },
+    "248": {
+      "n": 100,
+      "top1": {
+        "score": 670.59,
+        "charCount": 182
+      },
+      "top10Avg": {
+        "score": 664.09,
+        "charCount": 192.7
+      },
+      "p50": {
+        "score": 620.84,
+        "charCount": 310
+      },
+      "p90": {
+        "score": 653.54,
+        "charCount": 211
+      }
+    },
+    "249": {
+      "n": 100,
+      "top1": {
+        "score": 690.43,
+        "charCount": 156
+      },
+      "top10Avg": {
+        "score": 676.48,
+        "charCount": 174.9
+      },
+      "p50": {
+        "score": 627.47,
+        "charCount": 281
+      },
+      "p90": {
+        "score": 658.33,
+        "charCount": 202
+      }
+    },
+    "250": {
+      "n": 100,
+      "top1": {
+        "score": 696.67,
+        "charCount": 149
+      },
+      "top10Avg": {
+        "score": 687.13,
+        "charCount": 160.9
+      },
+      "p50": {
+        "score": 632.31,
+        "charCount": 264
+      },
+      "p90": {
+        "score": 662.96,
+        "charCount": 194
+      }
+    },
+    "251": {
+      "n": 100,
+      "top1": {
+        "score": 693.95,
+        "charCount": 152
+      },
+      "top10Avg": {
+        "score": 692.38,
+        "charCount": 153.8
+      },
+      "p50": {
+        "score": 636.22,
+        "charCount": 252
+      },
+      "p90": {
+        "score": 681.43,
+        "charCount": 167
+      }
+    },
+    "252": {
+      "n": 100,
+      "top1": {
+        "score": 731.15,
+        "charCount": 117
+      },
+      "top10Avg": {
+        "score": 731.15,
+        "charCount": 117
+      },
+      "p50": {
+        "score": 688.73,
+        "charCount": 158
+      },
+      "p90": {
+        "score": 731.15,
+        "charCount": 117
+      }
+    },
+    "253": {
+      "n": 100,
+      "top1": {
+        "score": 722.68,
+        "charCount": 124
+      },
+      "top10Avg": {
+        "score": 722.34,
+        "charCount": 124.3
+      },
+      "p50": {
+        "score": 643.41,
+        "charCount": 233
+      },
+      "p90": {
+        "score": 714.77,
+        "charCount": 131
+      }
+    },
+    "254": {
+      "n": 100,
+      "top1": {
+        "score": 708.39,
+        "charCount": 137
+      },
+      "top10Avg": {
+        "score": 702.72,
+        "charCount": 142.7
+      },
+      "p50": {
+        "score": 661.18,
+        "charCount": 197
+      },
+      "p90": {
+        "score": 700.43,
+        "charCount": 145
+      }
+    },
+    "255": {
+      "n": 100,
+      "top1": {
+        "score": 681.43,
+        "charCount": 167
+      },
+      "top10Avg": {
+        "score": 673.46,
+        "charCount": 178.2
+      },
+      "p50": {
+        "score": 620.64,
+        "charCount": 311
+      },
+      "p90": {
+        "score": 661.18,
+        "charCount": 197
+      }
+    },
+    "256": {
+      "n": 100,
+      "top1": {
+        "score": 674.74,
+        "charCount": 176
+      },
+      "top10Avg": {
+        "score": 666.28,
+        "charCount": 189.1
+      },
+      "p50": {
+        "score": 610.9,
+        "charCount": 378
+      },
+      "p90": {
+        "score": 649.61,
+        "charCount": 219
+      }
+    },
+    "257": {
+      "n": 100,
+      "top1": {
+        "score": 706.34,
+        "charCount": 139
+      },
+      "top10Avg": {
+        "score": 703.91,
+        "charCount": 141.5
+      },
+      "p50": {
+        "score": 656.69,
+        "charCount": 205
+      },
+      "p90": {
+        "score": 695.76,
+        "charCount": 150
+      }
+    },
+    "258": {
+      "n": 100,
+      "top1": {
+        "score": 720.37,
+        "charCount": 126
+      },
+      "top10Avg": {
+        "score": 711.74,
+        "charCount": 134.1
+      },
+      "p50": {
+        "score": 652.03,
+        "charCount": 214
+      },
+      "p90": {
+        "score": 696.67,
+        "charCount": 149
+      }
+    },
+    "259": {
+      "n": 100,
+      "top1": {
+        "score": 683.8,
+        "charCount": 164
+      },
+      "top10Avg": {
+        "score": 669.7,
+        "charCount": 184.6
+      },
+      "p50": {
+        "score": 620.64,
+        "charCount": 311
+      },
+      "p90": {
+        "score": 651.05,
+        "charCount": 216
+      }
+    },
+    "260": {
+      "n": 100,
+      "top1": {
+        "score": 712.6,
+        "charCount": 133
+      },
+      "top10Avg": {
+        "score": 702.53,
+        "charCount": 143.5
+      },
+      "p50": {
+        "score": 637.27,
+        "charCount": 249
+      },
+      "p90": {
+        "score": 676.18,
+        "charCount": 174
+      }
+    },
+    "261": {
+      "n": 100,
+      "top1": {
+        "score": 703.34,
+        "charCount": 142
+      },
+      "top10Avg": {
+        "score": 687.55,
+        "charCount": 160.2
+      },
+      "p50": {
+        "score": 639.09,
+        "charCount": 244
+      },
+      "p90": {
+        "score": 672.63,
+        "charCount": 179
+      }
+    }
+  }
+}
