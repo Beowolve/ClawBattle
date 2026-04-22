@@ -130,6 +130,19 @@ export async function processClaim({
     return { status: 'error', message: err.message };
   }
 
+  if ((raw.tokensUsed ?? 0) === 0) {
+    const message = 'model returned 0 tokens (possible refusal or empty response)';
+    failAttempt(db, claim.id, claim.claim_token, message);
+    onProgress?.({
+      type: 'attempt_error',
+      targetId: claim.target_id,
+      attempt: claim.attempt,
+      errorType: 'runtime_error',
+      message,
+    });
+    return { status: 'error', message };
+  }
+
   let code, rendered, matchInfo, cssBattleScore;
   try {
     code = sanitizeCode(raw.code);

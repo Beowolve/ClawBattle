@@ -284,12 +284,29 @@ test('processClaim: does NOT retry AbortError (re-throws immediately)', async ()
   assert.equal(calls, 1);
 });
 
+test('processClaim: tokensUsed=0 → failAttempt with refusal message', async () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, baseOpts);
+  const claim = claimNextPending(db);
+
+  const adapter = {
+    generate: async () => ({ code: "I'm sorry, but I cannot assist with that request.", tokensUsed: 0, cost: 0 }),
+  };
+  const result = await processClaim(baseArgs(db, claim, { deps: { adapter } }));
+  assert.equal(result.status, 'error');
+  assert.ok(result.message.includes('0 tokens'));
+
+  const row = db.prepare('SELECT status, error_message FROM runs WHERE id = ?').get(claim.id);
+  assert.equal(row.status, 'error');
+  assert.ok(row.error_message.includes('0 tokens'));
+});
+
 test('processClaim: previous render failure falls back to base prompt (no followup)', async () => {
   const db = openDb(':memory:');
   enqueueRun(db, baseOpts);
   const c1 = claimNextPending(db);
   await processClaim(baseArgs(db, c1, {
-    deps: { adapter: { generate: async () => ({ code: 'BAD', tokensUsed: 0, cost: 0 }) } },
+    deps: { adapter: { generate: async () => ({ code: 'BAD', tokensUsed: 1, cost: 0 }) } },
   }));
 
   const c2 = claimNextPending(db);

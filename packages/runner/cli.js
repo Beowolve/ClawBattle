@@ -16,7 +16,8 @@ const { values } = parseArgs({
     prompt:     { type: 'string', default: process.env.PROMPT_VERSION ?? 'v3' },
     concurrency: { type: 'string', default: '1' },
     retries:     { type: 'string', default: '0' },
-    reasoning:   { type: 'string' },   // low | medium | high
+    reasoning:            { type: 'string' },   // low | medium | high
+    'reasoning-max-tokens': { type: 'string' },  // e.g. 8000
   }
 });
 
@@ -28,15 +29,18 @@ if (!values.model) {
 
 try {
   await runBenchmark({
-    model:           values.model,
-    provider:        values.provider,
-    targetType:      values.targets,
-    targetId:        values['target-id'],
-    attempts:        parseInt(values.attempts),
-    promptVersion:   values.prompt,
-    concurrency:     parseInt(values.concurrency),
-    retries:         parseInt(values.retries),
-    reasoningEffort: values.reasoning ?? undefined,
+    model:              values.model,
+    provider:           values.provider,
+    targetType:         values.targets,
+    targetId:           values['target-id'],
+    attempts:           parseInt(values.attempts),
+    promptVersion:      values.prompt,
+    concurrency:        parseInt(values.concurrency),
+    retries:            parseInt(values.retries),
+    reasoningEffort:    values.reasoning ?? undefined,
+    reasoningMaxTokens: values['reasoning-max-tokens'] != null
+      ? parseInt(values['reasoning-max-tokens'])
+      : undefined,
   });
 } finally {
   await closeBrowser().catch(() => {});
