@@ -205,8 +205,8 @@ is pre-inserted before any work starts and moves through these statuses:
 - **`running`** — claimed by a worker; protected with a `claim_token` so a
   pause or re-claim can't be overwritten by a stale worker.
 - **`done`** — complete. Only `done` rows appear in the leaderboard
-  (grouped by `model + reasoning_effort`),
-  insights, the History view and the Supabase upload.
+  (grouped by `model + reasoning_effort`), model-level insights, the History
+  view and the Supabase upload.
 - **`error`** — non-terminal. The row stays visible in the Queue view with
   a Retry button per attempt, plus Reset-all-errors per run.
 - **`paused`** — set by Cancel. The original status is saved in

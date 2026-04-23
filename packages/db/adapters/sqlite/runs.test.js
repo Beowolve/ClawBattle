@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openDb } from './connection.js';
-import { saveAttempt, getResults, deleteRunGroup } from './runs.js';
+import { saveAttempt, getResults, getInsights, deleteRunGroup } from './runs.js';
 
 function makeDb() {
   return openDb(':memory:');
@@ -202,6 +202,57 @@ test('match_distribution view excludes non-done attempts', () => {
   assert.equal(rows.length, 1);
   assert.equal(rows[0].bucket, '90\u201399');
   assert.equal(rows[0].count, 1);
+});
+
+test('insights separate model consistency and cost efficiency by reasoning effort', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-low',
+    targetId: '1',
+    reasoningEffort: 'low',
+    match: 80,
+    score: 700,
+    cost: 0.001,
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-high',
+    targetId: '1',
+    reasoningEffort: 'high',
+    match: 95,
+    score: 900,
+    cost: 0.003,
+  });
+
+  const insights = getInsights(db, 'v1');
+
+  assert.deepEqual(
+    insights.consistency.map(row => ({
+      model: row.model,
+      reasoningEffort: row.reasoningEffort,
+      label: row.label,
+      avgMatch: row.avgMatch,
+    })).sort((a, b) => String(a.reasoningEffort).localeCompare(String(b.reasoningEffort))),
+    [
+      { model: 'gpt-4o', reasoningEffort: 'high', label: 'gpt-4o [high]', avgMatch: 95 },
+      { model: 'gpt-4o', reasoningEffort: 'low', label: 'gpt-4o [low]', avgMatch: 80 },
+    ],
+  );
+
+  assert.deepEqual(
+    insights.costEfficiency.map(row => ({
+      model: row.model,
+      reasoningEffort: row.reasoningEffort,
+      label: row.label,
+      avgScore: row.avgScore,
+      avgCost: row.avgCost,
+    })).sort((a, b) => String(a.reasoningEffort).localeCompare(String(b.reasoningEffort))),
+    [
+      { model: 'gpt-4o', reasoningEffort: 'high', label: 'gpt-4o [high]', avgScore: 900, avgCost: 0.003 },
+      { model: 'gpt-4o', reasoningEffort: 'low', label: 'gpt-4o [low]', avgScore: 700, avgCost: 0.001 },
+    ],
+  );
 });
 
 test('attempt_results view returns exactly status=done rows', () => {

@@ -104,6 +104,10 @@ const DIST_BUCKETS = [
   '50\u201359', '60\u201369', '70\u201379', '80\u201389', '90\u201399', '100',
 ];
 
+function modelConfigLabel(model, reasoningEffort) {
+  return reasoningEffort ? `${model} [${reasoningEffort}]` : model;
+}
+
 function mapDifficulty(rows) {
   return rows
     .map(r => {
@@ -128,6 +132,8 @@ function mapConsistency(rows) {
   return rows
     .map(r => ({
       model: r.model,
+      reasoningEffort: r.reasoning_effort ?? null,
+      label: modelConfigLabel(r.model, r.reasoning_effort),
       avgMatch: +Number(r.avg_match).toFixed(1),
       stdDev: +Number(r.std_dev).toFixed(1),
       n: Number(r.n),
@@ -141,7 +147,14 @@ function mapCostEfficiency(rows) {
       const avgScore = Number(r.avg_score);
       const avgCost = r.avg_cost != null ? Number(r.avg_cost) : 0;
       const ratio = avgCost > 0 ? avgScore / (avgCost * 1000) : null;
-      return { model: r.model, avgScore: +avgScore.toFixed(1), avgCost, ratio };
+      return {
+        model: r.model,
+        reasoningEffort: r.reasoning_effort ?? null,
+        label: modelConfigLabel(r.model, r.reasoning_effort),
+        avgScore: +avgScore.toFixed(1),
+        avgCost,
+        ratio,
+      };
     })
     .sort((a, b) => (b.ratio ?? -Infinity) - (a.ratio ?? -Infinity));
 }
@@ -173,17 +186,17 @@ export function getInsights(db, promptVersion) {
       `).all();
 
   const consistRows = promptVersion
-    ? db.prepare('SELECT model, avg_match, std_dev, n FROM model_consistency WHERE prompt_version = ?').all(promptVersion)
+    ? db.prepare('SELECT model, reasoning_effort, avg_match, std_dev, n FROM model_consistency WHERE prompt_version = ?').all(promptVersion)
     : db.prepare(`
-        SELECT model, AVG(avg_match) AS avg_match, AVG(std_dev) AS std_dev, SUM(n) AS n
-        FROM model_consistency GROUP BY model
+        SELECT model, reasoning_effort, AVG(avg_match) AS avg_match, AVG(std_dev) AS std_dev, SUM(n) AS n
+        FROM model_consistency GROUP BY model, reasoning_effort
       `).all();
 
   const costRows = promptVersion
-    ? db.prepare('SELECT model, avg_score, avg_cost FROM cost_efficiency WHERE prompt_version = ?').all(promptVersion)
+    ? db.prepare('SELECT model, reasoning_effort, avg_score, avg_cost FROM cost_efficiency WHERE prompt_version = ?').all(promptVersion)
     : db.prepare(`
-        SELECT model, AVG(avg_score) AS avg_score, AVG(avg_cost) AS avg_cost
-        FROM cost_efficiency GROUP BY model
+        SELECT model, reasoning_effort, AVG(avg_score) AS avg_score, AVG(avg_cost) AS avg_cost
+        FROM cost_efficiency GROUP BY model, reasoning_effort
       `).all();
 
   const distRows = promptVersion

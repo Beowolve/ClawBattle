@@ -50,6 +50,7 @@ Last updated: 2026-04-23
 - [x] Target Detail — sticky code/preview/target layout, Quirks Mode iframe, solutions table
 - [x] Start Run tab — model, provider, reasoning effort, attempts, concurrency, retries, target range, Fill toggle, cancel button; supports launching multiple runs in parallel and provider-scoped model autocomplete from existing runs
 - [x] Leaderboard delete flow — targets a single leaderboard entry (`model + reasoning_effort`) and can limit deletion to selected prompt versions
+- [x] Insights — model consistency and cost efficiency compare model reasoning configurations separately (`model + reasoning_effort`)
 - [x] Active run indicator (pulsing dot on tab)
 - [x] Resume banner with Clear button
 - [x] About box "How it works" states that attempts 2-3 include previous render + previous code as follow-up context

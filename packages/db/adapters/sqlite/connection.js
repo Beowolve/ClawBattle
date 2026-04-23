@@ -263,26 +263,26 @@ export function initSchema(db) {
 
     DROP VIEW IF EXISTS model_consistency;
     CREATE VIEW model_consistency AS
-    SELECT model, prompt_version,
+    SELECT model, reasoning_effort, prompt_version,
       AVG(match) AS avg_match,
       SQRT(AVG(match * match) - AVG(match) * AVG(match)) AS std_dev,
       COUNT(*) AS n
     FROM attempt_results WHERE match IS NOT NULL
-    GROUP BY model, prompt_version;
+    GROUP BY model, reasoning_effort, prompt_version;
 
     DROP VIEW IF EXISTS cost_efficiency;
     CREATE VIEW cost_efficiency AS
     WITH ranked AS (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY model, target_id, target_type, prompt_version
+        PARTITION BY model, reasoning_effort, target_id, target_type, prompt_version
         ORDER BY score DESC NULLS LAST
       ) AS rn FROM attempt_results
     ),
     best_per_target AS (SELECT * FROM ranked WHERE rn = 1)
-    SELECT model, prompt_version,
+    SELECT model, reasoning_effort, prompt_version,
       AVG(score) AS avg_score,
       AVG(CASE WHEN cost IS NOT NULL THEN cost END) AS avg_cost
-    FROM best_per_target GROUP BY model, prompt_version;
+    FROM best_per_target GROUP BY model, reasoning_effort, prompt_version;
 
     DROP VIEW IF EXISTS match_distribution;
     CREATE VIEW match_distribution AS

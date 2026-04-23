@@ -83,6 +83,14 @@ const BUCKET_ORDER = [
   '50–59','60–69','70–79','80–89','90–99','100',
 ];
 
+function modelConfigKey(row) {
+  return `${row.model}__${row.reasoning_effort ?? ''}`;
+}
+
+function modelConfigLabel(model, reasoningEffort) {
+  return reasoningEffort ? `${model} [${reasoningEffort}]` : model;
+}
+
 function transformInsights(diffRows, consistRows, costRows, distRows) {
   // ── difficulty ──────────────────────────────────────────────────────────────
   // Multiple rows per target when prompt_version is in group-by (or no filter).
@@ -113,13 +121,20 @@ function transformInsights(diffRows, consistRows, costRows, distRows) {
     .sort((a, b) => a.avgMatch - b.avgMatch);
 
   // ── consistency ─────────────────────────────────────────────────────────────
-  // Average avg_match and std_dev across versions per model (unweighted approx).
+  // Average avg_match and std_dev across versions per model reasoning config (unweighted approx).
   const consistByModel = {};
   for (const r of consistRows) {
-    if (!consistByModel[r.model]) {
-      consistByModel[r.model] = { model: r.model, avgMatches: [], stdDevs: [], totalN: 0 };
+    const key = modelConfigKey(r);
+    if (!consistByModel[key]) {
+      consistByModel[key] = {
+        model: r.model,
+        reasoningEffort: r.reasoning_effort ?? null,
+        avgMatches: [],
+        stdDevs: [],
+        totalN: 0,
+      };
     }
-    const m = consistByModel[r.model];
+    const m = consistByModel[key];
     m.avgMatches.push(Number(r.avg_match ?? 0));
     m.stdDevs.push(Number(r.std_dev   ?? 0));
     m.totalN  += Number(r.n ?? 0);
@@ -127,6 +142,8 @@ function transformInsights(diffRows, consistRows, costRows, distRows) {
   const consistency = Object.values(consistByModel)
     .map(m => ({
       model:    m.model,
+      reasoningEffort: m.reasoningEffort,
+      label:    modelConfigLabel(m.model, m.reasoningEffort),
       avgMatch: +(m.avgMatches.reduce((a, b) => a + b, 0) / m.avgMatches.length).toFixed(1),
       stdDev:   +(m.stdDevs.reduce((a, b) => a + b, 0)   / m.stdDevs.length).toFixed(1),
       n:        m.totalN,
@@ -136,9 +153,17 @@ function transformInsights(diffRows, consistRows, costRows, distRows) {
   // ── cost efficiency ──────────────────────────────────────────────────────────
   const costByModel = {};
   for (const r of costRows) {
-    if (!costByModel[r.model]) costByModel[r.model] = { model: r.model, scores: [], costs: [] };
-    costByModel[r.model].scores.push(Number(r.avg_score ?? 0));
-    if (r.avg_cost != null) costByModel[r.model].costs.push(Number(r.avg_cost));
+    const key = modelConfigKey(r);
+    if (!costByModel[key]) {
+      costByModel[key] = {
+        model: r.model,
+        reasoningEffort: r.reasoning_effort ?? null,
+        scores: [],
+        costs: [],
+      };
+    }
+    costByModel[key].scores.push(Number(r.avg_score ?? 0));
+    if (r.avg_cost != null) costByModel[key].costs.push(Number(r.avg_cost));
   }
   const costEfficiency = Object.values(costByModel)
     .map(m => {
@@ -147,7 +172,14 @@ function transformInsights(diffRows, consistRows, costRows, distRows) {
         ? m.costs.reduce((a, b) => a + b, 0) / m.costs.length
         : 0;
       const ratio = avgCost > 0 ? avgScore / (avgCost * 1000) : null;
-      return { model: m.model, avgScore: +avgScore.toFixed(1), avgCost, ratio };
+      return {
+        model: m.model,
+        reasoningEffort: m.reasoningEffort,
+        label: modelConfigLabel(m.model, m.reasoningEffort),
+        avgScore: +avgScore.toFixed(1),
+        avgCost,
+        ratio,
+      };
     })
     .sort((a, b) => (b.ratio ?? -Infinity) - (a.ratio ?? -Infinity));
 

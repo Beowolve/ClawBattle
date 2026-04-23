@@ -244,37 +244,39 @@ group by d.target_id, d.target_type, d.prompt_version,
 
 grant select on public.target_difficulty to anon, authenticated;
 
--- model_consistency: std deviation + avg match per model per prompt_version.
+-- model_consistency: std deviation + avg match per model reasoning config per prompt_version.
 -- stddev_pop is native PostgreSQL — no client-side computation needed.
 create or replace view public.model_consistency with (security_invoker = true) as
 select
   model,
+  reasoning_effort,
   prompt_version,
   avg(match)        as avg_match,
   stddev_pop(match) as std_dev,
   count(*)          as n
 from public.runs
 where match is not null
-group by model, prompt_version;
+group by model, reasoning_effort, prompt_version;
 
 grant select on public.model_consistency to anon, authenticated;
 
--- cost_efficiency: best score per target averaged per model per prompt_version,
+-- cost_efficiency: best score per target averaged per model reasoning config per prompt_version,
 -- alongside average cost per attempt.
 create or replace view public.cost_efficiency with (security_invoker = true) as
 with best_per_target as (
-  select distinct on (model, target_id, target_type, prompt_version)
-    model, target_id, target_type, prompt_version, score, cost
+  select distinct on (model, reasoning_effort, target_id, target_type, prompt_version)
+    model, reasoning_effort, target_id, target_type, prompt_version, score, cost
   from public.runs
-  order by model, target_id, target_type, prompt_version, score desc nulls last
+  order by model, reasoning_effort, target_id, target_type, prompt_version, score desc nulls last
 )
 select
   model,
+  reasoning_effort,
   prompt_version,
   avg(score)                              as avg_score,
   avg(cost) filter (where cost is not null) as avg_cost
 from best_per_target
-group by model, prompt_version;
+group by model, reasoning_effort, prompt_version;
 
 grant select on public.cost_efficiency to anon, authenticated;
 
