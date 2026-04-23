@@ -56,6 +56,8 @@ export async function uploadTargetsToSupabase({ url, key, battleTargets, dailyTa
 const QUEUE_ONLY_FIELDS = new Set([
   'status', 'claim_token', 'enqueued_at', 'claimed_at',
   'paused_from', 'error_message',
+  // Local debug field for queue inspection; not part of Supabase schema.
+  'prompt_text',
 ]);
 
 function stripQueueFields(row) {

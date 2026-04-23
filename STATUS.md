@@ -11,6 +11,7 @@ Last updated: 2026-04-23
 - [x] Scorer (`packages/core/scorer.js`) — pixelmatch threshold 0.01, CSS Battle formula; `computeMatch()` for match %, `computeScore()` for the scoring math
 - [x] SQLite adapter (`packages/db/`) — single `runs` table, acts as both attempt-log and persistent queue; uses Node 22's `node:sqlite`
 - [x] LLM adapters — OpenRouter, OpenAI, Ollama (all with AbortSignal support)
+- [x] OpenRouter provider routing overrides — model-specific provider forcing via local JSON config (`config/openrouter.providers.json` or `OPENROUTER_PROVIDER_CONFIG_PATH`)
 - [x] Reasoning-token cap — optional `reasoningMaxTokens` limits thinking-budget tokens via OpenRouter's unified `reasoning` parameter (applies to any reasoning model, e.g. Kimi K2, o-series); persisted per-row so resumes honour it
 - [x] LLM error handling — API-level errors detected even on HTTP 200, empty-response guard
 - [x] Code safety guard — generated HTML/CSS is sanitized; JS, SVG, external resources, and disallowed URL schemes (`data|blob|file|ftp`) rejected across `src`/`href`, `srcset`, `url(...)`, `@import` before render/score
@@ -22,7 +23,9 @@ Last updated: 2026-04-23
 - [x] Fill mode — new run fills only missing attempts per (model, prompt_version, reasoning_effort, target) up to the configured attempts; seeds follow-up context by re-rendering the last stored attempt's code
 - [x] Fast cancel — `render()` and adapter `generate()` are raced against the abort signal; worker queue is drained on abort; cancel returns control within ~500ms instead of waiting for the current attempt
 - [x] Unified Resume — works on any non-done run with outstanding work (paused, credits-out, or server-restart recovery); re-kicks the worker pool against existing DB rows without re-enqueueing targets; endpoint guards against double-start via `isJobActive`
+- [x] Run-scoped workers — benchmark/resume workers only claim `pending` rows of their own `run_id` (no cross-run queue stealing)
 - [x] In-queue Cancel button — cancels any run whose worker pool is live; aborts in-flight calls and pauses remaining rows
+- [x] In-queue Resume concurrency — each queued run can be resumed with a user-selected worker-thread count from the Queue UI
 - [x] Authoritative run-activity signal — `/api/runs/queue` exposes `worker_active` per run (derived from the in-memory job registry), so the dashboard shows correct Resume/Cancel controls even when DB status and worker state diverge (crash, orphaned rows)
 - [x] Startup recovery — stale `running` rows left over from a crashed process are requeued to `pending` on server start, with claim tokens invalidated
 
@@ -30,7 +33,7 @@ Last updated: 2026-04-23
 - [x] REST endpoints — results, queue, history, target images
 - [x] `POST /api/runs/start` — kicks off benchmark async, returns runId; accepts concurrency, retries, resumeRunId, fillMode, targetFrom/To, reasoningEffort; logs run metadata on start
 - [x] `POST /api/runs/:runId/cancel` — aborts the run and pauses the queue (`{ cancelled, paused }`)
-- [x] `POST /api/runs/:runId/resume` — unified resume for paused and orphaned runs
+- [x] `POST /api/runs/:runId/resume` — unified resume for paused and orphaned runs, with configurable resume concurrency
 - [x] `POST /api/runs/attempts/:id/retry` — single `error` → `pending`
 - [x] `POST /api/runs/:runId/reset-errors` — bulk `error` → `pending` per run
 - [x] `DELETE /api/runs/:runId` — removes all attempt rows for a run (aborts live workers first); `DELETE /api/runs/attempts/:id` — removes a single attempt row
@@ -46,8 +49,8 @@ Last updated: 2026-04-23
 - [x] Run History — clickable list of completed runs only; click filters the attempt table
 - [x] Target Grid — thumbnails, colors, best match per target
 - [x] Target Detail — sticky code/preview/target layout, Quirks Mode iframe, solutions table
-- [x] Start Run tab — model, provider, reasoning effort + max-tokens, attempts, concurrency, retries, target range, Fill toggle, cancel button
-- [x] Leaderboard delete flow — targets a single leaderboard entry (`model + reasoning_effort`) and can limit deletion to selected prompt versions
+- [x] Start Run tab — model, provider, reasoning effort + max-tokens, attempts, concurrency, retries, target range, Fill toggle, cancel button; supports launching multiple runs in parallel and provider-scoped model autocomplete from existing runs
+- [x] Leaderboard delete flow — targets a single leaderboard entry (`model + reasoning_effort + reasoning_max_tokens`) and can limit deletion to selected prompt versions
 - [x] Active run indicator (pulsing dot on tab)
 - [x] Resume banner with Clear button
 - [x] About box "How it works" states that attempts 2-3 include previous render + previous code as follow-up context
@@ -70,7 +73,7 @@ Last updated: 2026-04-23
 - [x] Supabase schema (`packages/db/schema.sql`) — idempotent, RLS, `run_state` dropped
 - [x] Bidirectional sync UI (Sync tab) — Upload Targets, Upload Results, Download from Supabase
 - [x] Persistent DB-backed attempt queue — one row per `(run_id, target_id, attempt)` with status `waiting | pending | running | done | error | paused`; survives process restarts, `runs_summary` view aggregates per-run status
-- [x] localStorage persistence for active runId + mount reconnect via `GET /api/runs/active`
+- [x] localStorage persistence for active run IDs + mount reconnect via `GET /api/runs/active`
 - [x] Public dashboard mode — `VITE_PUBLIC_MODE=true` builds a read-only variant (Leaderboard/Targets/Insights only, no delete buttons, data fetched from Supabase via anon key)
 
 ### Baselines

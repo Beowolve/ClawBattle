@@ -15,10 +15,12 @@ export const {
   upsertBattleTarget, upsertDailyTarget,
   deleteRunGroup, getCompletedTargetIds,
   getExistingAttempts,
+  getPreviousAttempt,
   upsertRuns,
   getRunQueue, getRunHistory,
   retryAttempt, resetErrors,
   pauseRun, resumeRun, hasRunPendingWork,
   requeueStaleRunningAttempts,
   deleteRun, deleteAttempt,
+  getAttemptById,
 } = mod;

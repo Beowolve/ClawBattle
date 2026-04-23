@@ -12,9 +12,12 @@ export function createRunsQueueRouter({
   hasRunPendingWork, // (runId) => boolean — run has pending/waiting/running rows
   isJobActive,       // optional: (runId) => boolean — worker already running
   cancelJob,         // optional: (runId) => boolean — abort live worker pool
-  startResumedRun,   // optional: (runId) => void — re-kicks worker pool for the run
+  startResumedRun,   // optional: (runId, concurrency) => void — re-kicks worker pool for the run
   deleteRun,         // optional: (runId) => number — drops all rows of a run
   deleteAttempt,     // optional: (id)    => boolean — drops one attempt row
+  getAttemptById,    // optional: (id)    => attempt row
+  getAttemptRequests, // optional: (runId, attemptId) => request[] from in-memory job state
+  buildAttemptPreview, // optional: async (attempt) => { computedPrompt, computedRequestBody, ... }
 }) {
   const router = express.Router();
 
@@ -59,6 +62,11 @@ export function createRunsQueueRouter({
   //   (c) the user reset errors on a non-paused run — same as (b)
   router.post('/:runId/resume', (req, res) => {
     const { runId } = req.params;
+    const { concurrency = 1 } = req.body ?? {};
+    const parsedConcurrency = Number(concurrency);
+    if (!Number.isInteger(parsedConcurrency) || parsedConcurrency < 1 || parsedConcurrency > 64) {
+      return res.status(400).json({ error: 'concurrency must be an integer between 1 and 64' });
+    }
     if (isJobActive?.(runId)) {
       return res.status(409).json({ error: 'run is already active' });
     }
@@ -67,8 +75,8 @@ export function createRunsQueueRouter({
     if (!hasWork && restored === 0) {
       return res.status(409).json({ error: 'run has no work to resume' });
     }
-    startResumedRun?.(runId);
-    res.json({ resumed: true, count: restored });
+    startResumedRun?.(runId, parsedConcurrency);
+    res.json({ resumed: true, count: restored, concurrency: parsedConcurrency });
   });
 
   // Delete a single attempt row by primary key. If the row was 'running' the
@@ -84,10 +92,49 @@ export function createRunsQueueRouter({
     res.json({ deleted: true });
   });
 
+  // Returns a computed prompt/request preview for this attempt, plus any
+  // in-memory live request payloads captured while the worker was running.
+  // Captured traces are intentionally non-persistent and only available while
+  // the job's short-lived in-memory buffers are retained.
+  router.get('/attempts/:id/request', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: 'invalid attempt id' });
+    }
+    if (!getAttemptById || !buildAttemptPreview) {
+      return res.status(501).json({ error: 'attempt preview not wired' });
+    }
+    const attempt = getAttemptById(id);
+    if (!attempt) return res.status(404).json({ error: 'attempt not found' });
+    try {
+      const preview = await buildAttemptPreview(attempt);
+      const capturedRequests = getAttemptRequests
+        ? getAttemptRequests(attempt.run_id, id)
+        : [];
+      return res.json({
+        attemptId: id,
+        runId: attempt.run_id,
+        targetId: attempt.target_id,
+        attempt: attempt.attempt,
+        provider: attempt.provider,
+        model: attempt.model,
+        ...preview,
+        capturedRequests,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        error: err?.message ?? 'failed to compute attempt preview',
+      });
+    }
+  });
+
   // Delete the entire run. If workers are live, abort them first so they
   // stop claiming new rows before we drop everything.
-  router.delete('/:runId', (req, res) => {
+  router.delete('/:runId', (req, res, next) => {
     const { runId } = req.params;
+    // Keep `/api/runs/group` available for leaderboard group deletion in the
+    // parent app; this dynamic route must not consume that reserved segment.
+    if (runId === 'group') return next();
     if (!deleteRun) return res.status(501).json({ error: 'delete not wired' });
     if (isJobActive?.(runId)) cancelJob?.(runId);
     const removed = deleteRun(runId);

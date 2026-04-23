@@ -645,6 +645,63 @@ td.muted {
   padding: 0 20px 20px;
 }
 
+.promptDialogCard {
+  width: min(980px, 100%);
+}
+
+.promptDialogBody {
+  padding-top: 10px;
+}
+
+.promptDialogMeta {
+  margin-bottom: 10px;
+  color: var(--muted-color);
+  font-size: 0.82rem;
+}
+
+.promptDialogTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.promptDialogTab {
+  border: 1px solid var(--border-color);
+  background: var(--table-row-bg);
+  color: var(--text-color);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.promptDialogTab--active {
+  border-color: var(--highlight-color);
+  color: var(--heading-color);
+  box-shadow: inset 0 0 0 1px var(--highlight-color);
+}
+
+.promptDialogPanel {
+  display: grid;
+  gap: 8px;
+}
+
+.promptDialogText {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--table-row-bg);
+  color: var(--font-color);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: min(65vh, 680px);
+  overflow: auto;
+  font-family: var(--mono-font, ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace);
+}
+
 .dialogSecondaryButton {
   background: none;
   border: 1px solid var(--border-color);
@@ -1439,12 +1496,30 @@ td.muted {
   border-bottom: 1px solid rgba(47, 95, 184, 0.06);
 }
 
+.queueAttemptsTable th.compactCol,
+.queueAttemptsTable td.compactCol {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.queueAttemptsTable th.errorCol,
+.queueAttemptsTable td.errorCol {
+  width: 100%;
+  max-width: 0;
+}
+
+.queueAttemptsTable th.statusCol,
+.queueAttemptsTable td.statusCol {
+  width: 170px;
+  min-width: 170px;
+  white-space: nowrap;
+}
+
 .queueAttemptsTable tr:last-child td {
   border-bottom: none;
 }
 
 .errorCell {
-  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1561,6 +1636,28 @@ td.muted {
   background: var(--error-color);
   color: #fff;
   border-color: var(--error-color);
+}
+
+.queueResumeConcurrency {
+  min-width: 58px;
+  height: 24px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--muted-color);
+  font-size: 0.72rem;
+  padding: 0 6px;
+}
+
+[data-theme="dark"] .runButton,
+[data-theme="dark"] .queueRetryBtn--primary {
+  background: #4e79c8;
+  border-color: #4e79c8;
+}
+
+[data-theme="dark"] .runButton:hover:not(:disabled),
+[data-theme="dark"] .queueRetryBtn--primary:hover:not(:disabled) {
+  background: #4268ae;
 }
 
 .queueActionCell {

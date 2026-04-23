@@ -1,19 +1,25 @@
 // LLM Adapter – Ollama (local models)
 import { extractCode } from './extract-code.js';
 
-export async function generate({ model, prompt, images, signal }) {
-  const baseUrl = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
-
+export function buildRequestBody({ model, prompt, images }) {
   const message = { role: 'user', content: prompt };
   if (images?.length) {
     message.images = images.map(buf => buf.toString('base64'));
   }
+  return { model, messages: [message], stream: false };
+}
 
+export async function generate({ model, prompt, images, signal }) {
+  const baseUrl = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+  const apiKey = process.env.OLLAMA_API_KEY?.trim();
+  const body = buildRequestBody({ model, prompt, images });
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
   const response = await fetch(`${baseUrl}/api/chat`, {
     method: 'POST',
     signal,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages: [message], stream: false }),
+    headers,
+    body: JSON.stringify(body),
   });
 
   const data = await response.json();

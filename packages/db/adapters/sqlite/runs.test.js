@@ -139,6 +139,22 @@ test('deleteRunGroup removes queue rows alongside done attempts', () => {
   assert.equal(remaining, 0);
 });
 
+test('deleteRunGroup filters by reasoningMaxTokens within same model/reasoning group', () => {
+  const db = makeDb();
+  saveAttempt(db, { ...baseAttempt, runId: 'run-no-cap', reasoningEffort: null, reasoningMaxTokens: null });
+  saveAttempt(db, { ...baseAttempt, runId: 'run-cap-8k', reasoningEffort: null, reasoningMaxTokens: 8000 });
+
+  const result = deleteRunGroup(db, {
+    model: 'gpt-4o',
+    reasoningEffort: null,
+    reasoningMaxTokens: 8000,
+  });
+  assert.deepEqual(result, { deletedRuns: 1, deletedAttempts: 1 });
+
+  const remainingRunIds = [...new Set(getResults(db).map(r => r.run_id))].sort();
+  assert.deepEqual(remainingRunIds, ['run-no-cap']);
+});
+
 // ─── Views read from attempt_results (done-only) ─────────────────────────────
 
 test('leaderboard view excludes non-done attempts', () => {
@@ -154,6 +170,42 @@ test('leaderboard view excludes non-done attempts', () => {
   assert.equal(board.length, 1);
   assert.equal(board[0].targets, 1, 'should only count the one done target');
   assert.equal(board[0].perfect_count, 1);
+});
+
+test('leaderboard view separates groups by reasoning_max_tokens', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-no-cap',
+    model: 'openai/gpt-5.4',
+    targetId: '1',
+    reasoningEffort: null,
+    reasoningMaxTokens: null,
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-cap-8k',
+    model: 'openai/gpt-5.4',
+    targetId: '2',
+    reasoningEffort: null,
+    reasoningMaxTokens: 8000,
+  });
+
+  const board = db.prepare(`
+    SELECT model, reasoning_effort, reasoning_max_tokens, targets
+    FROM leaderboard
+    WHERE model = 'openai/gpt-5.4'
+    ORDER BY reasoning_max_tokens
+  `).all();
+
+  assert.equal(board.length, 2);
+  assert.deepEqual(
+    board.map(row => ({ reasoning_max_tokens: row.reasoning_max_tokens, targets: row.targets })),
+    [
+      { reasoning_max_tokens: null, targets: 1 },
+      { reasoning_max_tokens: 8000, targets: 1 },
+    ],
+  );
 });
 
 test('match_distribution view excludes non-done attempts', () => {

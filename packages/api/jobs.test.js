@@ -9,6 +9,7 @@ import {
   pushEvent,
   subscribe,
   unsubscribe,
+  getAttemptRequests,
   __setJobsConfigForTests,
   __resetJobsForTests,
 } from './jobs.js';
@@ -191,6 +192,49 @@ test('pushEvent keeps only the configured ring buffer of recent events', () => {
     { type: 'attempt', attempt: 1 },
     { type: 'attempt', attempt: 2 },
   ]);
+});
+
+test('llm_request events keep full request in-memory while SSE gets only preview metadata', () => {
+  createJob('run-1', { model: 'kimi', provider: 'openrouter' });
+  const subscriber = createMockSubscriber();
+  assert.equal(subscribe('run-1', subscriber), true);
+
+  pushEvent('run-1', {
+    type: 'llm_request',
+    attemptId: 123,
+    attempt: 2,
+    targetId: '7',
+    model: 'moonshotai/kimi-k2.6',
+    provider: 'openrouter',
+    endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    method: 'POST',
+    requestAttempt: 1,
+    requestBody: {
+      model: 'moonshotai/kimi-k2.6',
+      provider: { order: ['io.net'], allow_fallbacks: false },
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'hello' }] }],
+    },
+  });
+
+  const stored = getAttemptRequests('run-1', 123);
+  assert.equal(stored.length, 1);
+  assert.deepEqual(stored[0].requestBody, {
+    model: 'moonshotai/kimi-k2.6',
+    provider: { order: ['io.net'], allow_fallbacks: false },
+    messages: [{ role: 'user', content: [{ type: 'text', text: 'hello' }] }],
+  });
+
+  const streamed = parseSseLines(subscriber.writes);
+  assert.equal(streamed.length, 1);
+  assert.equal(streamed[0].type, 'llm_request');
+  assert.equal(streamed[0].requestBody, undefined);
+  assert.deepEqual(streamed[0].requestPreview, {
+    provider: { order: ['io.net'], allow_fallbacks: false },
+    reasoning: null,
+    max_tokens: null,
+    content_parts: 1,
+    image_parts: 0,
+  });
 });
 
 test('finished jobs are evicted after the configured cleanup TTL fires', () => {

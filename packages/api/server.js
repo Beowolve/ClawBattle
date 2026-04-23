@@ -10,13 +10,24 @@ import {
   upsertRuns,
   getRunQueue, getRunHistory, retryAttempt, resetErrors, pauseRun, resumeRun,
   hasRunPendingWork, requeueStaleRunningAttempts,
-  deleteRun, deleteAttempt,
+  deleteRun, deleteAttempt, getAttemptById,
 } from '../db/index.js';
 import { uploadToSupabase, uploadTargetsToSupabase, downloadFromSupabase } from '../db/sync.js';
 import { runBenchmark, resumeWorkers } from '../runner/benchmark.js';
-import { createJob, getJob, isJobActive, cancelJob, listActiveJobs, pushEvent, subscribe, unsubscribe } from './jobs.js';
+import {
+  createJob,
+  getJob,
+  isJobActive,
+  cancelJob,
+  listActiveJobs,
+  pushEvent,
+  subscribe,
+  unsubscribe,
+  getAttemptRequests,
+} from './jobs.js';
 import { createRunsQueueRouter } from './routes/runs-queue.js';
 import { closeBrowser } from '../core/renderer.js';
+import { buildAttemptPreview } from './attempt-preview.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -100,7 +111,10 @@ app.use('/api/runs', createRunsQueueRouter({
   cancelJob,
   deleteRun,
   deleteAttempt,
-  startResumedRun: (runId) => {
+  getAttemptById,
+  getAttemptRequests,
+  buildAttemptPreview,
+  startResumedRun: (runId, concurrency = 1) => {
     const meta = getRunQueue().find(r => r.run_id === runId);
     if (!meta) return;
     const signal = createJob(runId, {
@@ -113,7 +127,7 @@ app.use('/api/runs', createRunsQueueRouter({
     console.log(
       `[API] Resume run — runId=${runId} model=${meta.model}` +
       `${meta.reasoning_effort ? ` [${meta.reasoning_effort}]` : ''}` +
-      ` provider=${meta.provider} prompt=${meta.prompt_version ?? '?'}`,
+      ` provider=${meta.provider} prompt=${meta.prompt_version ?? '?'} concurrency=${concurrency}`,
     );
     // Use resumeWorkers instead of runBenchmark so we never call enqueueRun.
     // The run's rows are already in the DB (restored from 'paused' by resumeRun);
@@ -124,7 +138,7 @@ app.use('/api/runs', createRunsQueueRouter({
       provider: meta.provider,
       promptVersion: meta.prompt_version ?? process.env.PROMPT_VERSION ?? 'v3',
       reasoningEffort: meta.reasoning_effort ?? undefined,
-      concurrency: 1,
+      concurrency: Number(concurrency),
       signal,
       onProgress: (event) => pushEvent(runId, event),
     }).catch((err) => {
@@ -135,14 +149,22 @@ app.use('/api/runs', createRunsQueueRouter({
 }));
 
 app.delete('/api/runs/group', (req, res) => {
-  const { model, reasoningEffort = null, promptVersions } = req.body ?? {};
+  const { model, reasoningEffort = null, reasoningMaxTokens = null, promptVersions } = req.body ?? {};
   if (!model) return res.status(400).json({ error: 'model required' });
   if (promptVersions != null && !Array.isArray(promptVersions)) {
     return res.status(400).json({ error: 'promptVersions must be an array when provided' });
   }
+  if (reasoningMaxTokens != null && !Number.isFinite(Number(reasoningMaxTokens))) {
+    return res.status(400).json({ error: 'reasoningMaxTokens must be numeric when provided' });
+  }
 
   try {
-    res.json(deleteRunGroup({ model, reasoningEffort, promptVersions }));
+    res.json(deleteRunGroup({
+      model,
+      reasoningEffort,
+      reasoningMaxTokens: reasoningMaxTokens != null ? Number(reasoningMaxTokens) : null,
+      promptVersions,
+    }));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

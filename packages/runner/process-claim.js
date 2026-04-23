@@ -4,23 +4,7 @@
 
 import { completeAttempt, failAttempt } from '../db/adapters/sqlite/queue.js';
 import { getPreviousAttempt } from '../db/adapters/sqlite/previous-attempt.js';
-
-function buildBasePrompt(template, { width, height, colors, chromeVersion }) {
-  return template
-    .replace('{{WIDTH}}', width)
-    .replace('{{HEIGHT}}', height)
-    .replace('{{COLORS}}', colors.join(', '))
-    .replace('{{CHROME_VERSION}}', chromeVersion);
-}
-
-function buildFollowupPrompt(basePrompt, appendix, { code = '', match = null, score = null } = {}) {
-  const matchStr = match != null ? match.toFixed(2) + '%' : 'unknown';
-  const scoreStr = score != null ? score.toFixed(2) : 'unknown';
-  return basePrompt + '\n' + appendix
-    .replace('{{PREVIOUS_CODE}}', code)
-    .replace('{{PREVIOUS_MATCH}}', matchStr)
-    .replace('{{PREVIOUS_SCORE}}', scoreStr);
-}
+import { buildBasePrompt, buildFollowupPrompt } from './prompt-utils.js';
 
 function classifyError(err) {
   if (err?.name === 'PolicyViolationError') return 'policy_violation';
@@ -28,7 +12,8 @@ function classifyError(err) {
 }
 
 function isPermanent(err) {
-  return err?.name === 'AbortError' || err?.name === 'PolicyViolationError';
+  if (err?.name === 'AbortError' || err?.name === 'PolicyViolationError') return true;
+  return err?.permanent === true;
 }
 
 function sleep(ms) {
@@ -41,7 +26,7 @@ async function generateWithRetry(adapter, args, retries, delayMs) {
   let lastErr;
   for (let i = 0; i <= retries; i++) {
     try {
-      return await adapter.generate(args);
+      return await adapter.generate({ ...args, requestAttempt: i + 1 });
     } catch (err) {
       lastErr = err;
       if (isPermanent(err) || i === retries) throw err;
@@ -113,7 +98,29 @@ export async function processClaim({
   try {
     raw = await generateWithRetry(
       adapter,
-      { model, prompt, images, reasoningEffort, reasoningMaxTokens, signal },
+      {
+        model,
+        prompt,
+        images,
+        reasoningEffort,
+        reasoningMaxTokens,
+        signal,
+        onBeforeRequest: ({ provider, endpoint, method, requestAttempt, body }) => {
+          onProgress?.({
+            type: 'llm_request',
+            attemptId: claim.id,
+            runId: claim.run_id,
+            targetId: claim.target_id,
+            attempt: claim.attempt,
+            model,
+            provider: provider ?? claim.provider,
+            endpoint,
+            method,
+            requestAttempt,
+            requestBody: body,
+          });
+        },
+      },
       internalRetries,
       internalRetryDelayMs,
     );
@@ -128,6 +135,15 @@ export async function processClaim({
       message: err.message,
     });
     return { status: 'error', message: err.message };
+  }
+
+  if (raw.warning) {
+    onProgress?.({
+      type: 'llm_warning',
+      targetId: claim.target_id,
+      attempt: claim.attempt,
+      message: raw.warning,
+    });
   }
 
   if ((raw.tokensUsed ?? 0) === 0) {

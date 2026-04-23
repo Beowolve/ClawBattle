@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { openDb, initSchema } from './connection.js';
 
-const NEW_COLS = ['status', 'error_message', 'enqueued_at', 'claimed_at', 'claim_token', 'paused_from'];
+const NEW_COLS = ['status', 'error_message', 'enqueued_at', 'claimed_at', 'claim_token', 'paused_from', 'prompt_text'];
 
 function legacyRunsDb() {
   const db = new DatabaseSync(':memory:');

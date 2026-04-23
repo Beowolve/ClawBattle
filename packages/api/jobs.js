@@ -4,7 +4,7 @@
 const DEFAULT_MAX_JOB_EVENTS = 200;
 const DEFAULT_COMPLETED_JOB_TTL_MS = 5 * 60 * 1000;
 
-const jobs = new Map(); // runId -> { status, model, provider, promptVersion, reasoningEffort, events, subscribers, controller, cleanupHandle }
+const jobs = new Map(); // runId -> { status, model, provider, promptVersion, reasoningEffort, events, requestsByAttempt, subscribers, controller, cleanupHandle }
 
 let maxJobEvents = DEFAULT_MAX_JOB_EVENTS;
 let completedJobTtlMs = DEFAULT_COMPLETED_JOB_TTL_MS;
@@ -34,6 +34,22 @@ function appendJobEvent(job, event) {
   }
 }
 
+function summarizeRequestBody(body) {
+  if (!body || typeof body !== 'object') return null;
+  const content = body.messages?.[0]?.content;
+  const contentParts = Array.isArray(content) ? content.length : 1;
+  const imageParts = Array.isArray(content)
+    ? content.filter((part) => part?.type === 'image_url').length
+    : 0;
+  return {
+    provider: body.provider ?? null,
+    reasoning: body.reasoning ?? null,
+    max_tokens: body.max_tokens ?? null,
+    content_parts: contentParts,
+    image_parts: imageParts,
+  };
+}
+
 export function createJob(runId, { model, provider, promptVersion, reasoningEffort, reasoningMaxTokens } = {}) {
   clearJobCleanup(jobs.get(runId));
 
@@ -46,6 +62,7 @@ export function createJob(runId, { model, provider, promptVersion, reasoningEffo
     reasoningEffort,
     reasoningMaxTokens,
     events: [],
+    requestsByAttempt: new Map(),
     subscribers: new Set(),
     controller,
     cleanupHandle: null,
@@ -83,12 +100,36 @@ export function pushEvent(runId, event) {
   const job = jobs.get(runId);
   if (!job) return;
 
-  appendJobEvent(job, event);
+  let eventForStream = event;
+  if (event?.type === 'llm_request' && Number.isInteger(Number(event.attemptId))) {
+    const attemptId = Number(event.attemptId);
+    if (!job.requestsByAttempt.has(attemptId) && job.requestsByAttempt.size >= maxJobEvents) {
+      const oldestAttemptId = job.requestsByAttempt.keys().next().value;
+      if (oldestAttemptId != null) job.requestsByAttempt.delete(oldestAttemptId);
+    }
+    const history = job.requestsByAttempt.get(attemptId) ?? [];
+    history.push({
+      requestAttempt: event.requestAttempt ?? null,
+      provider: event.provider ?? null,
+      endpoint: event.endpoint ?? null,
+      method: event.method ?? null,
+      requestBody: event.requestBody ?? null,
+    });
+    if (history.length > 10) history.splice(0, history.length - 10);
+    job.requestsByAttempt.set(attemptId, history);
+    eventForStream = {
+      ...event,
+      requestBody: undefined,
+      requestPreview: summarizeRequestBody(event.requestBody),
+    };
+  }
+
+  appendJobEvent(job, eventForStream);
   if (event.type === 'done' || event.type === 'fatal_error' || event.type === 'cancelled') {
     job.status = event.type === 'done' ? 'done' : event.type === 'cancelled' ? 'cancelled' : 'error';
   }
 
-  const line = `data: ${JSON.stringify(event)}\n\n`;
+  const line = `data: ${JSON.stringify(eventForStream)}\n\n`;
   for (const subscriber of job.subscribers) {
     subscriber.write(line);
     if (job.status !== 'running') subscriber.end();
@@ -98,6 +139,12 @@ export function pushEvent(runId, event) {
     job.subscribers.clear();
     scheduleJobCleanup(runId, job);
   }
+}
+
+export function getAttemptRequests(runId, attemptId) {
+  const job = jobs.get(runId);
+  if (!job) return [];
+  return [...(job.requestsByAttempt.get(Number(attemptId)) ?? [])];
 }
 
 export function subscribe(runId, res) {

@@ -108,6 +108,15 @@ export function completeAttempt(db, id, claimToken, result) {
   }
 }
 
+export function setAttemptPrompt(db, id, claimToken, promptText) {
+  const { changes } = db.prepare(`
+    UPDATE runs
+    SET prompt_text = ?
+    WHERE id = ? AND status = 'running' AND claim_token = ?
+  `).run(promptText ?? null, id, claimToken);
+  return changes > 0;
+}
+
 export function failAttempt(db, id, claimToken, errorMessage) {
   const finishedAt = new Date().toISOString();
   const { changes } = db.prepare(`
@@ -161,6 +170,7 @@ export function requeueStaleRunningAttempts(db) {
   const { changes } = db.prepare(`
     UPDATE runs
     SET status = 'pending',
+        prompt_text = NULL,
         claim_token = NULL,
         claimed_at = NULL
     WHERE status = 'running'
@@ -176,6 +186,7 @@ export function pauseRun(db, runId) {
       UPDATE runs
       SET match = NULL, score = NULL, code = NULL, code_length = NULL,
           tokens_used = NULL, cost = NULL, duration_ms = NULL, finished_at = NULL,
+          prompt_text = NULL,
           claim_token = NULL, claimed_at = NULL
       WHERE run_id = ? AND status = 'running'
     `).run(runId);
@@ -211,6 +222,7 @@ export function retryAttempt(db, id) {
     UPDATE runs
     SET status = 'pending',
         error_message = NULL,
+        prompt_text = NULL,
         finished_at = NULL,
         claimed_at = NULL,
         claim_token = NULL
@@ -224,6 +236,7 @@ export function resetErrors(db, runId = null) {
     UPDATE runs
     SET status = 'pending',
         error_message = NULL,
+        prompt_text = NULL,
         finished_at = NULL,
         claimed_at = NULL,
         claim_token = NULL
@@ -250,6 +263,10 @@ export function deleteAttempt(db, id) {
   return changes > 0;
 }
 
+export function getAttemptById(db, id) {
+  return db.prepare('SELECT * FROM runs WHERE id = ?').get(id) ?? null;
+}
+
 export function claimNextPending(db) {
   const token = randomUUID();
   db.exec('BEGIN IMMEDIATE');
@@ -267,6 +284,33 @@ export function claimNextPending(db) {
       )
       RETURNING *
     `).get(token);
+    db.exec('COMMIT');
+    return row ?? null;
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+}
+
+// Like claimNextPending, but restricted to a single run_id. Used by per-run
+// worker pools (start/resume) so one run cannot steal pending rows from another.
+export function claimNextPendingForRun(db, runId) {
+  const token = randomUUID();
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    const row = db.prepare(`
+      UPDATE runs
+      SET status = 'running',
+          claimed_at = datetime('now'),
+          claim_token = ?
+      WHERE id = (
+        SELECT id FROM runs
+        WHERE status = 'pending' AND run_id = ?
+        ORDER BY enqueued_at, id
+        LIMIT 1
+      )
+      RETURNING *
+    `).get(token, runId);
     db.exec('COMMIT');
     return row ?? null;
   } catch (err) {

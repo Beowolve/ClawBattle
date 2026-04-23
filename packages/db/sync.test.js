@@ -46,7 +46,7 @@ test('uploadToSupabase strips queue-only columns before upload', async () => {
       run_id: 'a', target_id: '1', attempt: 1, status: 'done',
       claim_token: 'tok-123', enqueued_at: '2026-04-20T10:00:00Z',
       claimed_at: '2026-04-20T10:01:00Z', paused_from: null,
-      error_message: null, match: 100, score: 900,
+      error_message: null, prompt_text: 'prompt body', match: 100, score: 900,
     }];
     await uploadToSupabase({ url: 'https://sb.test', key: 'k', runs });
     const sent = sb.calls[0].body[0];
@@ -56,6 +56,7 @@ test('uploadToSupabase strips queue-only columns before upload', async () => {
     assert.equal('claimed_at'    in sent, false);
     assert.equal('paused_from'   in sent, false);
     assert.equal('error_message' in sent, false);
+    assert.equal('prompt_text'   in sent, false);
     // But normal result columns stay.
     assert.equal(sent.run_id, 'a');
     assert.equal(sent.match, 100);

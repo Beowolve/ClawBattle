@@ -37,3 +37,6 @@ npm-debug.log*
 
 # Misc
 *.local
+
+# Local OpenRouter routing overrides
+config/openrouter.providers.json

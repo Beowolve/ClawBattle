@@ -2,12 +2,16 @@
 import { extractCode } from './extract-code.js';
 import { buildUserMessage } from './build-message.js';
 
-export async function generate({ model, prompt, images, reasoningEffort, signal }) {
-  const body = {
+export function buildRequestBody({ model, prompt, images, reasoningEffort }) {
+  return {
     model,
     messages: [{ role: 'user', content: buildUserMessage(prompt, images) }],
     ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
   };
+}
+
+export async function generate({ model, prompt, images, reasoningEffort, signal }) {
+  const body = buildRequestBody({ model, prompt, images, reasoningEffort });
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     signal,

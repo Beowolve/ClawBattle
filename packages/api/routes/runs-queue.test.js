@@ -6,6 +6,7 @@ import {
   enqueueRun, claimNextPending, completeAttempt, failAttempt, pauseRun,
   getRunQueue, getRunHistory, retryAttempt, resetErrors, resumeRun,
   hasRunPendingWork,
+  getAttemptById,
 } from '../../db/adapters/sqlite/queue.js';
 import { createRunsQueueRouter } from './runs-queue.js';
 
@@ -30,6 +31,7 @@ async function startServer(db, extra = {}) {
     resetErrors: (runId) => resetErrors(db, runId),
     resumeRun: (runId) => resumeRun(db, runId),
     hasRunPendingWork: (runId) => hasRunPendingWork(db, runId),
+    getAttemptById: (id) => getAttemptById(db, id),
     ...extra,
   }));
   const server = await new Promise((resolve) => {
@@ -142,8 +144,12 @@ test('POST /api/runs/:runId/resume restores paused rows and calls startResumedRu
   enqueueRun(db, baseOpts);
   pauseRun(db, 'run-http-1');
   let resumedFor = null;
+  let resumedConcurrency = null;
   const { url, close } = await startServer(db, {
-    startResumedRun: (runId) => { resumedFor = runId; },
+    startResumedRun: (runId, concurrency) => {
+      resumedFor = runId;
+      resumedConcurrency = concurrency;
+    },
   });
   try {
     const res = await fetch(`${url}/api/runs/run-http-1/resume`, { method: 'POST' });
@@ -152,6 +158,7 @@ test('POST /api/runs/:runId/resume restores paused rows and calls startResumedRu
     assert.equal(body.resumed, true);
     assert.ok(body.count > 0);
     assert.equal(resumedFor, 'run-http-1');
+    assert.equal(resumedConcurrency, 1);
     const paused = db.prepare("SELECT COUNT(*) AS n FROM runs WHERE status='paused'").get().n;
     assert.equal(paused, 0);
   } finally {
@@ -166,16 +173,46 @@ test('POST /api/runs/:runId/resume starts workers on a non-paused run with pendi
   const db = openDb(':memory:');
   enqueueRun(db, baseOpts);
   let resumedFor = null;
+  let resumedConcurrency = null;
   const { url, close } = await startServer(db, {
-    startResumedRun: (runId) => { resumedFor = runId; },
+    startResumedRun: (runId, concurrency) => {
+      resumedFor = runId;
+      resumedConcurrency = concurrency;
+    },
   });
   try {
-    const res = await fetch(`${url}/api/runs/run-http-1/resume`, { method: 'POST' });
+    const res = await fetch(`${url}/api/runs/run-http-1/resume`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ concurrency: 5 }),
+    });
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.resumed, true);
     assert.equal(body.count, 0); // nothing restored — nothing was paused
+    assert.equal(body.concurrency, 5);
     assert.equal(resumedFor, 'run-http-1');
+    assert.equal(resumedConcurrency, 5);
+  } finally {
+    await close();
+  }
+});
+
+test('POST /api/runs/:runId/resume rejects invalid concurrency', async () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, baseOpts);
+  let resumedCalls = 0;
+  const { url, close } = await startServer(db, {
+    startResumedRun: () => { resumedCalls++; },
+  });
+  try {
+    const res = await fetch(`${url}/api/runs/run-http-1/resume`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ concurrency: 0 }),
+    });
+    assert.equal(res.status, 400);
+    assert.equal(resumedCalls, 0);
   } finally {
     await close();
   }
@@ -209,5 +246,120 @@ test('POST /api/runs/:runId/resume returns 409 when a worker is already active',
     assert.equal(resumedCalls, 0);
   } finally {
     await close();
+  }
+});
+
+test('GET /api/runs/attempts/:id/request returns in-memory request trace for the attempt', async () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, baseOpts);
+  const claim = claimNextPending(db);
+
+  const { url, close } = await startServer(db, {
+    buildAttemptPreview: async () => ({
+      promptVersion: 'v1',
+      chromeVersion: '140.0.0.0',
+      width: 400,
+      height: 300,
+      isFollowup: false,
+      computedPrompt: 'PROMPT',
+      computedRequestBody: { model: 'moonshotai/kimi-k2.6' },
+    }),
+    getAttemptRequests: (runId, attemptId) => {
+      assert.equal(runId, 'run-http-1');
+      assert.equal(attemptId, claim.id);
+      return [{
+        requestAttempt: 1,
+        provider: 'openrouter',
+        endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+        method: 'POST',
+        requestBody: { model: 'moonshotai/kimi-k2.6' },
+      }];
+    },
+  });
+
+  try {
+    const res = await fetch(`${url}/api/runs/attempts/${claim.id}/request`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.attemptId, claim.id);
+    assert.equal(body.runId, 'run-http-1');
+    assert.equal(body.targetId, '1');
+    assert.equal(body.attempt, 1);
+    assert.equal(body.computedPrompt, 'PROMPT');
+    assert.equal(body.computedRequestBody.model, 'moonshotai/kimi-k2.6');
+    assert.equal(body.capturedRequests.length, 1);
+    assert.equal(body.capturedRequests[0].requestBody.model, 'moonshotai/kimi-k2.6');
+  } finally {
+    await close();
+  }
+});
+
+test('GET /api/runs/attempts/:id/request returns computed preview even without captured requests', async () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, baseOpts);
+  const claim = claimNextPending(db);
+
+  const { url, close } = await startServer(db, {
+    buildAttemptPreview: async () => ({
+      promptVersion: 'v1',
+      chromeVersion: '140.0.0.0',
+      width: 400,
+      height: 300,
+      isFollowup: false,
+      computedPrompt: 'PROMPT ONLY',
+      computedRequestBody: { model: 'gpt-4o' },
+    }),
+    getAttemptRequests: () => [],
+  });
+
+  try {
+    const res = await fetch(`${url}/api/runs/attempts/${claim.id}/request`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.computedPrompt, 'PROMPT ONLY');
+    assert.equal(body.computedRequestBody.model, 'gpt-4o');
+    assert.deepEqual(body.capturedRequests, []);
+  } finally {
+    await close();
+  }
+});
+
+test('DELETE /api/runs/group is not swallowed by DELETE /api/runs/:runId', async () => {
+  const db = openDb(':memory:');
+  let deleteRunCalls = 0;
+  let groupDeleteCalls = 0;
+
+  const app = express();
+  app.use(express.json());
+  app.use('/api/runs', createRunsQueueRouter({
+    getRunQueue: () => getRunQueue(db),
+    getRunHistory: () => getRunHistory(db),
+    retryAttempt: (id) => retryAttempt(db, id),
+    resetErrors: (runId) => resetErrors(db, runId),
+    resumeRun: (runId) => resumeRun(db, runId),
+    hasRunPendingWork: (runId) => hasRunPendingWork(db, runId),
+    deleteRun: () => {
+      deleteRunCalls += 1;
+      return 0;
+    },
+  }));
+  app.delete('/api/runs/group', (req, res) => {
+    groupDeleteCalls += 1;
+    res.json({ ok: true });
+  });
+
+  const server = await new Promise((resolve) => {
+    const s = app.listen(0, () => resolve(s));
+  });
+  const { port } = server.address();
+  const url = `http://127.0.0.1:${port}`;
+
+  try {
+    const res = await fetch(`${url}/api/runs/group`, { method: 'DELETE' });
+    assert.equal(res.status, 200);
+    assert.equal(groupDeleteCalls, 1);
+    assert.equal(deleteRunCalls, 0);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
   }
 });

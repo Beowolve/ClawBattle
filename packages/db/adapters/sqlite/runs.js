@@ -8,8 +8,8 @@ export function saveAttempt(db, data) {
     INSERT INTO runs
       (run_id, benchmark_version, model, provider,
        prompt_version, temperature, attempts_per_target, started_at,
-       target_id, target_type, attempt, match, score, tokens_used, code, code_length, cost, duration_ms, reasoning_effort)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       target_id, target_type, attempt, match, score, tokens_used, code, code_length, cost, duration_ms, reasoning_effort, reasoning_max_tokens)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     data.runId, data.benchmarkVersion, data.model, data.provider,
     data.promptVersion ?? null, data.temperature ?? null,
@@ -19,6 +19,7 @@ export function saveAttempt(db, data) {
     data.tokensUsed ?? null, data.code ?? null, data.codeLength ?? null,
     data.cost ?? null, data.durationMs ?? null,
     data.reasoningEffort ?? null,
+    data.reasoningMaxTokens ?? null,
   );
 }
 
@@ -79,6 +80,7 @@ export function getLeaderboard(db, promptVersion) {
     rows: rows.map(r => ({
       model: r.model,
       reasoningEffort: r.reasoning_effort ?? null,
+      reasoningMaxTokens: r.reasoning_max_tokens != null ? Number(r.reasoning_max_tokens) : null,
       provider: r.provider,
       promptVersions: r.prompt_versions ? r.prompt_versions.split(',') : [],
       targets: Number(r.targets),
@@ -286,9 +288,9 @@ export function upsertRuns(db, rows) {
 }
 
 // Deletes every row (done + queue state) that matches the (model,
-// reasoningEffort, promptVersions) filter. Targets the `runs` table
+// reasoningEffort, reasoningMaxTokens, promptVersions) filter. Targets the `runs` table
 // directly — `run_state` was removed in the slice 4.3 cleanup.
-export function deleteRunGroup(db, { model, reasoningEffort = null, promptVersions } = {}) {
+export function deleteRunGroup(db, { model, reasoningEffort = null, reasoningMaxTokens = null, promptVersions } = {}) {
   if (!model) {
     throw new Error('model is required');
   }
@@ -305,6 +307,17 @@ export function deleteRunGroup(db, { model, reasoningEffort = null, promptVersio
   } else {
     where.push('reasoning_effort = ?');
     params.push(reasoningEffort);
+  }
+
+  if (reasoningMaxTokens == null) {
+    where.push('reasoning_max_tokens IS NULL');
+  } else {
+    const normalized = Number(reasoningMaxTokens);
+    if (!Number.isFinite(normalized)) {
+      throw new Error('reasoningMaxTokens must be numeric');
+    }
+    where.push('reasoning_max_tokens = ?');
+    params.push(normalized);
   }
 
   if (selectedPromptVersions.length) {

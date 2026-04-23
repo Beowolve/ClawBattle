@@ -131,6 +131,26 @@ test('workerLoop: propagates resolveAdapter/resolveTarget per-claim (different r
   assert.deepEqual(ids, ['1', '5']);
 });
 
+test('workerLoop: with runId set, it only claims rows from that run', async () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, { ...baseOpts, runId: 'run-1', attemptsPerTarget: 1, targets: [{ id: '1', type: 'battle' }] });
+  enqueueRun(db, { ...baseOpts, runId: 'run-2', attemptsPerTarget: 1, targets: [{ id: '5', type: 'battle' }] });
+
+  const seenTargets = [];
+  const resolveTarget = (type, id) => {
+    seenTargets.push(String(id));
+    return { def: { id, name: `t${id}`, colors: [] }, buffer: Buffer.from(`b${id}`) };
+  };
+
+  await workerLoop({ db, runId: 'run-1', ...makeDeps({ resolveTarget }) });
+
+  const run1Done = db.prepare("SELECT COUNT(*) AS n FROM runs WHERE run_id='run-1' AND status='done'").get().n;
+  const run2Pending = db.prepare("SELECT COUNT(*) AS n FROM runs WHERE run_id='run-2' AND status='pending'").get().n;
+  assert.equal(run1Done, 1);
+  assert.equal(run2Pending, 1);
+  assert.deepEqual(seenTargets, ['1']);
+});
+
 test('workerLoop: emits target_done when the last open attempt of a target finishes', async () => {
   const db = openDb(':memory:');
   enqueueRun(db, { ...baseOpts, attemptsPerTarget: 1, targets: [{ id: '1', type: 'battle' }, { id: '2', type: 'battle' }] });

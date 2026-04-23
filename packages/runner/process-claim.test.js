@@ -75,6 +75,7 @@ test('processClaim: attempt 1 — adapter prompt uses base template, result is s
   assert.equal(row.code_length, '<div>hi</div>'.length);
   assert.equal(row.tokens_used, 42);
   assert.equal(row.cost, 0.001);
+  assert.equal(row.prompt_text, null);
   assert.ok(row.duration_ms >= 0);
   assert.ok(row.finished_at);
 });
@@ -127,6 +128,8 @@ test('processClaim: attempt 2 — previous code is re-rendered and injected into
   assert.equal(capturedImages.length, 2);
   // render called once for previous code + once for current result
   assert.equal(renderCalls, 2);
+  const row = db.prepare('SELECT prompt_text FROM runs WHERE id = ?').get(c2.id);
+  assert.equal(row.prompt_text, null);
 });
 
 test('processClaim: adapter error → failAttempt sets status=error with message', async () => {
@@ -140,9 +143,10 @@ test('processClaim: adapter error → failAttempt sets status=error with message
   const result = await processClaim(baseArgs(db, claim, { deps: { adapter } }));
   assert.equal(result.status, 'error');
 
-  const row = db.prepare('SELECT status, error_message FROM runs WHERE id = ?').get(claim.id);
+  const row = db.prepare('SELECT status, error_message, prompt_text FROM runs WHERE id = ?').get(claim.id);
   assert.equal(row.status, 'error');
   assert.equal(row.error_message, 'api exploded');
+  assert.equal(row.prompt_text, null);
 });
 
 test('processClaim: AbortError is re-thrown, no completeAttempt/failAttempt write', async () => {
@@ -174,6 +178,38 @@ test('processClaim: onProgress emits attempt event on success', async () => {
   assert.equal(attemptEvt.targetId, '1');
   assert.equal(attemptEvt.attempt, 1);
   assert.equal(attemptEvt.matchPercent, 87.5);
+});
+
+test('processClaim: onProgress emits llm_request with request metadata', async () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, baseOpts);
+  const claim = claimNextPending(db);
+  const events = [];
+  const adapter = {
+    generate: async ({ onBeforeRequest, requestAttempt }) => {
+      onBeforeRequest?.({
+        provider: 'openrouter',
+        endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+        method: 'POST',
+        requestAttempt,
+        body: { model: 'gpt-4o', provider: { order: ['io.net'] } },
+      });
+      return { code: '<div/>', tokensUsed: 1, cost: 0 };
+    },
+  };
+  await processClaim(baseArgs(db, claim, {
+    onProgress: (e) => events.push(e),
+    deps: { adapter },
+  }));
+  const req = events.find(e => e.type === 'llm_request');
+  assert.ok(req);
+  assert.equal(req.attemptId, claim.id);
+  assert.equal(req.targetId, '1');
+  assert.equal(req.attempt, 1);
+  assert.equal(req.provider, 'openrouter');
+  assert.equal(req.method, 'POST');
+  assert.equal(req.requestBody.model, 'gpt-4o');
+  assert.deepEqual(req.requestBody.provider, { order: ['io.net'] });
 });
 
 test('processClaim: onProgress emits attempt_error on failure with error type', async () => {
@@ -236,9 +272,10 @@ test('processClaim: gives up after N internal retries and marks attempt as error
   }));
   assert.equal(result.status, 'error');
   assert.equal(calls, 3); // 1 initial + 2 retries
-  const row = db.prepare('SELECT status, error_message FROM runs WHERE id = ?').get(claim.id);
+  const row = db.prepare('SELECT status, error_message, prompt_text FROM runs WHERE id = ?').get(claim.id);
   assert.equal(row.status, 'error');
   assert.equal(row.error_message, 'rate limit');
+  assert.equal(row.prompt_text, null);
 });
 
 test('processClaim: does NOT retry PolicyViolationError (permanent)', async () => {
@@ -259,6 +296,28 @@ test('processClaim: does NOT retry PolicyViolationError (permanent)', async () =
     internalRetries: 2,
     internalRetryDelayMs: 0,
   }));
+  assert.equal(calls, 1);
+});
+
+test('processClaim: does NOT retry errors flagged as permanent (err.permanent = true)', async () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, baseOpts);
+  const claim = claimNextPending(db);
+  let calls = 0;
+  const adapter = {
+    generate: async () => {
+      calls++;
+      const err = new Error('OpenRouter: empty response (finish_reason=null)');
+      err.permanent = true;
+      throw err;
+    },
+  };
+  const result = await processClaim(baseArgs(db, claim, {
+    deps: { adapter },
+    internalRetries: 2,
+    internalRetryDelayMs: 0,
+  }));
+  assert.equal(result.status, 'error');
   assert.equal(calls, 1);
 });
 
@@ -296,9 +355,10 @@ test('processClaim: tokensUsed=0 → failAttempt with refusal message', async ()
   assert.equal(result.status, 'error');
   assert.ok(result.message.includes('0 tokens'));
 
-  const row = db.prepare('SELECT status, error_message FROM runs WHERE id = ?').get(claim.id);
+  const row = db.prepare('SELECT status, error_message, prompt_text FROM runs WHERE id = ?').get(claim.id);
   assert.equal(row.status, 'error');
   assert.ok(row.error_message.includes('0 tokens'));
+  assert.equal(row.prompt_text, null);
 });
 
 test('processClaim: previous render failure falls back to base prompt (no followup)', async () => {

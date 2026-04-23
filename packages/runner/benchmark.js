@@ -187,6 +187,7 @@ export async function runBenchmark({
   const workers = Array.from({ length: workerCount }, () =>
     workerLoop({
       db, signal,
+      runId,
       resolveTarget, resolveAdapter, resolvePromptTemplate,
       followupAppendix, chromeVersion,
       render, computeMatch, computeScore, sanitizeCode,
@@ -225,6 +226,14 @@ function createProgressShim(defById, onProgress) {
     return targetState.get(key);
   }
   return (evt) => {
+    if (evt.type === 'llm_request') {
+      const providerSuffix = evt.provider ? ` via ${evt.provider}` : '';
+      const retrySuffix = evt.requestAttempt && evt.requestAttempt > 1 ? ` (retry ${evt.requestAttempt})` : '';
+      const providerRouting = evt.requestBody?.provider ? ` provider=${JSON.stringify(evt.requestBody.provider)}` : '';
+      console.log(`  [${evt.targetId}] Attempt ${evt.attempt} request${retrySuffix} → ${evt.model}${providerSuffix}${providerRouting}`);
+      onProgress?.(evt);
+      return;
+    }
     if (evt.type === 'attempt_start') {
       const tag = evt.isFollowup ? ' (follow-up)' : '';
       console.log(`  [${evt.targetId}] Attempt ${evt.attempt} starting — ${evt.model}${tag}`);
@@ -236,6 +245,11 @@ function createProgressShim(defById, onProgress) {
       s.scores.push(evt.matchPercent);
       s.allErrors = false;
       console.log(`  [${evt.targetId}] Attempt ${evt.attempt}: ${evt.matchPercent.toFixed(1)}%${evt.perfect ? ' (perfect)' : ''}`);
+      onProgress?.(evt);
+      return;
+    }
+    if (evt.type === 'llm_warning') {
+      console.warn(`  [${evt.targetId}] Attempt ${evt.attempt} warning: ${evt.message}`);
       onProgress?.(evt);
       return;
     }
@@ -346,6 +360,7 @@ export async function resumeWorkers({
   const workers = Array.from({ length: workerCount }, () =>
     workerLoop({
       db, signal,
+      runId,
       resolveTarget,
       resolveAdapter: () => adapterModule,
       resolvePromptTemplate: () => promptTemplate,

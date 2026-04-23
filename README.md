@@ -21,7 +21,7 @@ Open `http://localhost:5173` for the dashboard.
 
 ## Running a Benchmark
 
-The easiest way is the **+ Run** tab in the dashboard — pick a model, provider, and hit Start.
+The easiest way is the **+ Run** tab in the dashboard — pick a model, provider, and hit Start. You can launch multiple runs in parallel, and the model field autocompletes previously used models filtered by the selected provider.
 
 Alternatively via CLI:
 
@@ -49,6 +49,39 @@ CLI options:
 *Set `PROMPT_VERSION=v2` in `.env` to change the default.
 
 Resume and target-range controls are available in the dashboard (+ Run tab).
+
+## OpenRouter Provider Forcing
+
+You can force OpenRouter provider routing per model via a local config file:
+
+```bash
+cp config/openrouter.providers.example.json config/openrouter.providers.json
+```
+
+Default lookup path: `./config/openrouter.providers.json`  
+Optional override: `OPENROUTER_PROVIDER_CONFIG_PATH=...`
+
+Config shape:
+
+```json
+{
+  "modelProviderOverrides": {
+    "openai/gpt-5-mini": "openai",
+    "moonshotai/*": "io.net",
+    "anthropic/claude-3.7-sonnet": {
+      "order": ["anthropic"],
+      "allow_fallbacks": false
+    }
+  }
+}
+```
+
+Rules:
+- `"<provider>"` forces a single provider (`allow_fallbacks: false`).
+- `["a", "b"]` sets provider order (`allow_fallbacks: false`).
+- `{ ... }` passes a raw OpenRouter `provider` object through unchanged.
+- `"vendor/*"` applies to all models with that prefix (for example `moonshotai/*`).
+- Matching priority is: exact model > longest `vendor/*` prefix.
 
 ## How it Works
 
@@ -171,7 +204,8 @@ is pre-inserted before any work starts and moves through these statuses:
 - **`pending`** — claim-ready. A worker may pick it up.
 - **`running`** — claimed by a worker; protected with a `claim_token` so a
   pause or re-claim can't be overwritten by a stale worker.
-- **`done`** — complete. Only `done` rows appear in the leaderboard,
+- **`done`** — complete. Only `done` rows appear in the leaderboard
+  (grouped by `model + reasoning_effort + reasoning_max_tokens`),
   insights, the History view and the Supabase upload.
 - **`error`** — non-terminal. The row stays visible in the Queue view with
   a Retry button per attempt, plus Reset-all-errors per run.
@@ -184,7 +218,8 @@ split in the dashboard.
 
 Workers claim the next `pending` row atomically with `BEGIN IMMEDIATE` +
 `UPDATE ... RETURNING`. Ordering is FIFO over `(enqueued_at, id)` across
-all runs, so a resumed run re-enters at the back of the queue.
+all runs, so a resumed run re-enters at the back of the queue. Each active
+worker pool is run-scoped and only claims rows for its own `run_id`.
 
 On server startup, any leftover `running` rows (from a crashed process)
 are flipped back to `pending` and their claim tokens are cleared.
@@ -194,7 +229,7 @@ are flipped back to `pending` and their claim tokens are cleared.
 - `POST /api/runs/start` — new run or fill-run. Pre-enqueues all attempts.
 - `POST /api/runs/:runId/cancel` — pauses the run (abort + `paused_from`).
 - `POST /api/runs/:runId/resume` — restores the pre-pause state and bumps
-  `enqueued_at` to now.
+  `enqueued_at` to now; accepts optional JSON body `{ "concurrency": <n> }`.
 - `POST /api/runs/attempts/:id/retry` — single `error` → `pending`.
 - `POST /api/runs/:runId/reset-errors` — bulk `error` → `pending`.
 - `GET /api/runs/queue` — everything not-yet-done, with attempts nested.

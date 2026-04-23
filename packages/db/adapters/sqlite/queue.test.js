@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openDb } from './connection.js';
-import { enqueueRun, claimNextPending, completeAttempt, failAttempt, retryAttempt, resetErrors, pauseRun, resumeRun, requeueStaleRunningAttempts, getRunQueue, getRunHistory } from './queue.js';
+import { enqueueRun, claimNextPending, completeAttempt, failAttempt, setAttemptPrompt, retryAttempt, resetErrors, pauseRun, resumeRun, requeueStaleRunningAttempts, getRunQueue, getRunHistory } from './queue.js';
 
 const baseOpts = {
   runId: 'run-1',
@@ -392,6 +392,18 @@ test('failAttempt: does not promote next waiting attempt', () => {
   assert.equal(next.status, 'waiting');
 });
 
+test('setAttemptPrompt: stores prompt text only for matching running claim', () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, baseOpts);
+  const claimed = claimNextPending(db);
+  const ok = setAttemptPrompt(db, claimed.id, claimed.claim_token, 'PROMPT BODY');
+  assert.equal(ok, true);
+  const row = db.prepare('SELECT prompt_text FROM runs WHERE id = ?').get(claimed.id);
+  assert.equal(row.prompt_text, 'PROMPT BODY');
+  const bad = setAttemptPrompt(db, claimed.id, 'wrong-token', 'OTHER');
+  assert.equal(bad, false);
+});
+
 test('stale claim protection: after pause-like token change, old worker cannot overwrite', () => {
   const db = openDb(':memory:');
   enqueueRun(db, baseOpts);
@@ -416,11 +428,13 @@ function erroredRow(db, opts = baseOpts) {
 test('retryAttempt: error → pending, clears error fields and claim state', () => {
   const db = openDb(':memory:');
   const row = erroredRow(db);
+  db.prepare('UPDATE runs SET prompt_text = ? WHERE id = ?').run('OLD PROMPT', row.id);
   const ok = retryAttempt(db, row.id);
   assert.equal(ok, true);
   const updated = db.prepare('SELECT * FROM runs WHERE id = ?').get(row.id);
   assert.equal(updated.status, 'pending');
   assert.equal(updated.error_message, null);
+  assert.equal(updated.prompt_text, null);
   assert.equal(updated.claimed_at, null);
   assert.equal(updated.claim_token, null);
   assert.equal(updated.finished_at, null);
@@ -516,10 +530,12 @@ test('resetErrors: without runId, resets all errors globally', () => {
 test('resetErrors: clears error_message, finished_at, claim_token, claimed_at', () => {
   const db = openDb(':memory:');
   const errored = erroredRow(db);
+  db.prepare('UPDATE runs SET prompt_text = ? WHERE id = ?').run('OLD PROMPT', errored.id);
   resetErrors(db, errored.run_id);
   const row = db.prepare('SELECT * FROM runs WHERE id = ?').get(errored.id);
   assert.equal(row.status, 'pending');
   assert.equal(row.error_message, null);
+  assert.equal(row.prompt_text, null);
   assert.equal(row.finished_at, null);
   assert.equal(row.claim_token, null);
   assert.equal(row.claimed_at, null);
@@ -599,7 +615,8 @@ test('pauseRun: clears partial results and claim fields on running rows', () => 
   // Pretend the worker had written partial results before pause
   db.prepare(`
     UPDATE runs SET match=50, score=40, code='partial', code_length=7,
-                    tokens_used=500, cost=0.001, duration_ms=1000, finished_at='2026-04-20T10:01:00Z'
+                    tokens_used=500, cost=0.001, duration_ms=1000, finished_at='2026-04-20T10:01:00Z',
+                    prompt_text='PROMPT BODY'
     WHERE id = ?
   `).run(claimed.id);
   pauseRun(db, 'run-1');
@@ -612,6 +629,7 @@ test('pauseRun: clears partial results and claim fields on running rows', () => 
   assert.equal(row.cost, null);
   assert.equal(row.duration_ms, null);
   assert.equal(row.finished_at, null);
+  assert.equal(row.prompt_text, null);
   assert.equal(row.claim_token, null);
   assert.equal(row.claimed_at, null);
 });
@@ -694,10 +712,12 @@ test('requeueStaleRunningAttempts: running → pending, clears claim fields', ()
   const db = openDb(':memory:');
   enqueueRun(db, baseOpts);
   const claimed = claimNextPending(db);
+  db.prepare('UPDATE runs SET prompt_text = ? WHERE id = ?').run('PROMPT BODY', claimed.id);
   const n = requeueStaleRunningAttempts(db);
   assert.equal(n, 1);
   const row = db.prepare('SELECT * FROM runs WHERE id = ?').get(claimed.id);
   assert.equal(row.status, 'pending');
+  assert.equal(row.prompt_text, null);
   assert.equal(row.claim_token, null);
   assert.equal(row.claimed_at, null);
 });

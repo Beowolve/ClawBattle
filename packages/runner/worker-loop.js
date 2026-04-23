@@ -3,19 +3,24 @@
 // the abort signal fires. Multiple workers can run in parallel against the
 // same DB; claimNextPending is atomic, so each row is processed exactly once.
 
-import { claimNextPending } from '../db/adapters/sqlite/queue.js';
+import { claimNextPending, claimNextPendingForRun } from '../db/adapters/sqlite/queue.js';
 import { processClaim } from './process-claim.js';
 
 const IDLE_POLL_MS = 50;
 
-function hasMoreWork(db) {
+function hasMoreWork(db, runId = null) {
   // 'waiting' rows only transition to 'pending' when a 'running' predecessor
   // calls completeAttempt. If no pending/running rows exist, no promotion can
   // happen and the workers should stop (orphaned 'waiting' rows from errors).
-  const row = db.prepare(`
-    SELECT COUNT(*) AS n FROM runs
-    WHERE status IN ('pending', 'running')
-  `).get();
+  const row = runId == null
+    ? db.prepare(`
+        SELECT COUNT(*) AS n FROM runs
+        WHERE status IN ('pending', 'running')
+      `).get()
+    : db.prepare(`
+        SELECT COUNT(*) AS n FROM runs
+        WHERE run_id = ? AND status IN ('pending', 'running')
+      `).get(runId);
   return row.n > 0;
 }
 
@@ -38,6 +43,7 @@ function sleep(ms, signal) {
 
 export async function workerLoop({
   db, signal,
+  runId = null,
   resolveTarget, resolveAdapter, resolvePromptTemplate,
   followupAppendix, chromeVersion,
   render, computeMatch, computeScore, sanitizeCode,
@@ -45,9 +51,9 @@ export async function workerLoop({
   onProgress,
 }) {
   while (!signal?.aborted) {
-    const claim = claimNextPending(db);
+    const claim = runId == null ? claimNextPending(db) : claimNextPendingForRun(db, runId);
     if (!claim) {
-      if (!hasMoreWork(db)) break;
+      if (!hasMoreWork(db, runId)) break;
       await sleep(IDLE_POLL_MS, signal);
       continue;
     }

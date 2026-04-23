@@ -12,6 +12,7 @@ import {
   getExistingAttempts as _getExistingAttempts,
   upsertRuns as _upsertRuns,
 } from './runs.js';
+import { getPreviousAttempt as _getPreviousAttempt } from './previous-attempt.js';
 import {
   upsertBattleTarget as _upsertBattleTarget,
   upsertDailyTarget as _upsertDailyTarget,
@@ -29,6 +30,7 @@ import {
   requeueStaleRunningAttempts as _requeueStaleRunningAttempts,
   deleteRun as _deleteRun,
   deleteAttempt as _deleteAttempt,
+  getAttemptById as _getAttemptById,
 } from './queue.js';
 
 export const getCompletedTargetIds = (runId)         => _getCompletedTargetIds(getDb(), runId);
@@ -53,3 +55,5 @@ export const hasRunPendingWork     = (runId)         => _hasRunPendingWork(getDb
 export const requeueStaleRunningAttempts = ()        => _requeueStaleRunningAttempts(getDb());
 export const deleteRun             = (runId)         => _deleteRun(getDb(), runId);
 export const deleteAttempt         = (id)            => _deleteAttempt(getDb(), id);
+export const getAttemptById        = (id)            => _getAttemptById(getDb(), id);
+export const getPreviousAttempt    = (runId, targetId, attempt) => _getPreviousAttempt(getDb(), runId, targetId, attempt);

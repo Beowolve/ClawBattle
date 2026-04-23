@@ -1,5 +1,8 @@
 function formatGroupLabel(row) {
-  return row.reasoningEffort ? `${row.model} [${row.reasoningEffort}]` : row.model;
+  const parts = [];
+  if (row.reasoningEffort) parts.push(`reasoning=${row.reasoningEffort}`);
+  if (row.reasoningMaxTokens != null) parts.push(`max_tokens=${row.reasoningMaxTokens}`);
+  return parts.length > 0 ? `${row.model} (${parts.join(', ')})` : row.model;
 }
 
 export default function DeleteLeaderboardRunsDialog({

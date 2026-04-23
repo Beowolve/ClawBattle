@@ -121,7 +121,9 @@ export default function RunHistory() {
                     </span>
                   </td>
                   <td className="numeric muted">{r.attempt}</td>
-                  <td className="numeric">{r.match != null ? r.match.toFixed(2) + '%' : '-'}</td>
+                  <td className={`numeric ${r.match >= 100 ? 'perfect' : ''}`}>
+                    {r.match != null ? r.match.toFixed(2) + '%' : '-'}
+                  </td>
                   <td className={`numeric ${r.score >= 990 ? 'perfect' : ''}`}>
                     {r.score != null ? r.score.toFixed(2) : '-'}
                   </td>
