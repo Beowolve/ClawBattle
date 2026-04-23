@@ -28,6 +28,8 @@ const TABS = [
   ] : []),
 ];
 
+const EMPTY_REASONING_FILTER = '__empty__';
+
 function computeKpisFromLeaderboard(data) {
   if (!data?.rows?.length) return { totalRuns: 0, avgBestScore: '-', totalCost: '-', models: 0 };
   const totalTargets = data.rows.reduce((a, r) => a + r.targets, 0);
@@ -62,9 +64,11 @@ export default function App() {
     localStorage.setItem('clawbattle.promptFilter', v);
   }
   const [modelFilter, setModelFilter] = useState(null);
+  const [reasoningFilter, setReasoningFilter] = useState(null);
 
-  function handleModelSelect(model) {
+  function handleModelSelect(model, reasoningEffort) {
     setModelFilter(model);
+    setReasoningFilter(reasoningEffort ?? '');
     setTargetView('table');
     setTab('targets');
   }
@@ -94,6 +98,19 @@ export default function App() {
     () => [...new Set(leaderboardQ.data?.rows?.map(r => r.model) ?? [])].sort(),
     [leaderboardQ.data],
   );
+
+  const reasoningOptions = useMemo(() => {
+    const values = new Set(
+      filteredRuns
+        .filter(r => r.target_type === targetType)
+        .map(r => r.reasoning_effort ?? ''),
+    );
+    return [...values].sort((a, b) => {
+      if (!a) return 1;
+      if (!b) return -1;
+      return a.localeCompare(b);
+    });
+  }, [filteredRuns, targetType]);
 
   // KPIs derived from leaderboard aggregation — available without loading raw runs
   const kpis = computeKpisFromLeaderboard(leaderboardQ.data);
@@ -163,8 +180,11 @@ export default function App() {
                   targetCount={sortedTargets.length}
                   runs={filteredRuns}
                   modelFilter={modelFilter}
+                  reasoningFilter={reasoningFilter}
                   models={models}
+                  reasoningOptions={reasoningOptions}
                   onModelFilterChange={setModelFilter}
+                  onReasoningFilterChange={setReasoningFilter}
                   onBack={() => setSelectedTarget(null)}
                   onPrev={selectedIdx > 0 ? () => setSelectedTarget(sortedTargets[selectedIdx - 1]) : null}
                   onNext={selectedIdx < sortedTargets.length - 1 ? () => setSelectedTarget(sortedTargets[selectedIdx + 1]) : null}
@@ -183,6 +203,21 @@ export default function App() {
                   >
                     <option value="">All models</option>
                     {models.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                  <select
+                    className="filterSelect"
+                    value={reasoningFilter === '' ? EMPTY_REASONING_FILTER : (reasoningFilter ?? '')}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setReasoningFilter(value === EMPTY_REASONING_FILTER ? '' : (value || null));
+                    }}
+                  >
+                    <option value="">All reasoning</option>
+                    {reasoningOptions.map(r => (
+                      <option key={r || EMPTY_REASONING_FILTER} value={r || EMPTY_REASONING_FILTER}>
+                        {r || 'No reasoning'}
+                      </option>
+                    ))}
                   </select>
                   <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                     <button
@@ -211,6 +246,7 @@ export default function App() {
                           type={targetType}
                           runs={filteredRuns}
                           modelFilter={modelFilter}
+                          reasoningFilter={reasoningFilter}
                           onSelect={setSelectedTarget}
                         />
                       : <TargetGrid

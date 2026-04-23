@@ -1,7 +1,24 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { IS_PUBLIC } from '../hooks/useData.js';
+import ReasoningBadge from './ReasoningBadge.jsx';
 
-export default function TargetDetail({ target, type, targetCount, runs, modelFilter, models, onModelFilterChange, onBack, onPrev, onNext }) {
+const EMPTY_REASONING_FILTER = '__empty__';
+
+export default function TargetDetail({
+  target,
+  type,
+  targetCount,
+  runs,
+  modelFilter,
+  reasoningFilter,
+  models,
+  reasoningOptions,
+  onModelFilterChange,
+  onReasoningFilterChange,
+  onBack,
+  onPrev,
+  onNext,
+}) {
   const [selected, setSelected] = useState(null);
 
   // Callback ref re-runs whenever selected changes, guaranteeing the write
@@ -26,8 +43,11 @@ export default function TargetDetail({ target, type, targetCount, runs, modelFil
       Number(r.target_id) === Number(targetId) && r.target_type === type && r.code,
     );
     if (modelFilter) filtered = filtered.filter(r => r.model === modelFilter);
+    if (reasoningFilter != null) {
+      filtered = filtered.filter(r => (r.reasoning_effort ?? '') === reasoningFilter);
+    }
     return [...filtered].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-  }, [runs, targetId, type, modelFilter]);
+  }, [runs, targetId, type, modelFilter, reasoningFilter]);
 
   // Auto-select best result
   useEffect(() => {
@@ -54,6 +74,23 @@ export default function TargetDetail({ target, type, targetCount, runs, modelFil
           >
             <option value="">All models</option>
             {models.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+        )}
+        {(reasoningOptions?.length > 0 || reasoningFilter != null) && (
+          <select
+            className="filterSelect"
+            value={reasoningFilter === '' ? EMPTY_REASONING_FILTER : (reasoningFilter ?? '')}
+            onChange={e => {
+              const value = e.target.value;
+              onReasoningFilterChange?.(value === EMPTY_REASONING_FILTER ? '' : (value || null));
+            }}
+          >
+            <option value="">All reasoning</option>
+            {reasoningOptions.map(r => (
+              <option key={r || EMPTY_REASONING_FILTER} value={r || EMPTY_REASONING_FILTER}>
+                {r || 'No reasoning'}
+              </option>
+            ))}
           </select>
         )}
       </div>
@@ -127,6 +164,7 @@ export default function TargetDetail({ target, type, targetCount, runs, modelFil
                 <tr>
                   <th>Model</th>
                   <th>Prompt</th>
+                  <th>Reasoning</th>
                   <th>Run</th>
                   <th className="numeric">Attempt</th>
                   <th className="numeric">Match</th>
@@ -144,6 +182,7 @@ export default function TargetDetail({ target, type, targetCount, runs, modelFil
                   >
                     <td className="modelName" title={r.model}>{r.model}</td>
                     <td className="muted" style={{ fontSize: '0.82rem' }}>{r.prompt_version ?? '-'}</td>
+                    <td><ReasoningBadge value={r.reasoning_effort} showEmpty /></td>
                     <td className="muted" style={{ fontSize: '0.82rem' }}>{r.run_id?.slice(0, 8)}</td>
                     <td className="numeric muted">{r.attempt}</td>
                     <td className={`numeric ${r.match >= 100 ? 'perfect' : ''}`}>

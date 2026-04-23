@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import ReasoningBadge from './ReasoningBadge.jsx';
 
 const COLS = [
   { key: 'num',           label: '#',          numeric: true },
@@ -11,7 +12,7 @@ const COLS = [
   { key: 'attempts',      label: 'Attempts',   numeric: true },
 ];
 
-export default function TargetTable({ targets, type, runs, modelFilter, onSelect }) {
+export default function TargetTable({ targets, type, runs, modelFilter, reasoningFilter, onSelect }) {
   const [sortKey, setSortKey] = useState('num');
   const [sortDir, setSortDir] = useState('asc');
   const rows = useMemo(() => {
@@ -21,6 +22,9 @@ export default function TargetTable({ targets, type, runs, modelFilter, onSelect
         Number(r.target_id) === Number(targetId) && r.target_type === type,
       );
       if (modelFilter) targetRuns = targetRuns.filter(r => r.model === modelFilter);
+      if (reasoningFilter != null) {
+        targetRuns = targetRuns.filter(r => (r.reasoning_effort ?? '') === reasoningFilter);
+      }
 
       let best = null;
       for (const r of targetRuns) {
@@ -39,7 +43,7 @@ export default function TargetTable({ targets, type, runs, modelFilter, onSelect
         attempts: targetRuns.length,
       };
     });
-  }, [targets, type, runs, modelFilter]);
+  }, [targets, type, runs, modelFilter, reasoningFilter]);
 
   const sorted = useMemo(() => {
     return [...rows].sort((a, b) => {
@@ -91,7 +95,7 @@ export default function TargetTable({ targets, type, runs, modelFilter, onSelect
               <td>{row.name}</td>
               <td className="modelName" title={row.bestModel ?? ''}>{row.bestModel ?? '—'}</td>
               <td className="muted">{row.bestPrompt ?? '—'}</td>
-              <td className="muted">{row.bestReasoning ?? '—'}</td>
+              <td><ReasoningBadge value={row.bestReasoning} showEmpty /></td>
               <td className={`numeric ${row.bestScore >= 990 ? 'perfect' : ''}`}>
                 {row.bestScore != null ? row.bestScore.toFixed(2) : '—'}
               </td>

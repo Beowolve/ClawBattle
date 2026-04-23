@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { IS_PUBLIC } from '../hooks/useData.js';
 import DeleteLeaderboardRunsDialog from './DeleteLeaderboardRunsDialog.jsx';
+import ReasoningBadge, { ModelWithReasoning, modelReasoningTitle } from './ReasoningBadge.jsx';
 
 const COLS = [
   { key: 'rank', label: '#' },
@@ -188,13 +189,13 @@ export default function Leaderboard({ rows, onModelSelect }) {
             {sorted.map((row, i) => (
               <tr key={`${row.model}__${row.reasoningEffort ?? ''}`}>
                 <td className="rank">{i + 1}</td>
-                <td className="modelName" title={row.model}>
-                  <button className="modelLink" onClick={() => onModelSelect?.(row.model)}>
-                    {row.model}{row.reasoningEffort ? ` [${row.reasoningEffort}]` : ''}
+                <td className="modelName" title={modelReasoningTitle(row.model, row.reasoningEffort)}>
+                  <button className="modelLink" onClick={() => onModelSelect?.(row.model, row.reasoningEffort)}>
+                    <ModelWithReasoning model={row.model} reasoning={row.reasoningEffort} />
                   </button>
                 </td>
                 <td className="muted">{row.promptVersions?.length ? row.promptVersions.join(', ') : '-'}</td>
-                <td className="muted">{row.reasoningEffort ?? '-'}</td>
+                <td><ReasoningBadge value={row.reasoningEffort} showEmpty /></td>
                 <td className="numeric">{row.targets}</td>
                 <td className={`numeric ${row.avgScore >= 990 ? 'perfect' : ''}`}>
                   {row.avgScore != null ? row.avgScore.toFixed(2) : '-'}

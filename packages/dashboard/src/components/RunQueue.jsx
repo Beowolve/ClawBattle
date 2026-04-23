@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRunQueue } from '../hooks/useData.js';
+import { ModelWithReasoning, modelReasoningTitle } from './ReasoningBadge.jsx';
 
 const RESUME_CONCURRENCY_OPTIONS = [1, 2, 3, 4, 5, 8, 10];
 
@@ -244,9 +245,8 @@ function QueueRunCard({
         <span className="queueRunHeaderMain" onClick={onToggle}>
           <span className="queueRunToggle">{expanded ? '▾' : '▸'}</span>
           <StatusBadge status={run.status} />
-          <span className="queueRunModel" title={run.run_id}>
-            {run.model}
-            {run.reasoning_effort ? ` [${run.reasoning_effort}]` : ''}
+          <span className="queueRunModel" title={`${modelReasoningTitle(run.model, run.reasoning_effort)} · ${run.run_id}`}>
+            <ModelWithReasoning model={run.model} reasoning={run.reasoning_effort} />
           </span>
           <span className="muted queueRunPrompt">{run.prompt_version ?? '—'}</span>
           <span className="muted queueRunStarted">{formatTs(run.started_at)}</span>

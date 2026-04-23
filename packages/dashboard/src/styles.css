@@ -309,6 +309,122 @@ td.modelName {
   text-overflow: ellipsis;
 }
 
+.modelConfigLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.modelConfigLabel__model {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reasoningBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 18px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.reasoningBadge--empty {
+  background: rgba(106, 120, 149, 0.10);
+  border-color: rgba(106, 120, 149, 0.22);
+  color: var(--muted-color);
+}
+
+.reasoningBadge--none {
+  background: rgba(106, 120, 149, 0.12);
+  border-color: rgba(106, 120, 149, 0.28);
+  color: var(--muted-color);
+}
+
+.reasoningBadge--minimal {
+  background: rgba(35, 137, 125, 0.12);
+  border-color: rgba(35, 137, 125, 0.28);
+  color: var(--chart-secondary);
+}
+
+.reasoningBadge--low {
+  background: rgba(71, 141, 83, 0.14);
+  border-color: rgba(71, 141, 83, 0.30);
+  color: #478d53;
+}
+
+.reasoningBadge--medium {
+  background: rgba(47, 95, 184, 0.12);
+  border-color: rgba(47, 95, 184, 0.28);
+  color: var(--primary-color);
+}
+
+.reasoningBadge--high {
+  background: rgba(156, 95, 224, 0.14);
+  border-color: rgba(156, 95, 224, 0.30);
+  color: var(--chart-accent);
+}
+
+.reasoningBadge--max {
+  background: rgba(201, 97, 121, 0.14);
+  border-color: rgba(201, 97, 121, 0.30);
+  color: var(--error-color);
+}
+
+.reasoningBadge--custom {
+  background: rgba(230, 168, 23, 0.14);
+  border-color: rgba(230, 168, 23, 0.32);
+  color: #9a6b00;
+}
+
+[data-theme="dark"] .reasoningBadge--low {
+  color: #8fd49a;
+}
+
+[data-theme="dark"] .reasoningBadge--custom {
+  color: #f3c15f;
+}
+
+.insightAxisTick {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  width: 100%;
+  height: 22px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.insightAxisTick__model {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-color);
+  font-size: 0.72rem;
+}
+
+.insightAxisTick .reasoningBadge {
+  height: 16px;
+  padding: 0 6px;
+  font-size: 0.62rem;
+}
+
 .modelLink {
   background: none;
   border: none;
@@ -322,6 +438,9 @@ td.modelName {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.modelLink .modelConfigLabel {
+  width: 100%;
 }
 .modelLink:hover {
   color: #aa1e22;

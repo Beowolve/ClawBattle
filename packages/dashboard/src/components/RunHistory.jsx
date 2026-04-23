@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useResultsPage, useResultsCount, useRunHistory } from '../hooks/useData.js';
+import ReasoningBadge, { ModelWithReasoning, modelReasoningTitle } from './ReasoningBadge.jsx';
 
 const PAGE_SIZE = 100;
 
@@ -109,11 +110,11 @@ export default function RunHistory() {
               {rows.map(r => (
                 <tr key={r.id} className="runRow">
                   <td className="runId muted">{r.run_id?.slice(0, 8)}</td>
-                  <td className="modelName" title={r.model}>
-                    {r.model}{r.reasoning_effort ? ` [${r.reasoning_effort}]` : ''}
+                  <td className="modelName" title={modelReasoningTitle(r.model, r.reasoning_effort)}>
+                    <ModelWithReasoning model={r.model} reasoning={r.reasoning_effort} />
                   </td>
                   <td className="muted">{r.prompt_version ?? '-'}</td>
-                  <td className="muted">{r.reasoning_effort ?? '-'}</td>
+                  <td><ReasoningBadge value={r.reasoning_effort} showEmpty /></td>
                   <td className="numeric">{r.target_type === 'battle' ? parseInt(r.target_id) : r.target_id}</td>
                   <td>
                     <span className={r.target_type === 'battle' ? 'badge badgeBattle' : 'badge badgeDaily'}>

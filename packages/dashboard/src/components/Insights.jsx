@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
 } from 'recharts';
+import ReasoningBadge, { ModelWithReasoning, modelReasoningTitle } from './ReasoningBadge.jsx';
 
 const TOOLTIP = {
   contentStyle: {
@@ -37,6 +38,26 @@ function DifficultyTooltip({ active, payload }) {
       <div style={{ fontWeight: 600, color: 'var(--heading-color)', marginBottom: 2 }}>{d.label}: {d.name}</div>
       <div style={{ color: 'var(--muted-color)' }}>Avg Match: <span style={{ color: 'var(--font-color)' }}>{d.avgMatch}%</span></div>
     </div>
+  );
+}
+
+function splitModelConfigLabel(value) {
+  const label = String(value ?? '');
+  const match = label.match(/^(.*) \[([^\]]+)\]$/);
+  return match
+    ? { model: match[1], reasoning: match[2] }
+    : { model: label, reasoning: null };
+}
+
+function ModelConsistencyTick({ x = 0, y = 0, payload }) {
+  const { model, reasoning } = splitModelConfigLabel(payload?.value);
+  return (
+    <foreignObject x={x - 150} y={y - 11} width={146} height={22}>
+      <div xmlns="http://www.w3.org/1999/xhtml" className="insightAxisTick" title={modelReasoningTitle(model, reasoning)}>
+        <span className="insightAxisTick__model">{model}</span>
+        <ReasoningBadge value={reasoning} />
+      </div>
+    </foreignObject>
   );
 }
 
@@ -153,10 +174,9 @@ export default function Insights({ data, onSelectTarget }) {
                 <YAxis
                   type="category"
                   dataKey="label"
-                  width={140}
+                  width={154}
                   interval={0}
-                  tick={{ fontSize: 11, fill: 'var(--muted-color)' }}
-                  tickFormatter={v => v.length > 20 ? v.slice(0, 20) + '…' : v}
+                  tick={<ModelConsistencyTick />}
                 />
                 <Tooltip
                   formatter={(v, name) => name === 'stdDev' ? [`±${v}%`, 'Std Dev'] : [`${v}%`, 'Avg Match']}
@@ -192,7 +212,9 @@ export default function Insights({ data, onSelectTarget }) {
                   {costEfficiency.map((row, i) => (
                     <tr key={`${row.model}__${row.reasoningEffort ?? ''}`}>
                       <td className="numeric muted">{i + 1}</td>
-                      <td className="modelName" title={row.label ?? row.model}>{row.label ?? row.model}</td>
+                      <td className="modelName" title={modelReasoningTitle(row.model, row.reasoningEffort)}>
+                        <ModelWithReasoning model={row.model} reasoning={row.reasoningEffort} />
+                      </td>
                       <td className="numeric">{row.avgScore.toFixed(1)}</td>
                       <td className="numeric muted">
                         {row.avgCost > 0 ? `$${row.avgCost.toFixed(5)}` : '—'}
