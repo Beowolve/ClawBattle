@@ -44,13 +44,12 @@ function summarizeRequestBody(body) {
   return {
     provider: body.provider ?? null,
     reasoning: body.reasoning ?? null,
-    max_tokens: body.max_tokens ?? null,
     content_parts: contentParts,
     image_parts: imageParts,
   };
 }
 
-export function createJob(runId, { model, provider, promptVersion, reasoningEffort, reasoningMaxTokens } = {}) {
+export function createJob(runId, { model, provider, promptVersion, reasoningEffort } = {}) {
   clearJobCleanup(jobs.get(runId));
 
   const controller = new AbortController();
@@ -60,7 +59,6 @@ export function createJob(runId, { model, provider, promptVersion, reasoningEffo
     provider,
     promptVersion,
     reasoningEffort,
-    reasoningMaxTokens,
     events: [],
     requestsByAttempt: new Map(),
     subscribers: new Set(),

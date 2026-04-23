@@ -32,7 +32,6 @@ const RUNS_COLUMNS_SQL = `
   cost REAL,
   duration_ms INTEGER,
   reasoning_effort TEXT,
-  reasoning_max_tokens INTEGER,
   created_at TEXT DEFAULT (datetime('now')),
   status TEXT NOT NULL DEFAULT 'done',
   error_message TEXT,
@@ -46,7 +45,7 @@ const LEGACY_REUSABLE_COLUMNS = [
   'id', 'run_id', 'benchmark_version', 'model', 'provider',
   'prompt_version', 'temperature', 'attempts_per_target', 'started_at', 'finished_at',
   'target_id', 'target_type', 'attempt', 'match', 'score', 'tokens_used',
-  'code', 'prompt_text', 'code_length', 'cost', 'duration_ms', 'reasoning_effort', 'reasoning_max_tokens',
+  'code', 'prompt_text', 'code_length', 'cost', 'duration_ms', 'reasoning_effort',
   'created_at', 'status', 'error_message', 'enqueued_at', 'claimed_at', 'claim_token', 'paused_from',
 ];
 
@@ -89,8 +88,9 @@ function migrateRunsTable(db) {
   const matchCol = cols.find(c => c.name === 'match');
   const matchIsNotNull = matchCol && matchCol.notnull === 1;
   const missingNewColumns = ['status', 'enqueued_at', 'paused_from'].some(n => !names.has(n));
+  const obsoleteColumns = ['reasoning_max_tokens'].some(n => names.has(n));
 
-  if (!matchIsNotNull && !missingNewColumns) return;
+  if (!matchIsNotNull && !missingNewColumns && !obsoleteColumns) return;
 
   // Drop any views that reference 'runs' so the subsequent DROP TABLE succeeds.
   // Use individual exec() calls — node:sqlite has quirks with multi-statement
@@ -142,9 +142,6 @@ export function initSchema(db) {
 
   // Additive column migrations for existing DBs (no rebuild needed).
   const currentCols = new Set(db.prepare('PRAGMA table_info(runs)').all().map(c => c.name));
-  if (!currentCols.has('reasoning_max_tokens')) {
-    db.exec('ALTER TABLE runs ADD COLUMN reasoning_max_tokens INTEGER');
-  }
   if (!currentCols.has('prompt_text')) {
     db.exec('ALTER TABLE runs ADD COLUMN prompt_text TEXT');
   }
@@ -172,20 +169,20 @@ export function initSchema(db) {
     CREATE VIEW leaderboard AS
     WITH ranked AS (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY model, reasoning_effort, reasoning_max_tokens, target_id, target_type
+        PARTITION BY model, reasoning_effort, target_id, target_type
         ORDER BY score DESC NULLS LAST
       ) AS rn FROM attempt_results
     ),
     best_per_target AS (SELECT * FROM ranked WHERE rn = 1),
     model_costs AS (
-      SELECT model, reasoning_effort, reasoning_max_tokens,
+      SELECT model, reasoning_effort,
         SUM(cost) AS total_cost,
         COUNT(*) AS attempt_count,
         GROUP_CONCAT(DISTINCT prompt_version ORDER BY prompt_version) AS prompt_versions
-      FROM attempt_results GROUP BY model, reasoning_effort, reasoning_max_tokens
+      FROM attempt_results GROUP BY model, reasoning_effort
     )
     SELECT
-      b.model, b.reasoning_effort, b.reasoning_max_tokens,
+      b.model, b.reasoning_effort,
       MAX(b.provider) AS provider,
       c.prompt_versions,
       COUNT(*) AS targets,
@@ -203,26 +200,25 @@ export function initSchema(db) {
     JOIN model_costs c
       ON b.model = c.model
       AND b.reasoning_effort IS c.reasoning_effort
-      AND b.reasoning_max_tokens IS c.reasoning_max_tokens
-    GROUP BY b.model, b.reasoning_effort, b.reasoning_max_tokens, c.prompt_versions, c.total_cost, c.attempt_count;
+    GROUP BY b.model, b.reasoning_effort, c.prompt_versions, c.total_cost, c.attempt_count;
 
     DROP VIEW IF EXISTS leaderboard_by_version;
     CREATE VIEW leaderboard_by_version AS
     WITH ranked AS (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY model, reasoning_effort, reasoning_max_tokens, target_id, target_type, prompt_version
+        PARTITION BY model, reasoning_effort, target_id, target_type, prompt_version
         ORDER BY score DESC NULLS LAST
       ) AS rn FROM attempt_results
     ),
     best_per_target AS (SELECT * FROM ranked WHERE rn = 1),
     model_version_costs AS (
-      SELECT model, reasoning_effort, reasoning_max_tokens, prompt_version,
+      SELECT model, reasoning_effort, prompt_version,
         SUM(cost) AS total_cost,
         COUNT(*) AS attempt_count
-      FROM attempt_results GROUP BY model, reasoning_effort, reasoning_max_tokens, prompt_version
+      FROM attempt_results GROUP BY model, reasoning_effort, prompt_version
     )
     SELECT
-      b.model, b.reasoning_effort, b.reasoning_max_tokens, b.prompt_version,
+      b.model, b.reasoning_effort, b.prompt_version,
       MAX(b.provider) AS provider,
       COUNT(*) AS targets,
       AVG(b.score) AS avg_score,
@@ -239,9 +235,8 @@ export function initSchema(db) {
     JOIN model_version_costs c
       ON b.model = c.model
       AND b.reasoning_effort IS c.reasoning_effort
-      AND b.reasoning_max_tokens IS c.reasoning_max_tokens
       AND b.prompt_version IS c.prompt_version
-    GROUP BY b.model, b.reasoning_effort, b.reasoning_max_tokens, b.prompt_version, c.total_cost, c.attempt_count;
+    GROUP BY b.model, b.reasoning_effort, b.prompt_version, c.total_cost, c.attempt_count;
 
     DROP VIEW IF EXISTS target_difficulty;
     CREATE VIEW target_difficulty AS
@@ -318,7 +313,6 @@ export function initSchema(db) {
       MAX(provider) AS provider,
       MAX(prompt_version) AS prompt_version,
       MAX(reasoning_effort) AS reasoning_effort,
-      MAX(reasoning_max_tokens) AS reasoning_max_tokens,
       MAX(attempts_per_target) AS attempts_per_target,
       MIN(started_at) AS started_at,
       CASE

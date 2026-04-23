@@ -61,7 +61,6 @@ export default function StartRun({ onStatusChange }) {
   const [concurrency, setConcurrency] = useState(5);
   const [retries, setRetries] = useState(1);
   const [reasoningEffort, setReasoningEffort] = useState('medium');
-  const [reasoningMaxTokens, setReasoningMaxTokens] = useState('');
   const [targetFrom, setTargetFrom] = useState('1');
   const [targetTo, setTargetTo] = useState('25');
   const [fillMode, setFillMode] = useState(false);
@@ -135,7 +134,6 @@ export default function StartRun({ onStatusChange }) {
         promptVersion: promptVersion || undefined,
         concurrency, retries,
         reasoningEffort: reasoningEffort || undefined,
-        reasoningMaxTokens: reasoningMaxTokens !== '' ? Number(reasoningMaxTokens) : undefined,
         targetFrom: targetFrom !== '' ? Number(targetFrom) : undefined,
         targetTo: targetTo !== '' ? Number(targetTo) : undefined,
         ...(fillMode ? { fillMode: true } : {}),
@@ -336,18 +334,6 @@ export default function StartRun({ onStatusChange }) {
               <option key={v} value={v}>{v}</option>
             ))}
           </select>
-          <input
-            className="targetRangeInput"
-            type="number"
-            min="0"
-            step="1000"
-            placeholder="reason. max tokens"
-            value={reasoningMaxTokens}
-            onChange={(e) => setReasoningMaxTokens(e.target.value)}
-            disabled={isStarting}
-            title="Cap on reasoning/thinking tokens (OpenRouter). Leave empty for model default."
-            style={{ width: 130 }}
-          />
           <select
             className="filterSelect"
             value={promptVersion}

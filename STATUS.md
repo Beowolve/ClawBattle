@@ -12,7 +12,6 @@ Last updated: 2026-04-23
 - [x] SQLite adapter (`packages/db/`) — single `runs` table, acts as both attempt-log and persistent queue; uses Node 22's `node:sqlite`
 - [x] LLM adapters — OpenRouter, OpenAI, Ollama (all with AbortSignal support)
 - [x] OpenRouter provider routing overrides — model-specific provider forcing via local JSON config (`config/openrouter.providers.json` or `OPENROUTER_PROVIDER_CONFIG_PATH`)
-- [x] Reasoning-token cap — optional `reasoningMaxTokens` limits thinking-budget tokens via OpenRouter's unified `reasoning` parameter (applies to any reasoning model, e.g. Kimi K2, o-series); persisted per-row so resumes honour it
 - [x] LLM error handling — API-level errors detected even on HTTP 200, empty-response guard
 - [x] Code safety guard — generated HTML/CSS is sanitized; JS, SVG, external resources, and disallowed URL schemes (`data|blob|file|ftp`) rejected across `src`/`href`, `srcset`, `url(...)`, `@import` before render/score
 
@@ -49,8 +48,8 @@ Last updated: 2026-04-23
 - [x] Run History — clickable list of completed runs only; click filters the attempt table
 - [x] Target Grid — thumbnails, colors, best match per target
 - [x] Target Detail — sticky code/preview/target layout, Quirks Mode iframe, solutions table
-- [x] Start Run tab — model, provider, reasoning effort + max-tokens, attempts, concurrency, retries, target range, Fill toggle, cancel button; supports launching multiple runs in parallel and provider-scoped model autocomplete from existing runs
-- [x] Leaderboard delete flow — targets a single leaderboard entry (`model + reasoning_effort + reasoning_max_tokens`) and can limit deletion to selected prompt versions
+- [x] Start Run tab — model, provider, reasoning effort, attempts, concurrency, retries, target range, Fill toggle, cancel button; supports launching multiple runs in parallel and provider-scoped model autocomplete from existing runs
+- [x] Leaderboard delete flow — targets a single leaderboard entry (`model + reasoning_effort`) and can limit deletion to selected prompt versions
 - [x] Active run indicator (pulsing dot on tab)
 - [x] Resume banner with Clear button
 - [x] About box "How it works" states that attempts 2-3 include previous render + previous code as follow-up context

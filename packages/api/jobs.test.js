@@ -231,7 +231,6 @@ test('llm_request events keep full request in-memory while SSE gets only preview
   assert.deepEqual(streamed[0].requestPreview, {
     provider: { order: ['io.net'], allow_fallbacks: false },
     reasoning: null,
-    max_tokens: null,
     content_parts: 1,
     image_parts: 0,
   });

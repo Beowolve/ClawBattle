@@ -8,13 +8,6 @@ const COLS = [
   { key: 'model', label: 'Model', style: { width: '100%' } },
   { key: 'promptVersions', label: 'Prompt' },
   { key: 'reasoningEffort', label: 'Reasoning' },
-  {
-    key: 'reasoningMaxTokens',
-    label: 'RMax',
-    title: 'Reasoning max tokens',
-    numeric: true,
-    style: { width: 70 },
-  },
   { key: 'targets', label: 'Targets', numeric: true },
   { key: 'avgScore', label: 'Avg Score', numeric: true },
   { key: 'avgMatch', label: 'Avg Match', numeric: true },
@@ -48,12 +41,6 @@ function compareSortValues(left, right) {
   });
 }
 
-function formatReasoningMaxTokens(value) {
-  if (value == null) return '-';
-  if (value >= 1000 && value % 1000 === 0) return `${value / 1000}k`;
-  return String(value);
-}
-
 export default function Leaderboard({ rows, onModelSelect }) {
   const [sortKey, setSortKey] = useState('avgScore');
   const [sortDir, setSortDir] = useState('desc');
@@ -64,7 +51,7 @@ export default function Leaderboard({ rows, onModelSelect }) {
   const queryClient = useQueryClient();
 
   function getRowDeleteKey(row) {
-    return `${row.model}__${row.reasoningEffort ?? ''}__${row.reasoningMaxTokens ?? ''}`;
+    return `${row.model}__${row.reasoningEffort ?? ''}`;
   }
 
   function openDeleteDialog(row) {
@@ -108,7 +95,6 @@ export default function Leaderboard({ rows, onModelSelect }) {
     const payload = {
       model: row.model,
       reasoningEffort: row.reasoningEffort ?? null,
-      reasoningMaxTokens: row.reasoningMaxTokens ?? null,
       promptVersions: selectedPrompts,
     };
 
@@ -200,7 +186,7 @@ export default function Leaderboard({ rows, onModelSelect }) {
           </thead>
           <tbody>
             {sorted.map((row, i) => (
-              <tr key={`${row.model}__${row.reasoningEffort ?? ''}__${row.reasoningMaxTokens ?? ''}`}>
+              <tr key={`${row.model}__${row.reasoningEffort ?? ''}`}>
                 <td className="rank">{i + 1}</td>
                 <td className="modelName" title={row.model}>
                   <button className="modelLink" onClick={() => onModelSelect?.(row.model)}>
@@ -209,9 +195,6 @@ export default function Leaderboard({ rows, onModelSelect }) {
                 </td>
                 <td className="muted">{row.promptVersions?.length ? row.promptVersions.join(', ') : '-'}</td>
                 <td className="muted">{row.reasoningEffort ?? '-'}</td>
-                <td className="numeric muted" title={row.reasoningMaxTokens != null ? String(row.reasoningMaxTokens) : undefined}>
-                  {formatReasoningMaxTokens(row.reasoningMaxTokens)}
-                </td>
                 <td className="numeric">{row.targets}</td>
                 <td className={`numeric ${row.avgScore >= 990 ? 'perfect' : ''}`}>
                   {row.avgScore != null ? row.avgScore.toFixed(2) : '-'}

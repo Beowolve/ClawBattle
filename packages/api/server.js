@@ -122,7 +122,6 @@ app.use('/api/runs', createRunsQueueRouter({
       provider: meta.provider,
       promptVersion: meta.prompt_version ?? null,
       reasoningEffort: meta.reasoning_effort ?? null,
-      reasoningMaxTokens: meta.reasoning_max_tokens ?? null,
     });
     console.log(
       `[API] Resume run — runId=${runId} model=${meta.model}` +
@@ -149,20 +148,15 @@ app.use('/api/runs', createRunsQueueRouter({
 }));
 
 app.delete('/api/runs/group', (req, res) => {
-  const { model, reasoningEffort = null, reasoningMaxTokens = null, promptVersions } = req.body ?? {};
+  const { model, reasoningEffort = null, promptVersions } = req.body ?? {};
   if (!model) return res.status(400).json({ error: 'model required' });
   if (promptVersions != null && !Array.isArray(promptVersions)) {
     return res.status(400).json({ error: 'promptVersions must be an array when provided' });
   }
-  if (reasoningMaxTokens != null && !Number.isFinite(Number(reasoningMaxTokens))) {
-    return res.status(400).json({ error: 'reasoningMaxTokens must be numeric when provided' });
-  }
-
   try {
     res.json(deleteRunGroup({
       model,
       reasoningEffort,
-      reasoningMaxTokens: reasoningMaxTokens != null ? Number(reasoningMaxTokens) : null,
       promptVersions,
     }));
   } catch (err) {
@@ -179,7 +173,6 @@ app.post('/api/runs/start', (req, res) => {
     resumeRunId,
     fillMode = false,
     reasoningEffort,
-    reasoningMaxTokens,
   } = req.body ?? {};
   if (!model) return res.status(400).json({ error: 'model required' });
 
@@ -188,7 +181,6 @@ app.post('/api/runs/start', (req, res) => {
     model, provider,
     promptVersion: promptVersion ?? null,
     reasoningEffort: reasoningEffort ?? null,
-    reasoningMaxTokens: reasoningMaxTokens ?? null,
   });
 
   const rangeStr = targetFrom != null || targetTo != null
@@ -196,7 +188,6 @@ app.post('/api/runs/start', (req, res) => {
     : 'all';
   console.log(
     `[API] Start run — runId=${runId} model=${model}${reasoningEffort ? ` [${reasoningEffort}]` : ''}` +
-    `${reasoningMaxTokens ? ` reasoningMaxTokens=${reasoningMaxTokens}` : ''}` +
     ` provider=${provider} prompt=${promptVersion} targets=${rangeStr} attempts=${attempts}` +
     ` concurrency=${concurrency}${fillMode ? ' fill' : ''}${resumeRunId ? ` resumeFrom=${resumeRunId}` : ''}`,
   );
@@ -210,7 +201,6 @@ app.post('/api/runs/start', (req, res) => {
     targetFrom: targetFrom != null ? Number(targetFrom) : undefined,
     targetTo: targetTo != null ? Number(targetTo) : undefined,
     reasoningEffort: reasoningEffort ?? undefined,
-    reasoningMaxTokens: reasoningMaxTokens != null ? Number(reasoningMaxTokens) : undefined,
     onProgress: (event) => pushEvent(runId, event),
   }).catch((err) => {
     if (err.name === 'AbortError') {

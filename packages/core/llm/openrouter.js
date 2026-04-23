@@ -67,11 +67,7 @@ function formatErrorMessage(error, httpStatus, choice) {
   return parts.join(' ');
 }
 
-export function buildRequestBody({ model, prompt, images, reasoningEffort, reasoningMaxTokens }) {
-  // OpenRouter's `reasoning.max_tokens` is only honoured by Gemini, Anthropic and
-  // Qwen. Models like Moonshot Kimi K2 silently ignore it and run reasoning
-  // unbounded. The universal hard cap is the top-level `max_tokens`, which OpenRouter
-  // requires to exceed the reasoning budget so the final answer still fits.
+export function buildRequestBody({ model, prompt, images, reasoningEffort }) {
   const reasoning = {};
   if (reasoningEffort === 'none') {
     // Explicit opt-out: OpenRouter's `enabled: false` tells reasoning-capable
@@ -80,21 +76,13 @@ export function buildRequestBody({ model, prompt, images, reasoningEffort, reaso
   } else if (reasoningEffort) {
     reasoning.effort = reasoningEffort;
   }
-  if (reasoningEffort !== 'none' && reasoningMaxTokens != null) {
-    reasoning.max_tokens = Number(reasoningMaxTokens);
-  }
 
-  const answerBudget = Number(process.env.ANSWER_TOKEN_BUDGET ?? 4096);
-  const maxTokens = (reasoningEffort !== 'none' && reasoningMaxTokens != null)
-    ? Number(reasoningMaxTokens) + answerBudget
-    : null;
   const providerRouting = resolveOpenRouterProviderRouting(model);
 
   return {
     model,
     messages: [{ role: 'user', content: buildUserMessage(prompt, images) }],
     ...(Object.keys(reasoning).length ? { reasoning } : {}),
-    ...(maxTokens != null ? { max_tokens: maxTokens } : {}),
     ...(providerRouting ? { provider: providerRouting } : {}),
   };
 }
@@ -104,12 +92,11 @@ export async function generate({
   prompt,
   images,
   reasoningEffort,
-  reasoningMaxTokens,
   signal,
   onBeforeRequest,
   requestAttempt,
 }) {
-  const body = buildRequestBody({ model, prompt, images, reasoningEffort, reasoningMaxTokens });
+  const body = buildRequestBody({ model, prompt, images, reasoningEffort });
   onBeforeRequest?.({
     provider: 'openrouter',
     endpoint: OPENROUTER_CHAT_COMPLETIONS_URL,

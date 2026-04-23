@@ -37,7 +37,6 @@ export async function runBenchmark({
   fillMode = false,
   promptVersion,
   reasoningEffort,
-  reasoningMaxTokens,
   runId: providedRunId, onProgress, signal,
 }) {
   const runId = providedRunId ?? crypto.randomUUID();
@@ -133,7 +132,6 @@ export async function runBenchmark({
     provider,
     promptVersion: promptVersion ?? null,
     reasoningEffort: reasoningEffort ?? null,
-    reasoningMaxTokens: reasoningMaxTokens ?? null,
     attemptsPerTarget: attempts,
     startedAt,
     targets: enqueueDefs.map(d => ({ id: d.id, type: targetType })),

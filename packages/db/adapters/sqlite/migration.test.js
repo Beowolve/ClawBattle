@@ -43,6 +43,7 @@ test('fresh DB has all new runs columns', () => {
   for (const n of NEW_COLS) {
     assert.ok(names.includes(n), `column ${n} missing`);
   }
+  assert.ok(!names.includes('reasoning_max_tokens'), 'obsolete reasoning_max_tokens column should not exist');
 });
 
 test('fresh DB: match column is nullable', () => {
@@ -103,6 +104,26 @@ test('legacy DB: match becomes nullable after migration', () => {
   `).run('r-pending', '1.0', 'gpt-4o', 'openrouter', '1', 'battle', 1, 'pending');
   const row = db.prepare('SELECT match FROM runs WHERE run_id = ?').get('r-pending');
   assert.equal(row.match, null);
+});
+
+test('legacy DB: initSchema drops obsolete reasoning_max_tokens column and preserves rows', () => {
+  const db = legacyRunsDb();
+  db.exec('ALTER TABLE runs ADD COLUMN reasoning_max_tokens INTEGER');
+  db.prepare(`
+    INSERT INTO runs
+      (run_id, benchmark_version, model, provider, target_id, target_type, attempt, match, reasoning_max_tokens)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run('legacy-rmax', '1.0', 'gpt-4o', 'openrouter', '1', 'battle', 1, 91.2, 8000);
+
+  initSchema(db);
+
+  const names = db.prepare("PRAGMA table_info(runs)").all().map(c => c.name);
+  assert.ok(!names.includes('reasoning_max_tokens'), 'obsolete reasoning_max_tokens column should be removed');
+
+  const row = db.prepare('SELECT run_id, match, status FROM runs WHERE run_id = ?').get('legacy-rmax');
+  assert.equal(row.run_id, 'legacy-rmax');
+  assert.equal(row.match, 91.2);
+  assert.equal(row.status, 'done');
 });
 
 test('legacy DB: unique index on (run_id, target_id, attempt) still present after migration', () => {

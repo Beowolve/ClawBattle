@@ -17,7 +17,6 @@ const { values } = parseArgs({
     concurrency: { type: 'string', default: '1' },
     retries:     { type: 'string', default: '0' },
     reasoning:            { type: 'string' },   // low | medium | high
-    'reasoning-max-tokens': { type: 'string' },  // e.g. 8000
   }
 });
 
@@ -38,9 +37,6 @@ try {
     concurrency:        parseInt(values.concurrency),
     retries:            parseInt(values.retries),
     reasoningEffort:    values.reasoning ?? undefined,
-    reasoningMaxTokens: values['reasoning-max-tokens'] != null
-      ? parseInt(values['reasoning-max-tokens'])
-      : undefined,
   });
 } finally {
   await closeBrowser().catch(() => {});

@@ -110,35 +110,41 @@ create index if not exists idx_runs_target     on public.runs (target_id, target
 create index if not exists idx_runs_created_at on public.runs (created_at);
 create index if not exists idx_runs_prompt     on public.runs (prompt_version);
 
+drop view if exists public.leaderboard cascade;
+drop view if exists public.leaderboard_by_version cascade;
+drop view if exists public.target_difficulty cascade;
+drop view if exists public.model_consistency cascade;
+drop view if exists public.cost_efficiency cascade;
+drop view if exists public.match_distribution cascade;
+alter table public.runs drop column if exists reasoning_max_tokens;
+
 -- ─── Leaderboard views ────────────────────────────────────────────────────────
 
--- leaderboard: one row per (model, reasoning_effort, reasoning_max_tokens) — aggregates across ALL prompt versions.
+-- leaderboard: one row per (model, reasoning_effort) — aggregates across ALL prompt versions.
 -- prompt_versions[] column lets the UI populate its version filter dropdown.
 create or replace view public.leaderboard with (security_invoker = true) as
 with best_per_target as (
   -- Pick the single highest-scoring attempt per model+target combination.
-  select distinct on (model, reasoning_effort, reasoning_max_tokens, target_id, target_type)
-    model, reasoning_effort, reasoning_max_tokens, target_id, target_type, provider,
+  select distinct on (model, reasoning_effort, target_id, target_type)
+    model, reasoning_effort, target_id, target_type, provider,
     score, match, duration_ms
   from public.runs
-  order by model, reasoning_effort, reasoning_max_tokens, target_id, target_type, score desc nulls last
+  order by model, reasoning_effort, target_id, target_type, score desc nulls last
 ),
 model_costs as (
   select
     model,
     reasoning_effort,
-    reasoning_max_tokens,
     sum(cost)  filter (where cost           is not null) as total_cost,
     count(*)                                             as attempt_count,
     array_agg(distinct prompt_version order by prompt_version)
                filter (where prompt_version is not null) as prompt_versions
   from public.runs
-  group by model, reasoning_effort, reasoning_max_tokens
+  group by model, reasoning_effort
 )
 select
   b.model,
   b.reasoning_effort,
-  b.reasoning_max_tokens,
   max(b.provider)                                                    as provider,
   c.prompt_versions,
   count(*)                                                           as targets,
@@ -158,36 +164,33 @@ from best_per_target b
 join model_costs c
   on  b.model            = c.model
   and b.reasoning_effort is not distinct from c.reasoning_effort
-  and b.reasoning_max_tokens is not distinct from c.reasoning_max_tokens
-group by b.model, b.reasoning_effort, b.reasoning_max_tokens, c.prompt_versions, c.total_cost, c.attempt_count;
+group by b.model, b.reasoning_effort, c.prompt_versions, c.total_cost, c.attempt_count;
 
 grant select on public.leaderboard to anon, authenticated;
 
--- leaderboard_by_version: same but one row per (model, reasoning_effort, reasoning_max_tokens, prompt_version).
+-- leaderboard_by_version: same but one row per (model, reasoning_effort, prompt_version).
 -- Used when the UI filters to a specific prompt version.
 create or replace view public.leaderboard_by_version with (security_invoker = true) as
 with best_per_target as (
-  select distinct on (model, reasoning_effort, reasoning_max_tokens, target_id, target_type, prompt_version)
-    model, reasoning_effort, reasoning_max_tokens, target_id, target_type, prompt_version, provider,
+  select distinct on (model, reasoning_effort, target_id, target_type, prompt_version)
+    model, reasoning_effort, target_id, target_type, prompt_version, provider,
     score, match, duration_ms
   from public.runs
-  order by model, reasoning_effort, reasoning_max_tokens, target_id, target_type, prompt_version, score desc nulls last
+  order by model, reasoning_effort, target_id, target_type, prompt_version, score desc nulls last
 ),
 model_version_costs as (
   select
     model,
     reasoning_effort,
-    reasoning_max_tokens,
     prompt_version,
     sum(cost) filter (where cost is not null) as total_cost,
     count(*)                                  as attempt_count
   from public.runs
-  group by model, reasoning_effort, reasoning_max_tokens, prompt_version
+  group by model, reasoning_effort, prompt_version
 )
 select
   b.model,
   b.reasoning_effort,
-  b.reasoning_max_tokens,
   b.prompt_version,
   max(b.provider)                                                    as provider,
   count(*)                                                           as targets,
@@ -207,9 +210,8 @@ from best_per_target b
 join model_version_costs c
   on  b.model            = c.model
   and b.reasoning_effort is not distinct from c.reasoning_effort
-  and b.reasoning_max_tokens is not distinct from c.reasoning_max_tokens
   and b.prompt_version   is not distinct from c.prompt_version
-group by b.model, b.reasoning_effort, b.reasoning_max_tokens, b.prompt_version, c.total_cost, c.attempt_count;
+group by b.model, b.reasoning_effort, b.prompt_version, c.total_cost, c.attempt_count;
 
 grant select on public.leaderboard_by_version to anon, authenticated;
 

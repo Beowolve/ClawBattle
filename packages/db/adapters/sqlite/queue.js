@@ -12,7 +12,6 @@ export function enqueueRun(db, opts) {
     provider,
     promptVersion = null,
     reasoningEffort = null,
-    reasoningMaxTokens = null,
     attemptsPerTarget,
     startedAt = null,
     targets,
@@ -32,10 +31,10 @@ export function enqueueRun(db, opts) {
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO runs
       (run_id, benchmark_version, model, provider,
-       prompt_version, reasoning_effort, reasoning_max_tokens,
+       prompt_version, reasoning_effort,
        attempts_per_target, started_at,
        target_id, target_type, attempt, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   db.exec('BEGIN');
@@ -48,7 +47,7 @@ export function enqueueRun(db, opts) {
         const status = attempt === 1 ? 'pending' : 'waiting';
         const { changes } = stmt.run(
           runId, benchmarkVersion, model, provider,
-          promptVersion, reasoningEffort, reasoningMaxTokens,
+          promptVersion, reasoningEffort,
           attemptsPerTarget, startedAt,
           targetId, targetType, attempt, status,
         );

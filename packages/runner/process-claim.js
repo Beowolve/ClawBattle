@@ -39,7 +39,7 @@ async function generateWithRetry(adapter, args, retries, delayMs) {
 export async function processClaim({
   db, claim,
   adapter, render, computeMatch, computeScore, sanitizeCode,
-  model, reasoningEffort, reasoningMaxTokens,
+  model, reasoningEffort,
   promptTemplate, followupAppendix,
   targetDef, targetBuffer,
   width, height, chromeVersion,
@@ -103,7 +103,6 @@ export async function processClaim({
         prompt,
         images,
         reasoningEffort,
-        reasoningMaxTokens,
         signal,
         onBeforeRequest: ({ provider, endpoint, method, requestAttempt, body }) => {
           onProgress?.({

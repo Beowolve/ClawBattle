@@ -66,7 +66,6 @@ export async function workerLoop({
         adapter, render, computeMatch, computeScore, sanitizeCode,
         model: claim.model,
         reasoningEffort: claim.reasoning_effort,
-        reasoningMaxTokens: claim.reasoning_max_tokens,
         promptTemplate, followupAppendix,
         targetDef: def, targetBuffer: buffer,
         width, height, chromeVersion,

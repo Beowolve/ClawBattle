@@ -49,7 +49,6 @@ function transformLeaderboard(viewRows, allVersionRows = null) {
   const rows = viewRows.map(r => ({
     model:          r.model,
     reasoningEffort: r.reasoning_effort ?? null,
-    reasoningMaxTokens: r.reasoning_max_tokens != null ? Number(r.reasoning_max_tokens) : null,
     provider:       r.provider,
     // leaderboard view has prompt_versions[]; leaderboard_by_version has prompt_version
     promptVersions: r.prompt_versions ?? (r.prompt_version ? [r.prompt_version] : []),
@@ -297,7 +296,6 @@ export function useRunHistory() {
                 provider: r.provider,
                 prompt_version: r.prompt_version ?? null,
                 reasoning_effort: r.reasoning_effort ?? null,
-                reasoning_max_tokens: r.reasoning_max_tokens ?? null,
                 started_at: r.started_at,
                 finished_at: r.finished_at,
                 total: 1,

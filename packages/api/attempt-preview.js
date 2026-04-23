@@ -23,14 +23,14 @@ function findTargetDefinition(targetType, targetId) {
   return getBattleTargets().find((t) => String(Math.round(Number(t.id))) === normalized) ?? null;
 }
 
-function buildProviderRequestBody({ provider, model, prompt, images, reasoningEffort, reasoningMaxTokens }) {
+function buildProviderRequestBody({ provider, model, prompt, images, reasoningEffort }) {
   if (provider === 'openai') {
     return buildOpenAiRequestBody({ model, prompt, images, reasoningEffort });
   }
   if (provider === 'ollama') {
     return buildOllamaRequestBody({ model, prompt, images });
   }
-  return buildOpenRouterRequestBody({ model, prompt, images, reasoningEffort, reasoningMaxTokens });
+  return buildOpenRouterRequestBody({ model, prompt, images, reasoningEffort });
 }
 
 export async function buildAttemptPreview(attempt) {
@@ -84,7 +84,6 @@ export async function buildAttemptPreview(attempt) {
     prompt,
     images,
     reasoningEffort: attempt.reasoning_effort ?? null,
-    reasoningMaxTokens: attempt.reasoning_max_tokens ?? null,
   });
 
   return {

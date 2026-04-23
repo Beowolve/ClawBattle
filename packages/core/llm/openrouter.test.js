@@ -183,7 +183,7 @@ test('openrouter adapter passes reasoningEffort="minimal" through as effort', as
   }
 });
 
-test('openrouter adapter omits reasoning block when reasoningEffort is empty and no max tokens set', async () => {
+test('openrouter adapter omits reasoning block when reasoningEffort is empty', async () => {
   const originalKey = process.env.OPENROUTER_API_KEY;
   const originalConfigPath = process.env.OPENROUTER_PROVIDER_CONFIG_PATH;
   process.env.OPENROUTER_API_KEY = 'test-key';
@@ -205,7 +205,6 @@ test('openrouter adapter omits reasoning block when reasoningEffort is empty and
   try {
     await generate({ model: 'm/x', prompt: 'test', images: [] });
     assert.equal(capturedBody.reasoning, undefined);
-    assert.equal(capturedBody.max_tokens, undefined);
   } finally {
     restore();
     process.env.OPENROUTER_API_KEY = originalKey;

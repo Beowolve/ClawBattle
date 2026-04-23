@@ -139,22 +139,6 @@ test('deleteRunGroup removes queue rows alongside done attempts', () => {
   assert.equal(remaining, 0);
 });
 
-test('deleteRunGroup filters by reasoningMaxTokens within same model/reasoning group', () => {
-  const db = makeDb();
-  saveAttempt(db, { ...baseAttempt, runId: 'run-no-cap', reasoningEffort: null, reasoningMaxTokens: null });
-  saveAttempt(db, { ...baseAttempt, runId: 'run-cap-8k', reasoningEffort: null, reasoningMaxTokens: 8000 });
-
-  const result = deleteRunGroup(db, {
-    model: 'gpt-4o',
-    reasoningEffort: null,
-    reasoningMaxTokens: 8000,
-  });
-  assert.deepEqual(result, { deletedRuns: 1, deletedAttempts: 1 });
-
-  const remainingRunIds = [...new Set(getResults(db).map(r => r.run_id))].sort();
-  assert.deepEqual(remainingRunIds, ['run-no-cap']);
-});
-
 // ─── Views read from attempt_results (done-only) ─────────────────────────────
 
 test('leaderboard view excludes non-done attempts', () => {
@@ -172,38 +156,36 @@ test('leaderboard view excludes non-done attempts', () => {
   assert.equal(board[0].perfect_count, 1);
 });
 
-test('leaderboard view separates groups by reasoning_max_tokens', () => {
+test('leaderboard view separates groups by reasoning effort', () => {
   const db = makeDb();
   saveAttempt(db, {
     ...baseAttempt,
-    runId: 'run-no-cap',
+    runId: 'run-low',
     model: 'openai/gpt-5.4',
     targetId: '1',
-    reasoningEffort: null,
-    reasoningMaxTokens: null,
+    reasoningEffort: 'low',
   });
   saveAttempt(db, {
     ...baseAttempt,
-    runId: 'run-cap-8k',
+    runId: 'run-high',
     model: 'openai/gpt-5.4',
     targetId: '2',
-    reasoningEffort: null,
-    reasoningMaxTokens: 8000,
+    reasoningEffort: 'high',
   });
 
   const board = db.prepare(`
-    SELECT model, reasoning_effort, reasoning_max_tokens, targets
+    SELECT model, reasoning_effort, targets
     FROM leaderboard
     WHERE model = 'openai/gpt-5.4'
-    ORDER BY reasoning_max_tokens
+    ORDER BY reasoning_effort
   `).all();
 
   assert.equal(board.length, 2);
   assert.deepEqual(
-    board.map(row => ({ reasoning_max_tokens: row.reasoning_max_tokens, targets: row.targets })),
+    board.map(row => ({ reasoning_effort: row.reasoning_effort, targets: row.targets })),
     [
-      { reasoning_max_tokens: null, targets: 1 },
-      { reasoning_max_tokens: 8000, targets: 1 },
+      { reasoning_effort: 'high', targets: 1 },
+      { reasoning_effort: 'low', targets: 1 },
     ],
   );
 });
