@@ -9,6 +9,7 @@ services:
       - ./results:/app/results
       - ./targets:/app/targets
       - ./prompts:/app/prompts
+      - ./config:/app/config:ro
     env_file: .env
 
   dashboard:
@@ -28,5 +29,6 @@ services:
       - ./results:/app/results
       - ./targets:/app/targets
       - ./prompts:/app/prompts
+      - ./config:/app/config:ro
     env_file: .env
     profiles: ["run"]
