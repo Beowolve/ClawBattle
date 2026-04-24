@@ -1356,6 +1356,31 @@ td.muted {
   line-height: 1.5;
 }
 
+.syncDangerOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid color-mix(in srgb, var(--error-color) 42%, var(--border-color));
+  border-radius: 8px;
+  color: var(--heading-color);
+  background: color-mix(in srgb, var(--error-color) 8%, transparent);
+  font-size: 0.83rem;
+  line-height: 1.35;
+}
+
+.syncDangerOption input {
+  margin-top: 2px;
+  accent-color: var(--error-color);
+}
+
+.syncDangerOption small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-color);
+  font-size: 0.76rem;
+}
+
 .syncResult {
   font-size: 0.85rem;
   margin-top: 2px;
@@ -1363,6 +1388,10 @@ td.muted {
 
 .syncResult--success { color: var(--perfect-color); }
 .syncResult--error   { color: var(--error-color); }
+
+.runButton--danger {
+  background: var(--error-color);
+}
 
 @media (max-width: 640px) {
   .syncBody {

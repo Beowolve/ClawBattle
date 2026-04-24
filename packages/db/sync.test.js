@@ -211,10 +211,36 @@ test('uploadToSupabase retries without optional columns missing from older Supab
       }],
     });
 
-    assert.deepEqual(result, { uploadedRuns: 1, omittedColumns: ['canonical_model'] });
+    assert.deepEqual(result, { uploadedRuns: 1, omittedColumns: ['canonical_model'], replacedRuns: false });
     assert.equal(sb.calls.length, 2);
     assert.equal(sb.calls[0].body[0].canonical_model, 'openai/gpt-5.4-mini');
     assert.equal('canonical_model' in sb.calls[1].body[0], false);
+  } finally {
+    sb.restore();
+  }
+});
+
+test('uploadToSupabase can replace all remote runs before uploading local done rows', async () => {
+  const sb = mockSupabase();
+  try {
+    const result = await uploadToSupabase({
+      url: 'https://sb.test',
+      key: 'k',
+      replaceAll: true,
+      runs: [
+        { run_id: 'a', target_id: '1', attempt: 1, status: 'done', match: 100 },
+        { run_id: 'a', target_id: '2', attempt: 1, status: 'pending', match: null },
+      ],
+    });
+
+    assert.deepEqual(result, { uploadedRuns: 1, omittedColumns: [], replacedRuns: true });
+    assert.equal(sb.calls.length, 2);
+    assert.equal(sb.calls[0].method, 'DELETE');
+    assert.equal(sb.calls[0].table, 'runs');
+    assert.equal(new URL(sb.calls[0].url).searchParams.get('id'), 'not.is.null');
+    assert.equal(sb.calls[1].method, 'POST');
+    assert.equal(sb.calls[1].body.length, 1);
+    assert.equal(sb.calls[1].body[0].target_id, '1');
   } finally {
     sb.restore();
   }

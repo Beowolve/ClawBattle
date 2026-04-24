@@ -7,6 +7,7 @@ export default function Sync() {
   const [uploadState, setUploadState] = useState(null);
   const [uploadTargetsState, setUploadTargetsState] = useState(null);
   const [downloadState, setDownloadState] = useState(null);
+  const [replaceAllRuns, setReplaceAllRuns] = useState(false);
 
   useEffect(() => {
     fetch('/api/sync/config').then(r => r.json()).then(d => setConfigured(d.configured));
@@ -27,7 +28,11 @@ export default function Sync() {
   async function handleUpload() {
     setUploadState('loading');
     try {
-      const res = await fetch('/api/sync/upload', { method: 'POST' });
+      const res = await fetch('/api/sync/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ replaceAll: replaceAllRuns }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setUploadState({ result: data });
@@ -59,14 +64,14 @@ export default function Sync() {
             <span className={`syncStatusDot syncStatusDot--${configured ? 'ok' : 'err'}`} />
             {configured
               ? 'Supabase configured'
-              : 'Not configured — add SUPABASE_RESULTS_URL + SUPABASE_RESULTS_KEY to .env'}
+              : 'Not configured - add SUPABASE_RESULTS_URL + SUPABASE_RESULTS_KEY to .env'}
           </span>
         )}
       </div>
 
       <div className="syncBody syncBody--single">
         <div className="syncSection">
-          <div className="syncSectionTitle">⊞ Upload Targets to Supabase</div>
+          <div className="syncSectionTitle">Upload Targets to Supabase</div>
           <div className="syncSectionDesc">
             Push local battle_targets and daily_targets to Supabase. Run this once to seed the DB for others.
           </div>
@@ -76,13 +81,13 @@ export default function Sync() {
               onClick={handleUploadTargets}
               disabled={!configured || uploadTargetsState === 'loading'}
             >
-              {uploadTargetsState === 'loading' ? 'Uploading…' : 'Upload Targets'}
+              {uploadTargetsState === 'loading' ? 'Uploading...' : 'Upload Targets'}
             </button>
             {uploadTargetsState && uploadTargetsState !== 'loading' && (
               <div className={`syncResult syncResult--${uploadTargetsState.error ? 'error' : 'success'}`}>
                 {uploadTargetsState.error
                   ? `Error: ${uploadTargetsState.error}`
-                  : `✓ ${uploadTargetsState.result.uploadedBattle} battle, ${uploadTargetsState.result.uploadedDaily} daily targets uploaded`}
+                  : `${uploadTargetsState.result.uploadedBattle} battle, ${uploadTargetsState.result.uploadedDaily} daily targets uploaded`}
               </div>
             )}
           </div>
@@ -91,22 +96,34 @@ export default function Sync() {
 
       <div className="syncBody">
         <div className="syncSection">
-          <div className="syncSectionTitle">↑ Upload to Supabase</div>
+          <div className="syncSectionTitle">Upload to Supabase</div>
           <div className="syncSectionDesc">
-            Push all local runs to Supabase. Existing rows are updated (upsert).
+            Push all local done runs to Supabase. Existing rows are updated by default.
           </div>
+          <label className="syncDangerOption">
+            <input
+              type="checkbox"
+              checked={replaceAllRuns}
+              disabled={!configured || uploadState === 'loading'}
+              onChange={e => setReplaceAllRuns(e.target.checked)}
+            />
+            <span>
+              Replace Supabase runs with local done rows
+              <small>Deletes all remote run rows before uploading. Use only after a local backup.</small>
+            </span>
+          </label>
           <button
-            className="runButton"
+            className={`runButton${replaceAllRuns ? ' runButton--danger' : ''}`}
             onClick={handleUpload}
             disabled={!configured || uploadState === 'loading'}
           >
-            {uploadState === 'loading' ? 'Uploading…' : 'Upload'}
+            {uploadState === 'loading' ? 'Uploading...' : (replaceAllRuns ? 'Replace + Upload' : 'Upload')}
           </button>
           {uploadState && uploadState !== 'loading' && (
             <div className={`syncResult syncResult--${uploadState.error ? 'error' : 'success'}`}>
               {uploadState.error
                 ? `Error: ${uploadState.error}`
-                : `✓ ${uploadState.result.uploadedRuns} done run rows uploaded`}
+                : `${uploadState.result.uploadedRuns} done run rows uploaded${uploadState.result.replacedRuns ? ' after replacing remote runs' : ''}`}
             </div>
           )}
         </div>
@@ -114,7 +131,7 @@ export default function Sync() {
         <div className="syncDivider" />
 
         <div className="syncSection">
-          <div className="syncSectionTitle">↓ Download from Supabase</div>
+          <div className="syncSectionTitle">Download from Supabase</div>
           <div className="syncSectionDesc">
             Pull all runs from Supabase into the local DB. Already-present rows are skipped.
           </div>
@@ -123,13 +140,13 @@ export default function Sync() {
             onClick={handleDownload}
             disabled={!configured || downloadState === 'loading'}
           >
-            {downloadState === 'loading' ? 'Downloading…' : 'Download'}
+            {downloadState === 'loading' ? 'Downloading...' : 'Download'}
           </button>
           {downloadState && downloadState !== 'loading' && (
             <div className={`syncResult syncResult--${downloadState.error ? 'error' : 'success'}`}>
               {downloadState.error
                 ? `Error: ${downloadState.error}`
-                : `✓ ${downloadState.result.insertedRuns} new run rows (${downloadState.result.fetchedRuns} fetched, ${downloadState.result.fetchedRuns - downloadState.result.insertedRuns} already present)`}
+                : `${downloadState.result.insertedRuns} new run rows (${downloadState.result.fetchedRuns} fetched, ${downloadState.result.fetchedRuns - downloadState.result.insertedRuns} already present)`}
             </div>
           )}
         </div>

@@ -249,10 +249,11 @@ app.post('/api/sync/upload', async (req, res) => {
   const key = process.env.SUPABASE_RESULTS_KEY;
   if (!url || !key) return res.status(400).json({ error: 'Supabase not configured in .env' });
   try {
+    const replaceAll = Boolean(req.body?.replaceAll);
     // getResults() already reads from attempt_results (done rows only),
     // so in-flight queue state never leaves the local process.
     const runs = getResults();
-    const result = await uploadToSupabase({ url, key, runs });
+    const result = await uploadToSupabase({ url, key, runs, replaceAll });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

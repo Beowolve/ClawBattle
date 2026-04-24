@@ -34,6 +34,22 @@ async function sbPost(url, key, table, rows, { onConflict = [] } = {}) {
   }
 }
 
+async function sbDeleteAll(url, key, table) {
+  const endpoint = new URL(`${url}/rest/v1/${table}`);
+  endpoint.searchParams.set('id', 'not.is.null');
+  const res = await fetch(endpoint, {
+    method: 'DELETE',
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      Prefer: 'return=minimal',
+    },
+  });
+  if (!res.ok) {
+    throw new SupabaseRestError({ table, operation: 'delete', status: res.status, body: await res.text() });
+  }
+}
+
 async function sbFetchPage(url, key, table, offset) {
   const res = await fetch(
     `${url}/rest/v1/${table}?select=*&limit=${PAGE_SIZE}&offset=${offset}`,
@@ -126,16 +142,19 @@ async function sbPostRuns(url, key, rows, omittedColumns) {
   }
 }
 
-export async function uploadToSupabase({ url, key, runs }) {
+export async function uploadToSupabase({ url, key, runs, replaceAll = false }) {
   // Callers should already filter to done rows via getResults / attempt_results,
   // but guard defensively so an accidental raw-runs feed still stays safe.
   const doneRuns = runs.filter(r => r.status === undefined || r.status === 'done');
   const clean = doneRuns.map(stripQueueFields);
   const omittedColumns = new Set();
+  if (replaceAll) {
+    await sbDeleteAll(url, key, 'runs');
+  }
   for (let i = 0; i < clean.length; i += BATCH_SIZE) {
     await sbPostRuns(url, key, clean.slice(i, i + BATCH_SIZE), omittedColumns);
   }
-  return { uploadedRuns: clean.length, omittedColumns: [...omittedColumns] };
+  return { uploadedRuns: clean.length, omittedColumns: [...omittedColumns], replacedRuns: Boolean(replaceAll) };
 }
 
 export async function downloadFromSupabase({ url, key, upsertRuns }) {
