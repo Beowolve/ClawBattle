@@ -6,6 +6,8 @@
 // public read-only dashboard (VITE_PUBLIC_MODE=true); queue-related methods
 // are stubbed out.
 
+import { canonicalModel } from '../../core/model-aliases.js';
+
 const SB_URL = process.env.SUPABASE_RESULTS_URL;
 const SB_KEY = process.env.SUPABASE_RESULTS_KEY;
 
@@ -41,7 +43,12 @@ export async function getResults() {
     if (page.length < PAGE_SIZE) break;
     offset += PAGE_SIZE;
   }
-  return rows;
+  return rows.map(row => ({
+    ...row,
+    raw_model: row.model,
+    canonical_model: row.canonical_model ?? canonicalModel(row.provider, row.model),
+    model: row.canonical_model ?? canonicalModel(row.provider, row.model),
+  }));
 }
 
 export async function getBattleTargets() {
@@ -84,7 +91,8 @@ export async function deleteRunGroup({ model, reasoningEffort = null, promptVers
     ? [...new Set(promptVersions.filter(Boolean))]
     : [];
 
-  const query = [`select=run_id`, `model=eq.${encodeURIComponent(model)}`];
+  const encodedModel = encodeURIComponent(String(model));
+  const query = [`select=run_id`, `or=(canonical_model.eq.${encodedModel},model.eq.${encodedModel})`];
   if (reasoningEffort == null) {
     query.push('reasoning_effort=is.null');
   } else {

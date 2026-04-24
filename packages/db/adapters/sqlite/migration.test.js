@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { openDb, initSchema } from './connection.js';
 
-const NEW_COLS = ['status', 'error_message', 'enqueued_at', 'claimed_at', 'claim_token', 'paused_from', 'prompt_text'];
+const NEW_COLS = ['status', 'error_message', 'enqueued_at', 'claimed_at', 'claim_token', 'paused_from', 'prompt_text', 'canonical_model'];
 
 function legacyRunsDb() {
   const db = new DatabaseSync(':memory:');
@@ -78,7 +78,7 @@ test('legacy DB: initSchema adds new columns and preserves old rows', () => {
   db.prepare(`
     INSERT INTO runs (run_id, benchmark_version, model, provider, target_id, target_type, attempt, match, score)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run('legacy-1', '1.0', 'gpt-4o', 'openrouter', '1', 'battle', 1, 87.5, 600.0);
+  `).run('legacy-1', '1.0', 'gpt-5.4-mini-2026-03-17', 'openai', '1', 'battle', 1, 87.5, 600.0);
 
   initSchema(db);
 
@@ -86,11 +86,12 @@ test('legacy DB: initSchema adds new columns and preserves old rows', () => {
   for (const n of NEW_COLS) {
     assert.ok(names.includes(n), `column ${n} missing after migration`);
   }
-  const row = db.prepare('SELECT run_id, match, score, status FROM runs WHERE run_id = ?').get('legacy-1');
+  const row = db.prepare('SELECT run_id, match, score, status, canonical_model FROM runs WHERE run_id = ?').get('legacy-1');
   assert.equal(row.run_id, 'legacy-1');
   assert.equal(row.match, 87.5);
   assert.equal(row.score, 600.0);
   assert.equal(row.status, 'done');
+  assert.equal(row.canonical_model, 'openai/gpt-5.4-mini');
 });
 
 test('legacy DB: match becomes nullable after migration', () => {

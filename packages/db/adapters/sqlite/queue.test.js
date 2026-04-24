@@ -68,6 +68,18 @@ test('enqueueRun: all rows carry run-level metadata', () => {
   }
 });
 
+test('enqueueRun: stores canonical model name', () => {
+  const db = openDb(':memory:');
+  enqueueRun(db, {
+    ...baseOpts,
+    model: 'gpt-5.4-mini-2026-03-17',
+    provider: 'openai',
+  });
+  const row = db.prepare('SELECT model, canonical_model FROM runs WHERE run_id = ? LIMIT 1').get('run-1');
+  assert.equal(row.model, 'gpt-5.4-mini-2026-03-17');
+  assert.equal(row.canonical_model, 'openai/gpt-5.4-mini');
+});
+
 test('enqueueRun: large run (25 targets × 3 attempts = 75 rows)', () => {
   const db = openDb(':memory:');
   const targets = Array.from({ length: 25 }, (_, i) => ({ id: String(i + 1), type: 'battle' }));

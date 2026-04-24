@@ -58,6 +58,8 @@ const QUEUE_ONLY_FIELDS = new Set([
   'paused_from', 'error_message',
   // Local debug field for queue inspection; not part of Supabase schema.
   'prompt_text',
+  // Read aliases from SQLite views; uploads keep raw model in `model`.
+  'raw_model', 'model_key',
 ]);
 
 function stripQueueFields(row) {
@@ -65,6 +67,7 @@ function stripQueueFields(row) {
   for (const [k, v] of Object.entries(row)) {
     if (!QUEUE_ONLY_FIELDS.has(k)) out[k] = v;
   }
+  if (row.raw_model) out.model = row.raw_model;
   return out;
 }
 

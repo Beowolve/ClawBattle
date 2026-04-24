@@ -3,15 +3,18 @@
 // (enqueueRun / claimNextPending / completeAttempt / failAttempt).
 // `saveAttempt` below is a test-only shortcut that inserts a done row directly.
 
+import { canonicalModel } from '../../../core/model-aliases.js';
+
 export function saveAttempt(db, data) {
+  const canonical = canonicalModel(data.provider, data.model);
   db.prepare(`
     INSERT INTO runs
-      (run_id, benchmark_version, model, provider,
+      (run_id, benchmark_version, model, canonical_model, provider,
        prompt_version, temperature, attempts_per_target, started_at,
        target_id, target_type, attempt, match, score, tokens_used, code, code_length, cost, duration_ms, reasoning_effort)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    data.runId, data.benchmarkVersion, data.model, data.provider,
+    data.runId, data.benchmarkVersion, data.model, canonical, data.provider,
     data.promptVersion ?? null, data.temperature ?? null,
     data.attemptsPerTarget ?? null, data.startedAt ?? null,
     data.targetId, data.targetType, data.attempt,
@@ -31,14 +34,15 @@ const VALID_SORT = new Set([
 // paused/error) never leak into the history UI, analytics, or sync uploads.
 export function getResults(db, { limit, offset, sort = 'created_at', dir = 'desc', runId, model } = {}) {
   const col = VALID_SORT.has(sort) ? sort : 'created_at';
+  const orderBy = col === 'model' ? 'model_key' : col;
   const direction = dir === 'asc' ? 'ASC' : 'DESC';
   const params = [];
   const where = [];
   if (runId) { where.push('run_id = ?'); params.push(runId); }
-  if (model) { where.push('model = ?'); params.push(model); }
+  if (model) { where.push('model_key = ?'); params.push(model); }
   let sql = 'SELECT * FROM attempt_results';
   if (where.length) sql += ' WHERE ' + where.join(' AND ');
-  sql += ` ORDER BY ${col} ${direction}`;
+  sql += ` ORDER BY ${orderBy} ${direction}`;
   if (limit != null) {
     sql += ' LIMIT ?';
     params.push(Number(limit));
@@ -47,14 +51,19 @@ export function getResults(db, { limit, offset, sort = 'created_at', dir = 'desc
       params.push(Number(offset));
     }
   }
-  return db.prepare(sql).all(...params);
+  return db.prepare(sql).all(...params).map(row => ({
+    ...row,
+    raw_model: row.raw_model ?? row.model,
+    canonical_model: row.model_key ?? row.canonical_model ?? row.model,
+    model: row.model_key ?? row.canonical_model ?? row.model,
+  }));
 }
 
 export function getResultsCount(db, { runId, model } = {}) {
   const params = [];
   const where = [];
   if (runId) { where.push('run_id = ?'); params.push(runId); }
-  if (model) { where.push('model = ?'); params.push(model); }
+  if (model) { where.push('model_key = ?'); params.push(model); }
   const sql = 'SELECT COUNT(*) as count FROM attempt_results' +
     (where.length ? ' WHERE ' + where.join(' AND ') : '');
   return db.prepare(sql).get(...params).count;
@@ -67,10 +76,6 @@ export function getLeaderboard(db, promptVersion) {
     ? db.prepare('SELECT * FROM leaderboard_by_version WHERE prompt_version = ?').all(promptVersion)
     : db.prepare('SELECT * FROM leaderboard').all();
 
-  const allRows = promptVersion
-    ? db.prepare('SELECT * FROM leaderboard').all()
-    : rows;
-
   const promptVersions = db.prepare(
     'SELECT DISTINCT prompt_version FROM attempt_results WHERE prompt_version IS NOT NULL ORDER BY prompt_version'
   ).all().map(r => r.prompt_version);
@@ -78,9 +83,10 @@ export function getLeaderboard(db, promptVersion) {
   return {
     rows: rows.map(r => ({
       model: r.model,
+      rawModel: r.raw_model ?? null,
       reasoningEffort: r.reasoning_effort ?? null,
       provider: r.provider,
-      promptVersions: r.prompt_versions ? r.prompt_versions.split(',') : [],
+      promptVersions: r.prompt_versions ? r.prompt_versions.split(',') : (r.prompt_version ? [r.prompt_version] : []),
       targets: Number(r.targets),
       avgScore: r.avg_score != null ? Number(r.avg_score) : null,
       avgMatch: r.avg_match != null ? Number(r.avg_match) : null,
@@ -90,8 +96,8 @@ export function getLeaderboard(db, promptVersion) {
       perfectCount: Number(r.perfect_count),
       perfectRate: r.perfect_rate != null ? Number(r.perfect_rate) : null,
     })),
-    totalAttempts: allRows.reduce((a, r) => a + Number(r.attempt_count ?? 0), 0),
-    totalCost: allRows.reduce((a, r) => a + Number(r.total_cost ?? 0), 0),
+    totalAttempts: rows.reduce((a, r) => a + Number(r.attempt_count ?? 0), 0),
+    totalCost: rows.reduce((a, r) => a + Number(r.total_cost ?? 0), 0),
     models: rows.length,
     promptVersions,
   };
@@ -275,16 +281,17 @@ export function getCompletedTargetIds(db, runId) {
 export function upsertRuns(db, rows) {
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO runs
-      (run_id, benchmark_version, model, provider,
+      (run_id, benchmark_version, model, canonical_model, provider,
        prompt_version, temperature, attempts_per_target, started_at, finished_at,
        target_id, target_type, attempt, match, score,
        tokens_used, code, code_length, cost, duration_ms, reasoning_effort, created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `);
   let inserted = 0;
   for (const r of rows) {
+    const canonical = r.canonical_model ?? canonicalModel(r.provider, r.model);
     const { changes } = stmt.run(
-      r.run_id, r.benchmark_version, r.model, r.provider,
+      r.run_id, r.benchmark_version, r.model, canonical, r.provider,
       r.prompt_version ?? null, r.temperature ?? null, r.attempts_per_target ?? null,
       r.started_at ?? null, r.finished_at ?? null,
       r.target_id, r.target_type, r.attempt,
@@ -310,7 +317,7 @@ export function deleteRunGroup(db, { model, reasoningEffort = null, promptVersio
     ? [...new Set(promptVersions.filter(Boolean))]
     : [];
 
-  const where = ['model = ?'];
+  const where = ['COALESCE(canonical_model, model) = ?'];
   const params = [model];
 
   if (reasoningEffort == null) {

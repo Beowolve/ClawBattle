@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "description": "Text token prices in USD per 1M tokens. Keys are canonical model names.",
+  "prices": {
+    "openai/gpt-5.4": {
+      "input": 2.5,
+      "cachedInput": 0.25,
+      "output": 15
+    },
+    "openai/gpt-5.4-mini": {
+      "input": 0.75,
+      "cachedInput": 0.075,
+      "output": 4.5
+    },
+    "openai/gpt-5.4-nano": {
+      "input": 0.2,
+      "cachedInput": 0.02,
+      "output": 1.25
+    },
+    "openai/gpt-5.3-codex": {
+      "input": 1.75,
+      "cachedInput": 0.175,
+      "output": 14
+    }
+  }
+}
+

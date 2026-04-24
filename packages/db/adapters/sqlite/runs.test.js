@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openDb } from './connection.js';
-import { saveAttempt, getResults, getInsights, deleteRunGroup } from './runs.js';
+import { saveAttempt, getResults, getInsights, getLeaderboard, deleteRunGroup } from './runs.js';
 
 function makeDb() {
   return openDb(':memory:');
@@ -48,6 +48,20 @@ test('saveAttempt stores meta fields', () => {
   assert.equal(row.attempts_per_target, 3);
   assert.equal(row.started_at, '2024-01-01T00:00:00Z');
   assert.equal(row.finished_at, null);
+});
+
+test('saveAttempt stores and returns canonical model names', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    model: 'gpt-5.4-mini-2026-03-17',
+    provider: 'openai',
+  });
+
+  const [row] = getResults(db);
+  assert.equal(row.model, 'openai/gpt-5.4-mini');
+  assert.equal(row.raw_model, 'gpt-5.4-mini-2026-03-17');
+  assert.equal(row.canonical_model, 'openai/gpt-5.4-mini');
 });
 
 test('saveAttempt stores code and code_length', () => {
@@ -139,6 +153,32 @@ test('deleteRunGroup removes queue rows alongside done attempts', () => {
   assert.equal(remaining, 0);
 });
 
+test('deleteRunGroup deletes by canonical model name', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-openai',
+    model: 'gpt-5.4-mini-2026-03-17',
+    provider: 'openai',
+    reasoningEffort: 'low',
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-openrouter',
+    model: 'openai/gpt-5.4-mini',
+    provider: 'openrouter',
+    reasoningEffort: 'low',
+  });
+
+  const result = deleteRunGroup(db, {
+    model: 'openai/gpt-5.4-mini',
+    reasoningEffort: 'low',
+  });
+
+  assert.deepEqual(result, { deletedRuns: 2, deletedAttempts: 2 });
+  assert.equal(getResults(db).length, 0);
+});
+
 // ─── Views read from attempt_results (done-only) ─────────────────────────────
 
 test('leaderboard view excludes non-done attempts', () => {
@@ -188,6 +228,123 @@ test('leaderboard view separates groups by reasoning effort', () => {
       { reasoning_effort: 'low', targets: 1 },
     ],
   );
+});
+
+test('leaderboard view separates groups by prompt version', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-v1',
+    model: 'openai/gpt-5.4',
+    targetId: '1',
+    promptVersion: 'v1',
+    reasoningEffort: 'high',
+    score: 700,
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-v2',
+    model: 'openai/gpt-5.4',
+    targetId: '1',
+    promptVersion: 'v2',
+    reasoningEffort: 'high',
+    score: 900,
+  });
+
+  const board = db.prepare(`
+    SELECT model, reasoning_effort, prompt_version, targets, avg_score
+    FROM leaderboard
+    WHERE model = 'openai/gpt-5.4'
+    ORDER BY prompt_version
+  `).all();
+
+  assert.deepEqual(
+    board.map(row => ({
+      reasoning_effort: row.reasoning_effort,
+      prompt_version: row.prompt_version,
+      targets: row.targets,
+      avg_score: row.avg_score,
+    })),
+    [
+      { reasoning_effort: 'high', prompt_version: 'v1', targets: 1, avg_score: 700 },
+      { reasoning_effort: 'high', prompt_version: 'v2', targets: 1, avg_score: 900 },
+    ],
+  );
+});
+
+test('leaderboard view aggregates aliases by canonical model name', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-openai',
+    model: 'gpt-5.4-mini-2026-03-17',
+    provider: 'openai',
+    targetId: '1',
+    reasoningEffort: 'low',
+    promptVersion: 'v1',
+    score: 700,
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-openrouter',
+    model: 'openai/gpt-5.4-mini',
+    provider: 'openrouter',
+    targetId: '2',
+    reasoningEffort: 'low',
+    promptVersion: 'v1',
+    score: 900,
+  });
+
+  const board = db.prepare(`
+    SELECT model, reasoning_effort, prompt_version, targets, attempt_count
+    FROM leaderboard
+    WHERE model = 'openai/gpt-5.4-mini'
+  `).all();
+
+  assert.deepEqual(
+    board.map(row => ({
+      model: row.model,
+      reasoning_effort: row.reasoning_effort,
+      prompt_version: row.prompt_version,
+      targets: row.targets,
+      attempt_count: row.attempt_count,
+    })),
+    [
+      {
+        model: 'openai/gpt-5.4-mini',
+        reasoning_effort: 'low',
+        prompt_version: 'v1',
+        targets: 2,
+        attempt_count: 2,
+      },
+    ],
+  );
+});
+
+test('getLeaderboard totals are scoped to the selected prompt version', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-v1',
+    model: 'openai/gpt-5.4',
+    targetId: '1',
+    promptVersion: 'v1',
+    cost: 0.01,
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-v2',
+    model: 'openai/gpt-5.4',
+    targetId: '1',
+    promptVersion: 'v2',
+    cost: 0.25,
+  });
+
+  const board = getLeaderboard(db, 'v1');
+
+  assert.equal(board.totalAttempts, 1);
+  assert.equal(board.totalCost, 0.01);
+  assert.deepEqual(board.promptVersions, ['v1', 'v2']);
 });
 
 test('match_distribution view excludes non-done attempts', () => {

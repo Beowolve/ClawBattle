@@ -47,6 +47,8 @@ test('uploadToSupabase strips queue-only columns before upload', async () => {
       claim_token: 'tok-123', enqueued_at: '2026-04-20T10:00:00Z',
       claimed_at: '2026-04-20T10:01:00Z', paused_from: null,
       error_message: null, prompt_text: 'prompt body', match: 100, score: 900,
+      model: 'openai/gpt-5.4-mini', raw_model: 'gpt-5.4-mini-2026-03-17',
+      model_key: 'openai/gpt-5.4-mini', canonical_model: 'openai/gpt-5.4-mini',
     }];
     await uploadToSupabase({ url: 'https://sb.test', key: 'k', runs });
     const sent = sb.calls[0].body[0];
@@ -57,8 +59,12 @@ test('uploadToSupabase strips queue-only columns before upload', async () => {
     assert.equal('paused_from'   in sent, false);
     assert.equal('error_message' in sent, false);
     assert.equal('prompt_text'   in sent, false);
+    assert.equal('raw_model'     in sent, false);
+    assert.equal('model_key'     in sent, false);
     // But normal result columns stay.
     assert.equal(sent.run_id, 'a');
+    assert.equal(sent.model, 'gpt-5.4-mini-2026-03-17');
+    assert.equal(sent.canonical_model, 'openai/gpt-5.4-mini');
     assert.equal(sent.match, 100);
     assert.equal(sent.score, 900);
   } finally {

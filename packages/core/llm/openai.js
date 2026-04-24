@@ -1,6 +1,7 @@
 // LLM Adapter – OpenAI (direct)
 import { extractCode } from './extract-code.js';
 import { buildUserMessage } from './build-message.js';
+import { calculateTextCost } from '../model-pricing.js';
 
 export function buildRequestBody({ model, prompt, images, reasoningEffort }) {
   return {
@@ -34,5 +35,6 @@ export async function generate({ model, prompt, images, reasoningEffort, signal 
   return {
     code: extractCode(data.choices[0].message.content),
     tokensUsed: data.usage?.total_tokens ?? 0,
+    cost: calculateTextCost({ provider: 'openai', model, usage: data.usage }),
   };
 }

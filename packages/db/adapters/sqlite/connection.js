@@ -6,6 +6,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { canonicalModel } from '../../../core/model-aliases.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 
@@ -14,6 +15,7 @@ const RUNS_COLUMNS_SQL = `
   run_id TEXT NOT NULL,
   benchmark_version TEXT NOT NULL,
   model TEXT NOT NULL,
+  canonical_model TEXT,
   provider TEXT NOT NULL,
   prompt_version TEXT,
   temperature REAL,
@@ -42,7 +44,7 @@ const RUNS_COLUMNS_SQL = `
 `;
 
 const LEGACY_REUSABLE_COLUMNS = [
-  'id', 'run_id', 'benchmark_version', 'model', 'provider',
+  'id', 'run_id', 'benchmark_version', 'model', 'canonical_model', 'provider',
   'prompt_version', 'temperature', 'attempts_per_target', 'started_at', 'finished_at',
   'target_id', 'target_type', 'attempt', 'match', 'score', 'tokens_used',
   'code', 'prompt_text', 'code_length', 'cost', 'duration_ms', 'reasoning_effort',
@@ -105,6 +107,33 @@ function migrateRunsTable(db) {
   db.exec('ALTER TABLE runs_new RENAME TO runs');
 }
 
+function backfillCanonicalModels(db) {
+  const rows = db.prepare(`
+    SELECT DISTINCT provider, model
+    FROM runs
+    WHERE canonical_model IS NULL OR canonical_model = ''
+  `).all();
+  if (!rows.length) return;
+
+  const stmt = db.prepare(`
+    UPDATE runs
+    SET canonical_model = ?
+    WHERE provider = ?
+      AND model = ?
+      AND (canonical_model IS NULL OR canonical_model = '')
+  `);
+  db.exec('BEGIN');
+  try {
+    for (const row of rows) {
+      stmt.run(canonicalModel(row.provider, row.model), row.provider, row.model);
+    }
+    db.exec('COMMIT');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
+}
+
 export function initSchema(db) {
   // Must run before CREATE TABLE IF NOT EXISTS runs to avoid shadowing an
   // orphaned runs_new with a fresh empty runs table.
@@ -145,12 +174,18 @@ export function initSchema(db) {
   if (!currentCols.has('prompt_text')) {
     db.exec('ALTER TABLE runs ADD COLUMN prompt_text TEXT');
   }
+  if (!currentCols.has('canonical_model')) {
+    db.exec('ALTER TABLE runs ADD COLUMN canonical_model TEXT');
+  }
+  backfillCanonicalModels(db);
 
   db.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_runs_unique
       ON runs(run_id, target_id, attempt);
     CREATE INDEX IF NOT EXISTS idx_runs_model
       ON runs(model);
+    CREATE INDEX IF NOT EXISTS idx_runs_canonical_model
+      ON runs(canonical_model);
     CREATE INDEX IF NOT EXISTS idx_runs_target
       ON runs(target_id, target_type);
     CREATE INDEX IF NOT EXISTS idx_runs_created_at
@@ -163,28 +198,31 @@ export function initSchema(db) {
   db.exec(`
     DROP VIEW IF EXISTS attempt_results;
     CREATE VIEW attempt_results AS
-    SELECT * FROM runs WHERE status = 'done';
+    SELECT
+      runs.*,
+      runs.model AS raw_model,
+      COALESCE(runs.canonical_model, runs.model) AS model_key
+    FROM runs WHERE status = 'done';
 
     DROP VIEW IF EXISTS leaderboard;
     CREATE VIEW leaderboard AS
     WITH ranked AS (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY model, reasoning_effort, target_id, target_type
+        PARTITION BY model_key, reasoning_effort, target_id, target_type, prompt_version
         ORDER BY score DESC NULLS LAST
       ) AS rn FROM attempt_results
     ),
     best_per_target AS (SELECT * FROM ranked WHERE rn = 1),
     model_costs AS (
-      SELECT model, reasoning_effort,
+      SELECT model_key, reasoning_effort, prompt_version,
         SUM(cost) AS total_cost,
-        COUNT(*) AS attempt_count,
-        GROUP_CONCAT(DISTINCT prompt_version ORDER BY prompt_version) AS prompt_versions
-      FROM attempt_results GROUP BY model, reasoning_effort
+        COUNT(*) AS attempt_count
+      FROM attempt_results GROUP BY model_key, reasoning_effort, prompt_version
     )
     SELECT
-      b.model, b.reasoning_effort,
+      b.model_key AS model, b.reasoning_effort, b.prompt_version,
+      MAX(b.raw_model) AS raw_model,
       MAX(b.provider) AS provider,
-      c.prompt_versions,
       COUNT(*) AS targets,
       AVG(b.score) AS avg_score,
       AVG(b.match) AS avg_match,
@@ -198,27 +236,29 @@ export function initSchema(db) {
       c.attempt_count
     FROM best_per_target b
     JOIN model_costs c
-      ON b.model = c.model
+      ON b.model_key = c.model_key
       AND b.reasoning_effort IS c.reasoning_effort
-    GROUP BY b.model, b.reasoning_effort, c.prompt_versions, c.total_cost, c.attempt_count;
+      AND b.prompt_version IS c.prompt_version
+    GROUP BY b.model_key, b.reasoning_effort, b.prompt_version, c.total_cost, c.attempt_count;
 
     DROP VIEW IF EXISTS leaderboard_by_version;
     CREATE VIEW leaderboard_by_version AS
     WITH ranked AS (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY model, reasoning_effort, target_id, target_type, prompt_version
+        PARTITION BY model_key, reasoning_effort, target_id, target_type, prompt_version
         ORDER BY score DESC NULLS LAST
       ) AS rn FROM attempt_results
     ),
     best_per_target AS (SELECT * FROM ranked WHERE rn = 1),
     model_version_costs AS (
-      SELECT model, reasoning_effort, prompt_version,
+      SELECT model_key, reasoning_effort, prompt_version,
         SUM(cost) AS total_cost,
         COUNT(*) AS attempt_count
-      FROM attempt_results GROUP BY model, reasoning_effort, prompt_version
+      FROM attempt_results GROUP BY model_key, reasoning_effort, prompt_version
     )
     SELECT
-      b.model, b.reasoning_effort, b.prompt_version,
+      b.model_key AS model, b.reasoning_effort, b.prompt_version,
+      MAX(b.raw_model) AS raw_model,
       MAX(b.provider) AS provider,
       COUNT(*) AS targets,
       AVG(b.score) AS avg_score,
@@ -233,16 +273,16 @@ export function initSchema(db) {
       c.attempt_count
     FROM best_per_target b
     JOIN model_version_costs c
-      ON b.model = c.model
+      ON b.model_key = c.model_key
       AND b.reasoning_effort IS c.reasoning_effort
       AND b.prompt_version IS c.prompt_version
-    GROUP BY b.model, b.reasoning_effort, b.prompt_version, c.total_cost, c.attempt_count;
+    GROUP BY b.model_key, b.reasoning_effort, b.prompt_version, c.total_cost, c.attempt_count;
 
     DROP VIEW IF EXISTS target_difficulty;
     CREATE VIEW target_difficulty AS
     WITH ranked AS (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY model, target_id, target_type, prompt_version
+        PARTITION BY model_key, target_id, target_type, prompt_version
         ORDER BY match DESC NULLS LAST
       ) AS rn FROM attempt_results
     ),
@@ -263,30 +303,30 @@ export function initSchema(db) {
 
     DROP VIEW IF EXISTS model_consistency;
     CREATE VIEW model_consistency AS
-    SELECT model, reasoning_effort, prompt_version,
+    SELECT model_key AS model, reasoning_effort, prompt_version,
       AVG(match) AS avg_match,
       SQRT(AVG(match * match) - AVG(match) * AVG(match)) AS std_dev,
       COUNT(*) AS n
     FROM attempt_results WHERE match IS NOT NULL
-    GROUP BY model, reasoning_effort, prompt_version;
+    GROUP BY model_key, reasoning_effort, prompt_version;
 
     DROP VIEW IF EXISTS cost_efficiency;
     CREATE VIEW cost_efficiency AS
     WITH ranked AS (
       SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY model, reasoning_effort, target_id, target_type, prompt_version
+        PARTITION BY model_key, reasoning_effort, target_id, target_type, prompt_version
         ORDER BY score DESC NULLS LAST
       ) AS rn FROM attempt_results
     ),
     best_per_target AS (SELECT * FROM ranked WHERE rn = 1)
-    SELECT model, reasoning_effort, prompt_version,
+    SELECT model_key AS model, reasoning_effort, prompt_version,
       AVG(score) AS avg_score,
       AVG(CASE WHEN cost IS NOT NULL THEN cost END) AS avg_cost
-    FROM best_per_target GROUP BY model, reasoning_effort, prompt_version;
+    FROM best_per_target GROUP BY model_key, reasoning_effort, prompt_version;
 
     DROP VIEW IF EXISTS match_distribution;
     CREATE VIEW match_distribution AS
-    SELECT model, prompt_version,
+    SELECT model_key AS model, prompt_version,
       CASE
         WHEN match >= 100 THEN '100'
         WHEN match >=  90 THEN '90\u201399'
@@ -302,14 +342,16 @@ export function initSchema(db) {
       END AS bucket,
       COUNT(*) AS count
     FROM attempt_results WHERE match IS NOT NULL
-    GROUP BY model, prompt_version, bucket;
+    GROUP BY model_key, prompt_version, bucket;
 
     DROP VIEW IF EXISTS runs_summary;
     CREATE VIEW runs_summary AS
     SELECT
       run_id,
       MAX(benchmark_version) AS benchmark_version,
-      MAX(model) AS model,
+      MAX(COALESCE(canonical_model, model)) AS model,
+      MAX(model) AS raw_model,
+      MAX(COALESCE(canonical_model, model)) AS canonical_model,
       MAX(provider) AS provider,
       MAX(prompt_version) AS prompt_version,
       MAX(reasoning_effort) AS reasoning_effort,

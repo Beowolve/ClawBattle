@@ -3,15 +3,15 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useResultsPage, useResultsCount, useRunHistory } from '../hooks/useData.js';
-import ReasoningBadge, { ModelWithReasoning, modelReasoningTitle } from './ReasoningBadge.jsx';
+import ReasoningBadge, { modelReasoningTitle } from './ReasoningBadge.jsx';
 
 const PAGE_SIZE = 100;
 
 const COLS = [
   { key: 'run_id',          label: 'Run ID' },
   { key: 'model',           label: 'Model' },
-  { key: 'prompt_version',  label: 'Prompt' },
   { key: 'reasoning_effort', label: 'Reasoning' },
+  { key: 'prompt_version',  label: 'Prompt' },
   { key: 'target_id',       label: 'Target',   numeric: true },
   { key: 'target_type',     label: 'Type' },
   { key: 'attempt',         label: 'Attempt',  numeric: true },
@@ -111,10 +111,10 @@ export default function RunHistory() {
                 <tr key={r.id} className="runRow">
                   <td className="runId muted">{r.run_id?.slice(0, 8)}</td>
                   <td className="modelName" title={modelReasoningTitle(r.model, r.reasoning_effort)}>
-                    <ModelWithReasoning model={r.model} reasoning={r.reasoning_effort} />
+                    {r.model}
                   </td>
-                  <td className="muted">{r.prompt_version ?? '-'}</td>
                   <td><ReasoningBadge value={r.reasoning_effort} showEmpty /></td>
+                  <td className="muted">{r.prompt_version ?? '-'}</td>
                   <td className="numeric">{r.target_type === 'battle' ? parseInt(r.target_id) : r.target_id}</td>
                   <td>
                     <span className={r.target_type === 'battle' ? 'badge badgeBattle' : 'badge badgeDaily'}>

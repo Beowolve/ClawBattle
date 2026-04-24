@@ -30,8 +30,25 @@ const TABS = [
 
 const EMPTY_REASONING_FILTER = '__empty__';
 
-function computeKpisFromLeaderboard(data) {
-  if (!data?.rows?.length) return { totalRuns: 0, avgBestScore: '-', totalCost: '-', models: 0 };
+function computeKpisFromLeaderboard(data, promptFilter) {
+  const promptScope = promptFilter && promptFilter !== 'all'
+    ? promptFilter
+    : 'all prompts';
+
+  if (!data?.rows?.length) {
+    return {
+      totalRuns: 0,
+      avgBestScore: '-',
+      totalCost: '-',
+      totalCostSub: `0 attempts | ${promptScope}`,
+      models: 0,
+      modelSub: `0 configs | 0 entries | ${promptScope}`,
+    };
+  }
+
+  const modelCount = new Set(data.rows.map(r => r.model)).size;
+  const configCount = new Set(data.rows.map(r => `${r.model}__${r.reasoningEffort ?? ''}`)).size;
+
   const totalTargets = data.rows.reduce((a, r) => a + r.targets, 0);
   const weightedScore = data.rows.reduce((a, r) => a + (r.avgScore ?? 0) * r.targets, 0);
   const avgBestScore = totalTargets > 0 ? (weightedScore / totalTargets).toFixed(2) : '-';
@@ -39,7 +56,9 @@ function computeKpisFromLeaderboard(data) {
     totalRuns: data.totalAttempts,
     avgBestScore,
     totalCost: data.totalCost > 0 ? '$' + data.totalCost.toFixed(4) : '-',
-    models: data.models,
+    totalCostSub: `${data.totalAttempts} attempts | ${promptScope}`,
+    models: modelCount,
+    modelSub: `${configCount} configs | ${data.rows.length} entries | ${promptScope}`,
   };
 }
 
@@ -113,7 +132,7 @@ export default function App() {
   }, [filteredRuns, targetType]);
 
   // KPIs derived from leaderboard aggregation — available without loading raw runs
-  const kpis = computeKpisFromLeaderboard(leaderboardQ.data);
+  const kpis = computeKpisFromLeaderboard(leaderboardQ.data, promptFilter);
 
   const sortedTargets = useMemo(() => {
     const list = targetType === 'battle' ? battleTargets : dailyTargets;
@@ -134,9 +153,9 @@ export default function App() {
       <main className="appContent">
         <div className="kpiGrid">
           <KpiCard title="Total Runs" value={kpis.totalRuns} />
-          <KpiCard title="Models Tested" value={kpis.models} />
+          <KpiCard title="Models Tested" value={kpis.models} sub={kpis.modelSub} />
           <KpiCard title="Avg Best Score" value={kpis.avgBestScore} sub="best attempt per target" />
-          <KpiCard title="Total Cost" value={kpis.totalCost} />
+          <KpiCard title="Total Cost" value={kpis.totalCost} sub={kpis.totalCostSub} />
         </div>
 
         <div className="tabs">

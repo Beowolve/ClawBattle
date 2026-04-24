@@ -5,8 +5,8 @@ const COLS = [
   { key: 'num',           label: '#',          numeric: true },
   { key: 'name',          label: 'Name',       numeric: false },
   { key: 'bestModel',     label: 'Best Model', numeric: false },
-  { key: 'bestPrompt',    label: 'Prompt',     numeric: false },
   { key: 'bestReasoning', label: 'Reasoning',  numeric: false },
+  { key: 'bestPrompt',    label: 'Prompt',     numeric: false },
   { key: 'bestScore',     label: 'Score',      numeric: true },
   { key: 'bestMatch',     label: 'Match',      numeric: true },
   { key: 'attempts',      label: 'Attempts',   numeric: true },
@@ -94,8 +94,8 @@ export default function TargetTable({ targets, type, runs, modelFilter, reasonin
               <td className="numeric">{row.num}</td>
               <td>{row.name}</td>
               <td className="modelName" title={row.bestModel ?? ''}>{row.bestModel ?? '—'}</td>
-              <td className="muted">{row.bestPrompt ?? '—'}</td>
               <td><ReasoningBadge value={row.bestReasoning} showEmpty /></td>
+              <td className="muted">{row.bestPrompt ?? '—'}</td>
               <td className={`numeric ${row.bestScore >= 990 ? 'perfect' : ''}`}>
                 {row.bestScore != null ? row.bestScore.toFixed(2) : '—'}
               </td>

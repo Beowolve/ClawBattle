@@ -3,6 +3,7 @@
 // `paused_from`. This replaces the in-memory queue in packages/runner/benchmark.js.
 
 import { randomUUID } from 'node:crypto';
+import { canonicalModel } from '../../../core/model-aliases.js';
 
 export function enqueueRun(db, opts) {
   const {
@@ -27,14 +28,15 @@ export function enqueueRun(db, opts) {
   if (!Array.isArray(targets) || targets.length === 0) {
     throw new Error('enqueueRun: targets must be a non-empty array');
   }
+  const canonical = canonicalModel(provider, model);
 
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO runs
-      (run_id, benchmark_version, model, provider,
+      (run_id, benchmark_version, model, canonical_model, provider,
        prompt_version, reasoning_effort,
        attempts_per_target, started_at,
        target_id, target_type, attempt, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   db.exec('BEGIN');
@@ -46,7 +48,7 @@ export function enqueueRun(db, opts) {
       for (let attempt = 1; attempt <= attemptsPerTarget; attempt++) {
         const status = attempt === 1 ? 'pending' : 'waiting';
         const { changes } = stmt.run(
-          runId, benchmarkVersion, model, provider,
+          runId, benchmarkVersion, model, canonical, provider,
           promptVersion, reasoningEffort,
           attemptsPerTarget, startedAt,
           targetId, targetType, attempt, status,

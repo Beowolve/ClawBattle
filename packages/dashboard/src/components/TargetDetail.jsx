@@ -163,8 +163,8 @@ export default function TargetDetail({
               <thead>
                 <tr>
                   <th>Model</th>
-                  <th>Prompt</th>
                   <th>Reasoning</th>
+                  <th>Prompt</th>
                   <th>Run</th>
                   <th className="numeric">Attempt</th>
                   <th className="numeric">Match</th>
@@ -181,8 +181,8 @@ export default function TargetDetail({
                     onClick={() => setSelected(r)}
                   >
                     <td className="modelName" title={r.model}>{r.model}</td>
-                    <td className="muted" style={{ fontSize: '0.82rem' }}>{r.prompt_version ?? '-'}</td>
                     <td><ReasoningBadge value={r.reasoning_effort} showEmpty /></td>
+                    <td className="muted" style={{ fontSize: '0.82rem' }}>{r.prompt_version ?? '-'}</td>
                     <td className="muted" style={{ fontSize: '0.82rem' }}>{r.run_id?.slice(0, 8)}</td>
                     <td className="numeric muted">{r.attempt}</td>
                     <td className={`numeric ${r.match >= 100 ? 'perfect' : ''}`}>

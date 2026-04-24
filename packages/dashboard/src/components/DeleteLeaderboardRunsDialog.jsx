@@ -1,6 +1,7 @@
 function formatGroupLabel(row) {
   const parts = [];
   if (row.reasoningEffort) parts.push(`reasoning=${row.reasoningEffort}`);
+  if (row.promptVersions?.length === 1) parts.push(`prompt=${row.promptVersions[0]}`);
   return parts.length > 0 ? `${row.model} (${parts.join(', ')})` : row.model;
 }
 
@@ -18,6 +19,7 @@ export default function DeleteLeaderboardRunsDialog({
 
   const promptVersions = row.promptVersions ?? [];
   const hasPromptSelection = promptVersions.length > 0;
+  const hasMultiplePrompts = promptVersions.length > 1;
   const canConfirm = !hasPromptSelection || selectedPrompts.length > 0;
 
   return (
@@ -38,7 +40,7 @@ export default function DeleteLeaderboardRunsDialog({
             This deletes all runs for <strong>{formatGroupLabel(row)}</strong>.
           </p>
 
-          {hasPromptSelection ? (
+          {hasMultiplePrompts ? (
             <>
               <p>Select which prompt versions should be removed for this entry.</p>
               <div className="dialogToolbar">
@@ -62,6 +64,8 @@ export default function DeleteLeaderboardRunsDialog({
                 ))}
               </div>
             </>
+          ) : hasPromptSelection ? (
+            <p>Prompt version <strong>{promptVersions[0]}</strong> will be removed for this entry.</p>
           ) : (
             <p>No stored prompt versions were found for this entry. The whole group will be deleted.</p>
           )}
