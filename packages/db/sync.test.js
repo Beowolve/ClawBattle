@@ -1,14 +1,34 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { uploadToSupabase } from './sync.js';
+import { downloadFromSupabase, uploadTargetsToSupabase, uploadToSupabase } from './sync.js';
 
-// Captures outgoing upserts so we can assert on what sync.js sends
-// without actually hitting Supabase.
-function mockSupabase() {
+function parseTable(url) {
+  return new URL(url).pathname.split('/').pop();
+}
+
+// Captures Supabase REST calls so we can assert on the sync contract without
+// hitting the remote project.
+function mockSupabase({ fetchPages = [], fail = null } = {}) {
   const calls = [];
   const originalFetch = global.fetch;
   global.fetch = async (url, opts) => {
-    calls.push({ url, table: url.split('/').pop(), body: JSON.parse(opts.body) });
+    const method = opts?.method ?? 'GET';
+    const table = parseTable(url);
+    const call = {
+      url,
+      method,
+      table,
+      headers: opts?.headers ?? {},
+      body: opts?.body ? JSON.parse(opts.body) : null,
+    };
+    calls.push(call);
+    if (fail?.(call)) {
+      return { ok: false, status: 500, text: async () => 'boom', json: async () => ({}) };
+    }
+    if (method === 'GET') {
+      const page = fetchPages.shift() ?? [];
+      return { ok: true, status: 200, text: async () => '', json: async () => page };
+    }
     return { ok: true, status: 200, text: async () => '', json: async () => ({}) };
   };
   return {
@@ -34,10 +54,172 @@ test('uploadToSupabase skips rows with status != done', async () => {
     assert.equal(payload[0].run_id, 'a');
     assert.equal(payload[0].target_id, '1');
     assert.equal(payload[0].attempt, 1);
+    assert.equal(new URL(sb.calls[0].url).searchParams.get('on_conflict'), 'run_id,target_id,attempt');
   } finally {
     sb.restore();
   }
 });
+
+test('uploadTargetsToSupabase uploads battle and daily targets in separate batches', async () => {
+  const sb = mockSupabase();
+  try {
+    const battleTargets = Array.from({ length: 501 }, (_, i) => ({
+      id: i + 1,
+      name: `Battle ${i + 1}`,
+      image_url: `https://img.test/battle/${i + 1}.png`,
+      colors: [],
+      battle_number: i + 1,
+    }));
+    const dailyTargets = Array.from({ length: 2 }, (_, i) => ({
+      key: `daily-${i + 1}`,
+      name: `Daily ${i + 1}`,
+      image_url: `https://img.test/daily/${i + 1}.png`,
+      colors: [],
+      date: `2026-04-${20 + i}`,
+    }));
+
+    const result = await uploadTargetsToSupabase({
+      url: 'https://sb.test',
+      key: 'k',
+      battleTargets,
+      dailyTargets,
+    });
+
+    assert.deepEqual(result, { uploadedBattle: 501, uploadedDaily: 2 });
+    assert.equal(sb.calls.length, 3);
+    assert.deepEqual(sb.calls.map(c => c.table), ['battle_targets', 'battle_targets', 'daily_targets']);
+    assert.deepEqual(sb.calls.map(c => c.body.length), [500, 1, 2]);
+    assert.deepEqual(
+      sb.calls.map(c => new URL(c.url).searchParams.get('on_conflict')),
+      ['id', 'id', 'key'],
+    );
+    for (const call of sb.calls) {
+      assert.equal(call.method, 'POST');
+      assert.equal(call.headers.Prefer, 'resolution=merge-duplicates,return=minimal');
+    }
+  } finally {
+    sb.restore();
+  }
+});
+
+test('downloadFromSupabase fetches all pages and passes rows to local upsert', async () => {
+  const page1 = Array.from({ length: 1000 }, (_, i) => ({
+    run_id: 'remote',
+    target_id: String(i + 1),
+    attempt: 1,
+  }));
+  const page2 = [
+    { run_id: 'remote', target_id: '1001', attempt: 1 },
+    { run_id: 'remote', target_id: '1002', attempt: 1 },
+  ];
+  const sb = mockSupabase({ fetchPages: [page1, page2] });
+  try {
+    let upsertedRows = null;
+    const result = await downloadFromSupabase({
+      url: 'https://sb.test',
+      key: 'k',
+      upsertRuns: (rows) => {
+        upsertedRows = rows;
+        return 7;
+      },
+    });
+
+    assert.deepEqual(result, { fetchedRuns: 1002, insertedRuns: 7 });
+    assert.equal(upsertedRows.length, 1002);
+    assert.equal(sb.calls.length, 2);
+    assert.equal(new URL(sb.calls[0].url).searchParams.get('limit'), '1000');
+    assert.equal(new URL(sb.calls[0].url).searchParams.get('offset'), '0');
+    assert.equal(new URL(sb.calls[1].url).searchParams.get('offset'), '1000');
+  } finally {
+    sb.restore();
+  }
+});
+
+test('downloadFromSupabase skips local upsert when remote has no runs', async () => {
+  const sb = mockSupabase({ fetchPages: [[]] });
+  try {
+    const result = await downloadFromSupabase({
+      url: 'https://sb.test',
+      key: 'k',
+      upsertRuns: () => assert.fail('upsert should not run for an empty download'),
+    });
+
+    assert.deepEqual(result, { fetchedRuns: 0, insertedRuns: 0 });
+    assert.equal(sb.calls.length, 1);
+  } finally {
+    sb.restore();
+  }
+});
+
+test('sync calls include Supabase error details', async () => {
+  const sb = mockSupabase({ fail: call => call.method === 'POST' && call.table === 'runs' });
+  try {
+    await assert.rejects(
+      uploadToSupabase({
+        url: 'https://sb.test',
+        key: 'k',
+        runs: [{ run_id: 'a', target_id: '1', attempt: 1, status: 'done' }],
+      }),
+      /Supabase upsert \(runs\) failed: HTTP 500 .* boom/,
+    );
+  } finally {
+    sb.restore();
+  }
+});
+
+test('uploadToSupabase retries without optional columns missing from older Supabase schemas', async () => {
+  let failedOnce = false;
+  const sb = mockSupabase({
+    fail: (call) => {
+      if (failedOnce || call.table !== 'runs' || call.body?.[0]?.canonical_model == null) return false;
+      failedOnce = true;
+      return true;
+    },
+  });
+  const originalFetch = global.fetch;
+  global.fetch = async (url, opts) => {
+    const call = {
+      method: opts?.method ?? 'GET',
+      table: parseTable(url),
+      body: opts?.body ? JSON.parse(opts.body) : null,
+    };
+    if (!failedOnce && call.table === 'runs' && call.body?.[0]?.canonical_model != null) {
+      failedOnce = true;
+      sb.calls.push({ ...call, url, headers: opts?.headers ?? {} });
+      return {
+        ok: false,
+        status: 400,
+        text: async () => JSON.stringify({
+          code: 'PGRST204',
+          message: "Could not find the 'canonical_model' column of 'runs' in the schema cache",
+        }),
+        json: async () => ({}),
+      };
+    }
+    return originalFetch(url, opts);
+  };
+  try {
+    const result = await uploadToSupabase({
+      url: 'https://sb.test',
+      key: 'k',
+      runs: [{
+        run_id: 'a',
+        target_id: '1',
+        attempt: 1,
+        status: 'done',
+        canonical_model: 'openai/gpt-5.4-mini',
+      }],
+    });
+
+    assert.deepEqual(result, { uploadedRuns: 1, omittedColumns: ['canonical_model'] });
+    assert.equal(sb.calls.length, 2);
+    assert.equal(sb.calls[0].body[0].canonical_model, 'openai/gpt-5.4-mini');
+    assert.equal('canonical_model' in sb.calls[1].body[0], false);
+  } finally {
+    sb.restore();
+  }
+});
+
 
 test('uploadToSupabase strips queue-only columns before upload', async () => {
   const sb = mockSupabase();
