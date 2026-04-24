@@ -2,6 +2,8 @@ name: Deploy Public Dashboard
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*.*.*'
   workflow_dispatch:
@@ -55,7 +57,7 @@ jobs:
           fi
 
   build:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -83,7 +85,7 @@ jobs:
           path: packages/dashboard/dist-public
 
   deploy:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     environment:
