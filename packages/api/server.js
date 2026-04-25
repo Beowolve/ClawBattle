@@ -27,6 +27,7 @@ import {
 } from './jobs.js';
 import { createRunsQueueRouter } from './routes/runs-queue.js';
 import { closeBrowser } from '../core/renderer.js';
+import { loadReasoningConfig, normalizeReasoningEffort } from '../core/model-reasoning.js';
 import { buildAttemptPreview } from './attempt-preview.js';
 
 const app = express();
@@ -51,6 +52,7 @@ app.get('/api/config', (req, res) => {
   res.json({
     promptVersion: process.env.PROMPT_VERSION ?? 'v3',
     availablePromptVersions: available,
+    modelReasoning: loadReasoningConfig(),
   });
 });
 
@@ -175,19 +177,20 @@ app.post('/api/runs/start', (req, res) => {
     reasoningEffort,
   } = req.body ?? {};
   if (!model) return res.status(400).json({ error: 'model required' });
+  const normalizedReasoningEffort = normalizeReasoningEffort(provider, model, reasoningEffort);
 
   const runId = crypto.randomUUID();
   const signal = createJob(runId, {
     model, provider,
     promptVersion: promptVersion ?? null,
-    reasoningEffort: reasoningEffort ?? null,
+    reasoningEffort: normalizedReasoningEffort,
   });
 
   const rangeStr = targetFrom != null || targetTo != null
     ? `${targetFrom ?? 1}-${targetTo ?? '*'}`
     : 'all';
   console.log(
-    `[API] Start run — runId=${runId} model=${model}${reasoningEffort ? ` [${reasoningEffort}]` : ''}` +
+    `[API] Start run — runId=${runId} model=${model}${normalizedReasoningEffort ? ` [${normalizedReasoningEffort}]` : ''}` +
     ` provider=${provider} prompt=${promptVersion} targets=${rangeStr} attempts=${attempts}` +
     ` concurrency=${concurrency}${fillMode ? ' fill' : ''}${resumeRunId ? ` resumeFrom=${resumeRunId}` : ''}`,
   );
@@ -200,7 +203,7 @@ app.post('/api/runs/start', (req, res) => {
     fillMode: Boolean(fillMode),
     targetFrom: targetFrom != null ? Number(targetFrom) : undefined,
     targetTo: targetTo != null ? Number(targetTo) : undefined,
-    reasoningEffort: reasoningEffort ?? undefined,
+    reasoningEffort: normalizedReasoningEffort,
     onProgress: (event) => pushEvent(runId, event),
   }).catch((err) => {
     if (err.name === 'AbortError') {

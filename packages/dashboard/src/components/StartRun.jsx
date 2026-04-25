@@ -4,7 +4,16 @@ import { useConfig, useRunHistory, useRunQueue } from '../hooks/useData.js';
 import RunQueue from './RunQueue.jsx';
 
 const PROVIDERS = ['openrouter', 'openai', 'ollama'];
-const REASONING_OPTIONS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
+const DEFAULT_REASONING_OPTION = 'default';
+const FALLBACK_REASONING_CONFIG = {
+  defaultOption: DEFAULT_REASONING_OPTION,
+  providerDefaults: {
+    openrouter: ['default', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
+    openai: ['default', 'low', 'medium', 'high', 'xhigh'],
+    ollama: ['default'],
+  },
+  modelOverrides: {},
+};
 const ATTEMPT_OPTIONS = [1, 2, 3, 5];
 const CONCURRENCY_OPTIONS = [1, 2, 3, 4, 5, 8, 10];
 const RETRY_OPTIONS = [0, 1, 2, 3];
@@ -49,6 +58,22 @@ function removeStoredActiveRunId(runId) {
   return writeStoredActiveRunIds(remaining);
 }
 
+function normalizeProvider(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function getReasoningOptions(config, provider, model) {
+  const reasoningConfig = config?.modelReasoning ?? FALLBACK_REASONING_CONFIG;
+  const providerName = normalizeProvider(provider);
+  const modelName = String(model ?? '').trim();
+  const defaultOption = reasoningConfig.defaultOption ?? DEFAULT_REASONING_OPTION;
+  const override = reasoningConfig.modelOverrides?.[providerName]?.[modelName];
+  const options = override?.length
+    ? override
+    : reasoningConfig.providerDefaults?.[providerName];
+  return options?.length ? options : [defaultOption];
+}
+
 export default function StartRun({ onStatusChange }) {
   const queryClient = useQueryClient();
   const { data: config } = useConfig();
@@ -60,7 +85,7 @@ export default function StartRun({ onStatusChange }) {
   const [attempts, setAttempts] = useState(3);
   const [concurrency, setConcurrency] = useState(5);
   const [retries, setRetries] = useState(1);
-  const [reasoningEffort, setReasoningEffort] = useState('medium');
+  const [reasoningEffort, setReasoningEffort] = useState(DEFAULT_REASONING_OPTION);
   const [targetFrom, setTargetFrom] = useState('1');
   const [targetTo, setTargetTo] = useState('25');
   const [fillMode, setFillMode] = useState(false);
@@ -97,6 +122,16 @@ export default function StartRun({ onStatusChange }) {
   }, [provider, runHistoryQ.data, runQueueQ.data]);
 
   const modelDatalistId = `model-suggestions-${provider}`;
+  const reasoningOptions = useMemo(
+    () => getReasoningOptions(config, provider, model),
+    [config, provider, model],
+  );
+
+  useEffect(() => {
+    if (!reasoningOptions.includes(reasoningEffort)) {
+      setReasoningEffort(reasoningOptions[0] ?? DEFAULT_REASONING_OPTION);
+    }
+  }, [reasoningEffort, reasoningOptions]);
 
   // On mount: reconnect to an active run if one was in progress before page refresh
   useEffect(() => {
@@ -328,9 +363,9 @@ export default function StartRun({ onStatusChange }) {
             value={reasoningEffort}
             onChange={(e) => setReasoningEffort(e.target.value)}
             disabled={isStarting}
-            title="Reasoning effort (for o-series / reasoning models)"
+            title="Reasoning effort for the selected provider/model"
           >
-            {REASONING_OPTIONS.map(v => (
+            {reasoningOptions.map(v => (
               <option key={v} value={v}>{v}</option>
             ))}
           </select>

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { IS_PUBLIC } from '../hooks/useData.js';
 import DeleteLeaderboardRunsDialog from './DeleteLeaderboardRunsDialog.jsx';
-import ReasoningBadge, { modelReasoningTitle } from './ReasoningBadge.jsx';
+import ReasoningBadge, { modelReasoningTitle, reasoningFilterLabel } from './ReasoningBadge.jsx';
 
 const EMPTY_REASONING_FILTER = '__empty__';
 
@@ -174,11 +174,11 @@ export default function Leaderboard({ rows, onModelSelect }) {
         <span className="filterLabel">Reasoning:</span>
         <select className="filterSelect" value={filterReasoning} onChange={e => setFilterReasoning(e.target.value)}>
           <option value="">All</option>
-          {reasoningOptions.map(reasoning => (
-            <option key={reasoning || EMPTY_REASONING_FILTER} value={reasoning || EMPTY_REASONING_FILTER}>
-              {reasoning || 'No reasoning'}
-            </option>
-          ))}
+            {reasoningOptions.map(reasoning => (
+              <option key={reasoning || EMPTY_REASONING_FILTER} value={reasoning || EMPTY_REASONING_FILTER}>
+                {reasoningFilterLabel(reasoning)}
+              </option>
+            ))}
         </select>
         <span className="filterLabel">Model:</span>
         <input

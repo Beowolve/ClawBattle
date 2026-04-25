@@ -2,12 +2,13 @@
 import { extractCode } from './extract-code.js';
 import { buildUserMessage } from './build-message.js';
 import { calculateTextCost } from '../model-pricing.js';
+import { shouldSendReasoningEffort } from '../model-reasoning.js';
 
 export function buildRequestBody({ model, prompt, images, reasoningEffort }) {
   return {
     model,
     messages: [{ role: 'user', content: buildUserMessage(prompt, images) }],
-    ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
+    ...(shouldSendReasoningEffort(reasoningEffort) ? { reasoning_effort: reasoningEffort } : {}),
   };
 }
 

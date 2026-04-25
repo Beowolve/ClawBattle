@@ -212,6 +212,32 @@ test('openrouter adapter omits reasoning block when reasoningEffort is empty', a
   }
 });
 
+test('openrouter adapter omits reasoning block when reasoningEffort="default"', async () => {
+  const originalKey = process.env.OPENROUTER_API_KEY;
+  process.env.OPENROUTER_API_KEY = 'test-key';
+
+  let capturedBody = null;
+  const restore = withMockedFetch(async (_url, options) => {
+    capturedBody = JSON.parse(options?.body ?? '{}');
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [{ message: { content: '```html\n<div>ok</div>\n```' } }],
+        usage: { total_tokens: 3 },
+      }),
+    };
+  });
+
+  try {
+    await generate({ model: 'm/x', prompt: 'test', images: [], reasoningEffort: 'default' });
+    assert.equal(capturedBody.reasoning, undefined);
+  } finally {
+    restore();
+    process.env.OPENROUTER_API_KEY = originalKey;
+  }
+});
+
 test('openrouter adapter applies forced provider routing from config', async () => {
   const originalKey = process.env.OPENROUTER_API_KEY;
   const originalConfigPath = process.env.OPENROUTER_PROVIDER_CONFIG_PATH;

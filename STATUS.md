@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-23
+Last updated: 2026-04-25
 
 ## What's Done
 
@@ -30,7 +30,7 @@ Last updated: 2026-04-23
 
 ### API
 - [x] REST endpoints — results, queue, history, target images
-- [x] `POST /api/runs/start` — kicks off benchmark async, returns runId; accepts concurrency, retries, resumeRunId, fillMode, targetFrom/To, reasoningEffort; logs run metadata on start
+- [x] `POST /api/runs/start` — kicks off benchmark async, returns runId; accepts concurrency, retries, resumeRunId, fillMode, targetFrom/To, reasoningEffort; normalizes reasoning via `config/model-reasoning.json`; logs run metadata on start
 - [x] `POST /api/runs/:runId/cancel` — aborts the run and pauses the queue (`{ cancelled, paused }`)
 - [x] `POST /api/runs/:runId/resume` — unified resume for paused and orphaned runs, with configurable resume concurrency
 - [x] `POST /api/runs/attempts/:id/retry` — single `error` → `pending`
@@ -48,7 +48,7 @@ Last updated: 2026-04-23
 - [x] Run History — clickable list of completed runs only; click filters the attempt table
 - [x] Target Grid — thumbnails, colors, best match per target
 - [x] Target Detail — sticky code/preview/target layout, Quirks Mode iframe, solutions table
-- [x] Start Run tab — model, provider, reasoning effort, attempts, concurrency, retries, target range, Fill toggle, cancel button; supports launching multiple runs in parallel and provider-scoped model autocomplete from existing runs
+- [x] Start Run tab — model, provider, config-driven reasoning effort, attempts, concurrency, retries, target range, Fill toggle, cancel button; supports launching multiple runs in parallel and provider-scoped model autocomplete from existing runs
 - [x] Leaderboard delete flow — targets a single leaderboard entry (`model + reasoning_effort`) and can limit deletion to selected prompt versions
 - [x] Insights — model consistency and cost efficiency compare model reasoning configurations separately (`model + reasoning_effort`)
 - [x] Active run indicator (pulsing dot on tab)
@@ -66,6 +66,7 @@ Last updated: 2026-04-23
 - [x] `scripts/recalculate-scores.js` — re-renders all stored runs with current scorer
 - [x] `scripts/upload-results.js` — uploads done-only runs to Supabase (queue state stays local)
 - [x] `scripts/download-results.js` — downloads runs from Supabase into local SQLite
+- [x] `scripts/audit-reasoning-runs.js` — reports invalid/legacy reasoning groups and applies safe `medium -> default` corrections on request
 - [x] `scripts/upload-targets.js` — seeds battle_targets / daily_targets in Supabase
 - [x] `scripts/sync-targets.js` — syncs targets + images from Supabase into local SQLite
 - [x] `scripts/export-human-stats.js` — exports compact `baselines/human_stats.json` from Supabase target leaderboard rows (`top1`, `top10Avg`, `p50`, `p90`, each as score+charCount pairs)

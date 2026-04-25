@@ -343,13 +343,19 @@ td.modelName {
   flex-shrink: 0;
 }
 
-.reasoningBadge--empty {
+.reasoningBadge--legacy {
   background: rgba(106, 120, 149, 0.10);
   border-color: rgba(106, 120, 149, 0.22);
   color: var(--muted-color);
 }
 
 .reasoningBadge--none {
+  background: rgba(106, 120, 149, 0.12);
+  border-color: rgba(106, 120, 149, 0.28);
+  color: var(--muted-color);
+}
+
+.reasoningBadge--default {
   background: rgba(106, 120, 149, 0.12);
   border-color: rgba(106, 120, 149, 0.28);
   color: var(--muted-color);
@@ -380,6 +386,12 @@ td.modelName {
 }
 
 .reasoningBadge--max {
+  background: rgba(201, 97, 121, 0.14);
+  border-color: rgba(201, 97, 121, 0.30);
+  color: var(--error-color);
+}
+
+.reasoningBadge--xhigh {
   background: rgba(201, 97, 121, 0.14);
   border-color: rgba(201, 97, 121, 0.30);
   color: var(--error-color);

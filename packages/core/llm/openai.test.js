@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { generate } from './openai.js';
+import { buildRequestBody, generate } from './openai.js';
 
 function withMockedFetch(handler) {
   const originalFetch = global.fetch;
@@ -73,3 +73,22 @@ test('openai adapter leaves cost null when pricing is unknown', async () => {
   }
 });
 
+test('openai adapter omits reasoning_effort when reasoningEffort="default"', () => {
+  const body = buildRequestBody({
+    model: 'gpt-5.4',
+    prompt: 'test',
+    images: [],
+    reasoningEffort: 'default',
+  });
+  assert.equal(body.reasoning_effort, undefined);
+});
+
+test('openai adapter sends explicit reasoning_effort values', () => {
+  const body = buildRequestBody({
+    model: 'gpt-5.4',
+    prompt: 'test',
+    images: [],
+    reasoningEffort: 'xhigh',
+  });
+  assert.equal(body.reasoning_effort, 'xhigh');
+});

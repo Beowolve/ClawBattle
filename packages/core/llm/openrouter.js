@@ -2,6 +2,7 @@
 import { extractCode } from './extract-code.js';
 import { buildUserMessage } from './build-message.js';
 import { resolveOpenRouterProviderRouting } from './openrouter-provider-config.js';
+import { shouldSendReasoningEffort } from '../model-reasoning.js';
 
 function normalizeAssistantContent(content) {
   if (typeof content === 'string') return content.trim();
@@ -73,7 +74,7 @@ export function buildRequestBody({ model, prompt, images, reasoningEffort }) {
     // Explicit opt-out: OpenRouter's `enabled: false` tells reasoning-capable
     // models to skip the thinking phase entirely.
     reasoning.enabled = false;
-  } else if (reasoningEffort) {
+  } else if (shouldSendReasoningEffort(reasoningEffort)) {
     reasoning.effort = reasoningEffort;
   }
 

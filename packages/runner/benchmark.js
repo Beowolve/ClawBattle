@@ -19,6 +19,7 @@ import {
 } from '../db/index.js';
 import { getDb } from '../db/adapters/sqlite/connection.js';
 import { enqueueRun } from '../db/adapters/sqlite/queue.js';
+import { normalizeReasoningEffort } from '../core/model-reasoning.js';
 import { workerLoop } from './worker-loop.js';
 
 const BENCHMARK_VERSION = '1.0';
@@ -39,12 +40,13 @@ export async function runBenchmark({
   reasoningEffort,
   runId: providedRunId, onProgress, signal,
 }) {
+  const normalizedReasoningEffort = normalizeReasoningEffort(provider, model, reasoningEffort);
   const runId = providedRunId ?? crypto.randomUUID();
   const startedAt = new Date().toISOString();
 
   console.log(`\nClawBattle Benchmark`);
   console.log(`  Run ID:              ${runId}`);
-  console.log(`  Model:               ${model}`);
+  console.log(`  Model:               ${model}${normalizedReasoningEffort ? ` [${normalizedReasoningEffort}]` : ''}`);
   console.log(`  Targets:             ${targetType}`);
   console.log(`  Attempts per target: ${attempts}`);
   console.log(`  Concurrency:         ${concurrency}\n`);
@@ -67,7 +69,7 @@ export async function runBenchmark({
     ? getExistingAttempts({
         model,
         promptVersion: promptVersion ?? null,
-        reasoningEffort: reasoningEffort ?? null,
+        reasoningEffort: normalizedReasoningEffort,
         targetType,
         targetIds: allDefs.map(d => d.id),
       })
@@ -131,7 +133,7 @@ export async function runBenchmark({
     model,
     provider,
     promptVersion: promptVersion ?? null,
-    reasoningEffort: reasoningEffort ?? null,
+    reasoningEffort: normalizedReasoningEffort,
     attemptsPerTarget: attempts,
     startedAt,
     targets: enqueueDefs.map(d => ({ id: d.id, type: targetType })),
@@ -312,6 +314,7 @@ export async function resumeWorkers({
   runId, model, provider, promptVersion, reasoningEffort,
   concurrency = 1, signal, onProgress,
 }) {
+  const normalizedReasoningEffort = normalizeReasoningEffort(provider, model, reasoningEffort);
   const promptTemplate = fs.readFileSync(path.join(PROMPTS_DIR, promptVersion, 'prompt.md'), 'utf8');
   const followupAppendix = fs.readFileSync(path.join(PROMPTS_DIR, promptVersion, 'followup.md'), 'utf8');
   const chromeVersion = await getChromeVersion();
@@ -329,7 +332,7 @@ export async function resumeWorkers({
   const statusSummary = counts.map(c => `${c.status}:${c.n}`).join(' ') || '(empty)';
   console.log(`\nClawBattle Resume`);
   console.log(`  Run ID:      ${runId}`);
-  console.log(`  Model:       ${model}${reasoningEffort ? ` [${reasoningEffort}]` : ''}`);
+  console.log(`  Model:       ${model}${normalizedReasoningEffort ? ` [${normalizedReasoningEffort}]` : ''}`);
   console.log(`  Provider:    ${provider}`);
   console.log(`  Prompt:      ${promptVersion}`);
   console.log(`  Targets:     ${range?.n ?? 0} (id ${range?.lo ?? '?'}–${range?.hi ?? '?'})`);

@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { IS_PUBLIC } from '../hooks/useData.js';
-import ReasoningBadge from './ReasoningBadge.jsx';
+import ReasoningBadge, { reasoningFilterLabel } from './ReasoningBadge.jsx';
 
 const EMPTY_REASONING_FILTER = '__empty__';
 
@@ -88,7 +88,7 @@ export default function TargetDetail({
             <option value="">All reasoning</option>
             {reasoningOptions.map(r => (
               <option key={r || EMPTY_REASONING_FILTER} value={r || EMPTY_REASONING_FILTER}>
-                {r || 'No reasoning'}
+                {reasoningFilterLabel(r)}
               </option>
             ))}
           </select>

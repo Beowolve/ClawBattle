@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "description": "Provider and model specific reasoning effort options. The value \"default\" means no reasoning parameter is sent and the provider/model default behavior applies.",
+  "defaultOption": "default",
+  "providerDefaults": {
+    "openai": ["default", "low", "medium", "high", "xhigh"],
+    "ollama": ["default"],
+    "openrouter": ["default", "none", "minimal", "low", "medium", "high", "xhigh"]
+  },
+  "modelOverrides": {
+    "openrouter": {
+      "google/gemma-4-31b-it": ["default"],
+      "qwen/qwen3.6-plus": ["default"],
+      "xiaomi/mimo-v2.5": ["default"],
+      "z-ai/glm-5v-turbo": ["default"]
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { generate } from './ollama.js';
+import { buildRequestBody, generate } from './ollama.js';
 
 function withMockedFetch(handler) {
   const originalFetch = global.fetch;
@@ -118,4 +118,16 @@ test('ollama adapter treats blank OLLAMA_API_KEY as unset', async () => {
     if (originalKey === undefined) delete process.env.OLLAMA_API_KEY;
     else process.env.OLLAMA_API_KEY = originalKey;
   }
+});
+
+test('ollama request body does not include reasoning settings', () => {
+  const body = buildRequestBody({
+    model: 'llama3',
+    prompt: 'hi',
+    images: [],
+    reasoningEffort: 'high',
+  });
+  assert.equal(body.reasoningEffort, undefined);
+  assert.equal(body.reasoning_effort, undefined);
+  assert.equal(body.reasoning, undefined);
 });

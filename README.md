@@ -44,7 +44,7 @@ CLI options:
 | `--prompt` | `v1`* | Prompt version (`v1`, `v2`, …) |
 | `--concurrency` | `1` | Run N targets in parallel |
 | `--retries` | `0` | Retry a target if all attempts error |
-| `--reasoning` | — | Reasoning effort for o-series models: `low` \| `medium` \| `high` |
+| `--reasoning` | `default` | Provider/model-specific reasoning effort from `config/model-reasoning.json`; `default` sends no reasoning parameter |
 
 *Set `PROMPT_VERSION=v2` in `.env` to change the default.
 
@@ -127,6 +127,7 @@ prompts/
 scripts/
   upload-results.js       Upload local SQLite results → Supabase (done rows only)
   download-results.js     Download results Supabase → local SQLite
+  audit-reasoning-runs.js Report invalid legacy reasoning_effort groups; --apply fixes safe cases
   upload-targets.js       Seed battle/daily targets in Supabase
   sync-targets.js         Sync target definitions + images from Supabase
   export-human-stats.js   Export compact human baseline stats from Supabase leaderboard rows
@@ -238,6 +239,12 @@ are flipped back to `pending` and their claim tokens are cleared.
 
 Queue state is local to each runner process — only `done` rows are ever
 synced to Supabase.
+
+Reasoning options are configured in `config/model-reasoning.json`. New runs
+store the explicit `default` value when no reasoning parameter is sent, so
+leaderboard groups do not depend on ambiguous `NULL` defaults. Run
+`npm run audit-reasoning` to inspect legacy or invalid reasoning groups; add
+`-- --apply` to apply the script's safe corrections.
 
 ## Running Tests
 

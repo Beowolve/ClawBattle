@@ -5,6 +5,7 @@
 import { parseArgs } from 'node:util';
 import { runBenchmark } from './benchmark.js';
 import { closeBrowser } from '../core/renderer.js';
+import { normalizeReasoningEffort } from '../core/model-reasoning.js';
 
 const { values } = parseArgs({
   options: {
@@ -27,6 +28,7 @@ if (!values.model) {
 }
 
 try {
+  const reasoningEffort = normalizeReasoningEffort(values.provider, values.model, values.reasoning);
   await runBenchmark({
     model:              values.model,
     provider:           values.provider,
@@ -36,7 +38,7 @@ try {
     promptVersion:      values.prompt,
     concurrency:        parseInt(values.concurrency),
     retries:            parseInt(values.retries),
-    reasoningEffort:    values.reasoning ?? undefined,
+    reasoningEffort,
   });
 } finally {
   await closeBrowser().catch(() => {});
