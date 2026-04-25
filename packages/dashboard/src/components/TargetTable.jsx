@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import ReasoningBadge from './ReasoningBadge.jsx';
+import humanStats from '../../../../baselines/human_stats.json';
 
 const COLS = [
   { key: 'num',           label: '#',          numeric: true },
@@ -9,6 +10,8 @@ const COLS = [
   { key: 'bestPrompt',    label: 'Prompt',     numeric: false },
   { key: 'bestScore',     label: 'Score',      numeric: true },
   { key: 'bestMatch',     label: 'Match',      numeric: true },
+  { key: 'humanRank1',    label: 'Human #1',   numeric: true },
+  { key: 'humanRank10',   label: 'Human Top10', numeric: true },
   { key: 'attempts',      label: 'Attempts',   numeric: true },
 ];
 
@@ -31,6 +34,8 @@ export default function TargetTable({ targets, type, runs, modelFilter, reasonin
         if (!best || (r.score ?? -Infinity) > (best.score ?? -Infinity)) best = r;
       }
 
+      const human = type === 'battle' ? humanStats.targets?.[String(targetId)] : null;
+
       return {
         target: t,
         num: t.target_number ?? t.id ?? 0,
@@ -39,6 +44,8 @@ export default function TargetTable({ targets, type, runs, modelFilter, reasonin
         bestPrompt: best?.prompt_version ?? null,
         bestReasoning: best?.reasoning_effort ?? null,
         bestScore: best?.score ?? null,
+        humanRank1: human?.top1?.score ?? null,
+        humanRank10: human?.top10Avg?.score ?? null,
         bestMatch: best?.match ?? null,
         attempts: targetRuns.length,
       };
@@ -101,6 +108,12 @@ export default function TargetTable({ targets, type, runs, modelFilter, reasonin
               </td>
               <td className={`numeric ${row.bestMatch >= 100 ? 'perfect' : ''}`}>
                 {row.bestMatch != null ? row.bestMatch.toFixed(2) + '%' : '—'}
+              </td>
+              <td className="numeric baselineText" title="Human #1 score for this target">
+                {row.humanRank1 != null ? row.humanRank1.toFixed(2) : '—'}
+              </td>
+              <td className="numeric baselineText" title="Average score of the top 10 human leaderboard entries for this target">
+                {row.humanRank10 != null ? row.humanRank10.toFixed(2) : '—'}
               </td>
               <td className="numeric muted">{row.attempts}</td>
             </tr>

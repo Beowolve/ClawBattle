@@ -14,6 +14,7 @@
   --chart-accent: #9c5fe0;
   --chart-accent-soft: rgba(156, 95, 224, 0.2);
   --perfect-color: #23897d;
+  --human-color: #2f8f3a;
 }
 
 [data-theme="dark"] {
@@ -31,6 +32,7 @@
   --chart-accent: #cca2ff;
   --chart-accent-soft: rgba(204, 162, 255, 0.2);
   --perfect-color: #70dfd1;
+  --human-color: #8fd49a;
 }
 
 /* ─── Reset & base ─────────────────────────────────────────────── */
@@ -460,17 +462,22 @@ td.modelName {
 }
 
 .baselineRow--human td {
-  color: color-mix(in srgb, var(--font-color) 82%, #23897d);
+  color: color-mix(in srgb, var(--font-color) 82%, var(--human-color));
 }
 
 .baselineModel {
   display: inline-block;
   width: 100%;
   overflow: hidden;
-  color: #156f65;
+  color: var(--human-color);
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.baselineText {
+  color: var(--human-color);
+  font-weight: 600;
 }
 
 .modelFilterBadge {
@@ -507,10 +514,13 @@ td.modelName {
   color: #e05555;
 }
 [data-theme="dark"] .baselineRow--human td {
-  color: color-mix(in srgb, var(--font-color) 82%, #70dfd1);
+  color: color-mix(in srgb, var(--font-color) 82%, var(--human-color));
 }
 [data-theme="dark"] .baselineModel {
-  color: #70dfd1;
+  color: var(--human-color);
+}
+[data-theme="dark"] .baselineText {
+  color: var(--human-color);
 }
 [data-theme="dark"] .modelFilterBadge {
   background: #aa1e2240;
