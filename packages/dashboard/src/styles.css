@@ -465,6 +465,10 @@ td.modelName {
   color: color-mix(in srgb, var(--font-color) 82%, var(--human-color));
 }
 
+.baselineRow--human td.perfect {
+  color: var(--perfect-color);
+}
+
 .baselineModel {
   display: inline-block;
   width: 100%;
@@ -515,6 +519,9 @@ td.modelName {
 }
 [data-theme="dark"] .baselineRow--human td {
   color: color-mix(in srgb, var(--font-color) 82%, var(--human-color));
+}
+[data-theme="dark"] .baselineRow--human td.perfect {
+  color: var(--perfect-color);
 }
 [data-theme="dark"] .baselineModel {
   color: var(--human-color);

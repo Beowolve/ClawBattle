@@ -261,7 +261,7 @@ export default function Leaderboard({ rows, onModelSelect }) {
                 <td><ReasoningBadge value={row.reasoningEffort} showEmpty /></td>
                 <td className="muted">
                   {row.isBaseline
-                    ? `targets 1-${row.baselineTargetMax ?? row.targets}`
+                    ? '-'
                     : row.promptVersions?.length ? row.promptVersions.join(', ') : '-'}
                 </td>
                 <td className="numeric">{row.targets}</td>
