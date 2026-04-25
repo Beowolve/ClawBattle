@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import humanStats from '../../../../baselines/human_stats.json';
 
 // ─── Local API (default) ──────────────────────────────────────────────────────
 
@@ -45,6 +46,54 @@ async function fetchAllFromSupabase(table, order = '', filter = '') {
 
 // Converts rows from the `leaderboard` or `leaderboard_by_version` Supabase view
 // into the shape expected by Leaderboard.jsx and App.jsx KPI cards.
+const HUMAN_BASELINES = [
+  { model: 'human/top1', statKey: 'top1' },
+  { model: 'human/top10', statKey: 'top10Avg' },
+  { model: 'human/rank100', statKey: 'rank100' },
+  { model: 'human/expert-player', statKey: 'p90' },
+  { model: 'human/avg-player', statKey: 'p50' },
+];
+
+function mean(values) {
+  return values.length
+    ? values.reduce((sum, value) => sum + value, 0) / values.length
+    : null;
+}
+
+function buildHumanBaselineRows(viewRows) {
+  const maxTargetId = Math.max(0, ...viewRows.map(r => Number(r.targets ?? 0)));
+  if (maxTargetId <= 0) return [];
+
+  return HUMAN_BASELINES.map(({ model, statKey }) => {
+    const values = [];
+    for (let targetId = 1; targetId <= maxTargetId; targetId += 1) {
+      const score = humanStats.targets?.[String(targetId)]?.[statKey]?.score;
+      if (Number.isFinite(Number(score))) values.push(Number(score));
+    }
+    if (!values.length) return null;
+
+    return {
+      model,
+      rawModel: model,
+      reasoningEffort: 'baseline',
+      provider: 'human',
+      promptVersions: [],
+      targets: values.length,
+      avgScore: mean(values),
+      avgMatch: 100,
+      avgDuration: null,
+      perfectCount: values.length,
+      perfectRate: 1,
+      totalCost: null,
+      avgCost: null,
+      isBaseline: true,
+      baselineSource: 'human',
+      baselineStat: statKey,
+      baselineTargetMax: maxTargetId,
+    };
+  }).filter(Boolean);
+}
+
 function transformLeaderboard(viewRows, allVersionRows = null) {
   const rows = viewRows.map(r => ({
     model:          r.model,
@@ -60,6 +109,7 @@ function transformLeaderboard(viewRows, allVersionRows = null) {
     perfectRate:    r.perfect_rate != null ? Number(r.perfect_rate) : null,
     totalCost:      r.total_cost  != null ? Number(r.total_cost)  : null,
     avgCost:        r.avg_cost    != null ? Number(r.avg_cost)    : null,
+    isBaseline:     false,
   }));
 
   const totalAttempts = viewRows.reduce((a, r) => a + Number(r.attempt_count ?? 0), 0);
@@ -72,7 +122,13 @@ function transformLeaderboard(viewRows, allVersionRows = null) {
     source.flatMap(r => r.prompt_versions ?? (r.prompt_version ? [r.prompt_version] : []))
   )].sort();
 
-  return { rows, totalAttempts, totalCost, models: rows.length, promptVersions };
+  return {
+    rows: [...rows, ...buildHumanBaselineRows(viewRows)],
+    totalAttempts,
+    totalCost,
+    models: rows.length,
+    promptVersions,
+  };
 }
 
 // ─── Public mode: insights transform ─────────────────────────────────────────
