@@ -7,6 +7,7 @@
 //
 // Notes:
 // - Defaults to cssbattle-feed's current leaderboard view.
+// - rank100 is the lowest retained row after --max-per-target sorting.
 // - p50/p90 are nearest-rank percentiles by score and preserve paired charCount.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -64,7 +65,7 @@ Options:
   --max-per-target=<n>             Max rows per target after sorting (default: 100)
   --top-n=<n>                      Top-N used for top10Avg pair (default: 10)
   --page-size=<n>                  Supabase page size (default: 1000)
-  --schema-version=<version>       Output schema version (default: 2.1.0)
+  --schema-version=<version>       Output schema version (default: 2.2.0)
 `);
 }
 
@@ -152,7 +153,7 @@ async function main() {
   const pageSize = asPositiveInt(args['page-size'], '--page-size', 1000);
   const maxPerTarget = asPositiveInt(args['max-per-target'], '--max-per-target', 100);
   const topN = asPositiveInt(args['top-n'], '--top-n', 10);
-  const schemaVersion = String(args['schema-version'] ?? '2.1.0');
+  const schemaVersion = String(args['schema-version'] ?? '2.2.0');
 
   const useTargetTypeFilter = targetType.toLowerCase() !== 'all';
   const fields = useTargetTypeFilter

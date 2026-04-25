@@ -121,6 +121,7 @@ targets/
   definitions/ Target metadata (colors, dimensions)
 baselines/
   human.json   Human expert top scores (reference baseline)
+  human_stats.json  Enriched per-target human leaderboard stats
 prompts/
   v1/          Original benchmark prompt
   v2/          Improved prompt (better color accuracy guidance)
@@ -162,6 +163,14 @@ node --env-file=.env scripts/export-human-stats.js \
   --output=baselines/human_stats.json \
   --max-per-target=100
 ```
+
+The export stores `top1`, `top10Avg`, `rank100`, `p50`, and `p90` as paired
+`score + charCount` values per target. The local leaderboard can optionally
+show synthetic human comparison rows (`human/top1`, `human/top10`,
+`human/rank100`, `human/expert-player`, `human/avg-player`) via the
+**Human Scores** checkbox. These rows are aggregated over battle targets
+`1..MAX(target_id)` from the current local benchmark scope, so partial runs
+compare against the same target range.
 
 Queue state (pending / running / waiting / paused / error attempts) never
 leaves the local process — only completed `done` rows are synced.

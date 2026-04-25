@@ -3,7 +3,94 @@
 // (enqueueRun / claimNextPending / completeAttempt / failAttempt).
 // `saveAttempt` below is a test-only shortcut that inserts a done row directly.
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { canonicalModel } from '../../../core/model-aliases.js';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+const HUMAN_STATS_PATH = path.join(ROOT, 'baselines', 'human_stats.json');
+const HUMAN_BASELINES = [
+  { model: 'human/top1', statKey: 'top1' },
+  { model: 'human/top10', statKey: 'top10Avg' },
+  { model: 'human/rank100', statKey: 'rank100' },
+  { model: 'human/expert-player', statKey: 'p90' },
+  { model: 'human/avg-player', statKey: 'p50' },
+];
+
+let humanStatsCache = null;
+
+function loadHumanStats() {
+  if (humanStatsCache !== null) return humanStatsCache;
+  try {
+    humanStatsCache = JSON.parse(fs.readFileSync(HUMAN_STATS_PATH, 'utf8'));
+  } catch {
+    humanStatsCache = null;
+  }
+  return humanStatsCache;
+}
+
+function getMaxBattleTargetId(db, promptVersion) {
+  const row = promptVersion
+    ? db.prepare(`
+        SELECT MAX(CAST(target_id AS INTEGER)) AS max_target_id
+        FROM attempt_results
+        WHERE target_type = 'battle'
+          AND prompt_version = ?
+          AND target_id GLOB '[0-9]*'
+      `).get(promptVersion)
+    : db.prepare(`
+        SELECT MAX(CAST(target_id AS INTEGER)) AS max_target_id
+        FROM attempt_results
+        WHERE target_type = 'battle'
+          AND target_id GLOB '[0-9]*'
+      `).get();
+
+  return Number(row?.max_target_id ?? 0);
+}
+
+function mean(values) {
+  return values.length
+    ? values.reduce((sum, value) => sum + value, 0) / values.length
+    : null;
+}
+
+function buildHumanBaselineRows(db, promptVersion) {
+  const stats = loadHumanStats();
+  const targets = stats?.targets;
+  const maxTargetId = getMaxBattleTargetId(db, promptVersion);
+  if (!targets || maxTargetId <= 0) return [];
+
+  return HUMAN_BASELINES.map(({ model, statKey }) => {
+    const values = [];
+    for (let targetId = 1; targetId <= maxTargetId; targetId += 1) {
+      const score = targets[String(targetId)]?.[statKey]?.score;
+      if (Number.isFinite(Number(score))) values.push(Number(score));
+    }
+
+    if (!values.length) return null;
+
+    return {
+      model,
+      rawModel: model,
+      reasoningEffort: 'baseline',
+      provider: 'human',
+      promptVersions: [],
+      targets: values.length,
+      avgScore: mean(values),
+      avgMatch: 100,
+      totalCost: null,
+      avgCost: null,
+      avgDuration: null,
+      perfectCount: values.length,
+      perfectRate: 1,
+      isBaseline: true,
+      baselineSource: 'human',
+      baselineStat: statKey,
+      baselineTargetMax: maxTargetId,
+    };
+  }).filter(Boolean);
+}
 
 export function saveAttempt(db, data) {
   const canonical = canonicalModel(data.provider, data.model);
@@ -80,8 +167,7 @@ export function getLeaderboard(db, promptVersion) {
     'SELECT DISTINCT prompt_version FROM attempt_results WHERE prompt_version IS NOT NULL ORDER BY prompt_version'
   ).all().map(r => r.prompt_version);
 
-  return {
-    rows: rows.map(r => ({
+  const leaderboardRows = rows.map(r => ({
       model: r.model,
       rawModel: r.raw_model ?? null,
       reasoningEffort: r.reasoning_effort ?? null,
@@ -95,7 +181,14 @@ export function getLeaderboard(db, promptVersion) {
       avgDuration: r.avg_duration_ms != null ? Number(r.avg_duration_ms) : null,
       perfectCount: Number(r.perfect_count),
       perfectRate: r.perfect_rate != null ? Number(r.perfect_rate) : null,
-    })),
+      isBaseline: false,
+    }));
+
+  return {
+    rows: [
+      ...leaderboardRows,
+      ...buildHumanBaselineRows(db, promptVersion),
+    ],
     totalAttempts: rows.reduce((a, r) => a + Number(r.attempt_count ?? 0), 0),
     totalCost: rows.reduce((a, r) => a + Number(r.total_cost ?? 0), 0),
     models: rows.length,

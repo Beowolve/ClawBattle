@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "1.0.0",
-  "updatedAt": "2026-04-22T22:55:12.763Z",
+  "schemaVersion": "2.2.0",
+  "updatedAt": "2026-04-25T17:49:43.232Z",
   "targets": {
     "1": {
       "n": 100,
@@ -9,6 +9,10 @@
         "charCount": 54
       },
       "top10Avg": {
+        "score": 839.08,
+        "charCount": 54
+      },
+      "rank100": {
         "score": 839.08,
         "charCount": 54
       },
@@ -31,6 +35,10 @@
         "score": 815.29,
         "charCount": 65
       },
+      "rank100": {
+        "score": 777.92,
+        "charCount": 85
+      },
       "p50": {
         "score": 783.08,
         "charCount": 82
@@ -49,6 +57,10 @@
       "top10Avg": {
         "score": 742.9,
         "charCount": 108
+      },
+      "rank100": {
+        "score": 733.67,
+        "charCount": 115
       },
       "p50": {
         "score": 738.87,
@@ -69,6 +81,10 @@
         "score": 769.61,
         "charCount": 90.7
       },
+      "rank100": {
+        "score": 696.67,
+        "charCount": 149
+      },
       "p50": {
         "score": 723.86,
         "charCount": 123
@@ -87,6 +103,10 @@
       "top10Avg": {
         "score": 729.08,
         "charCount": 118.8
+      },
+      "rank100": {
+        "score": 681.43,
+        "charCount": 167
       },
       "p50": {
         "score": 693.06,
@@ -107,6 +127,10 @@
         "score": 741.35,
         "charCount": 109.2
       },
+      "rank100": {
+        "score": 723.86,
+        "charCount": 123
+      },
       "p50": {
         "score": 723.86,
         "charCount": 123
@@ -123,6 +147,10 @@
         "charCount": 115
       },
       "top10Avg": {
+        "score": 733.67,
+        "charCount": 115
+      },
+      "rank100": {
         "score": 733.67,
         "charCount": 115
       },
@@ -145,6 +173,10 @@
         "score": 696.47,
         "charCount": 149.8
       },
+      "rank100": {
+        "score": 649.61,
+        "charCount": 219
+      },
       "p50": {
         "score": 658.33,
         "charCount": 202
@@ -163,6 +195,10 @@
       "top10Avg": {
         "score": 741.27,
         "charCount": 109.2
+      },
+      "rank100": {
+        "score": 698.53,
+        "charCount": 147
       },
       "p50": {
         "score": 706.34,
@@ -183,6 +219,10 @@
         "score": 670.41,
         "charCount": 182.4
       },
+      "rank100": {
+        "score": 632.62,
+        "charCount": 263
+      },
       "p50": {
         "score": 644.67,
         "charCount": 230
@@ -201,6 +241,10 @@
       "top10Avg": {
         "score": 709.74,
         "charCount": 135.7
+      },
+      "rank100": {
+        "score": 643.83,
+        "charCount": 232
       },
       "p50": {
         "score": 657.23,
@@ -221,6 +265,10 @@
         "score": 742.33,
         "charCount": 108.8
       },
+      "rank100": {
+        "score": 637.27,
+        "charCount": 249
+      },
       "p50": {
         "score": 666.03,
         "charCount": 189
@@ -239,6 +287,10 @@
       "top10Avg": {
         "score": 837.95,
         "charCount": 54.5
+      },
+      "rank100": {
+        "score": 815.28,
+        "charCount": 65
       },
       "p50": {
         "score": 830.13,
@@ -259,6 +311,10 @@
         "score": 745.04,
         "charCount": 106.5
       },
+      "rank100": {
+        "score": 649.61,
+        "charCount": 219
+      },
       "p50": {
         "score": 666.03,
         "charCount": 189
@@ -277,6 +333,10 @@
       "top10Avg": {
         "score": 746.49,
         "charCount": 105.4
+      },
+      "rank100": {
+        "score": 741.54,
+        "charCount": 109
       },
       "p50": {
         "score": 741.54,
@@ -297,6 +357,10 @@
         "score": 705.94,
         "charCount": 139.4
       },
+      "rank100": {
+        "score": 686.23,
+        "charCount": 161
+      },
       "p50": {
         "score": 692.17,
         "charCount": 154
@@ -315,6 +379,10 @@
       "top10Avg": {
         "score": 682.8,
         "charCount": 165.5
+      },
+      "rank100": {
+        "score": 643.83,
+        "charCount": 232
       },
       "p50": {
         "score": 653.03,
@@ -335,6 +403,10 @@
         "score": 704.33,
         "charCount": 141
       },
+      "rank100": {
+        "score": 675.45,
+        "charCount": 175
+      },
       "p50": {
         "score": 702.36,
         "charCount": 143
@@ -353,6 +425,10 @@
       "top10Avg": {
         "score": 723.17,
         "charCount": 124.1
+      },
+      "rank100": {
+        "score": 671.26,
+        "charCount": 181
       },
       "p50": {
         "score": 684.6,
@@ -373,6 +449,10 @@
         "score": 711.56,
         "charCount": 135.1
       },
+      "rank100": {
+        "score": 657.23,
+        "charCount": 204
+      },
       "p50": {
         "score": 668.6,
         "charCount": 185
@@ -391,6 +471,10 @@
       "top10Avg": {
         "score": 698.39,
         "charCount": 147.6
+      },
+      "rank100": {
+        "score": 647.75,
+        "charCount": 223
       },
       "p50": {
         "score": 655.62,
@@ -411,6 +495,10 @@
         "score": 751.2,
         "charCount": 102.6
       },
+      "rank100": {
+        "score": 687.89,
+        "charCount": 159
+      },
       "p50": {
         "score": 705.33,
         "charCount": 140
@@ -429,6 +517,10 @@
       "top10Avg": {
         "score": 763.98,
         "charCount": 93.6
+      },
+      "rank100": {
+        "score": 749.87,
+        "charCount": 103
       },
       "p50": {
         "score": 757.19,
@@ -449,6 +541,10 @@
         "score": 725.03,
         "charCount": 122.6
       },
+      "rank100": {
+        "score": 667.94,
+        "charCount": 186
+      },
       "p50": {
         "score": 675.45,
         "charCount": 175
@@ -467,6 +563,10 @@
       "top10Avg": {
         "score": 692.45,
         "charCount": 153.7
+      },
+      "rank100": {
+        "score": 651.05,
+        "charCount": 216
       },
       "p50": {
         "score": 660.03,
@@ -487,6 +587,10 @@
         "score": 734.09,
         "charCount": 114.9
       },
+      "rank100": {
+        "score": 671.94,
+        "charCount": 180
+      },
       "p50": {
         "score": 687.05,
         "charCount": 160
@@ -505,6 +609,10 @@
       "top10Avg": {
         "score": 729.91,
         "charCount": 118
+      },
+      "rank100": {
+        "score": 693.95,
+        "charCount": 152
       },
       "p50": {
         "score": 697.6,
@@ -525,6 +633,10 @@
         "score": 700.37,
         "charCount": 147.4
       },
+      "rank100": {
+        "score": 645.1,
+        "charCount": 229
+      },
       "p50": {
         "score": 660.03,
         "charCount": 199
@@ -543,6 +655,10 @@
       "top10Avg": {
         "score": 769,
         "charCount": 90.4
+      },
+      "rank100": {
+        "score": 722.68,
+        "charCount": 124
       },
       "p50": {
         "score": 745.65,
@@ -563,6 +679,10 @@
         "score": 782.73,
         "charCount": 82.2
       },
+      "rank100": {
+        "score": 774.56,
+        "charCount": 87
+      },
       "p50": {
         "score": 774.56,
         "charCount": 87
@@ -581,6 +701,10 @@
       "top10Avg": {
         "score": 774.09,
         "charCount": 87.3
+      },
+      "rank100": {
+        "score": 720.37,
+        "charCount": 126
       },
       "p50": {
         "score": 734.95,
@@ -601,6 +725,10 @@
         "score": 744.47,
         "charCount": 106.9
       },
+      "rank100": {
+        "score": 690.43,
+        "charCount": 156
+      },
       "p50": {
         "score": 705.33,
         "charCount": 140
@@ -619,6 +747,10 @@
       "top10Avg": {
         "score": 704.05,
         "charCount": 141.7
+      },
+      "rank100": {
+        "score": 655.09,
+        "charCount": 208
       },
       "p50": {
         "score": 659.46,
@@ -639,6 +771,10 @@
         "score": 754.81,
         "charCount": 99.6
       },
+      "rank100": {
+        "score": 686.23,
+        "charCount": 161
+      },
       "p50": {
         "score": 713.68,
         "charCount": 132
@@ -657,6 +793,10 @@
       "top10Avg": {
         "score": 697.74,
         "charCount": 148
+      },
+      "rank100": {
+        "score": 653.54,
+        "charCount": 211
       },
       "p50": {
         "score": 665.4,
@@ -677,6 +817,10 @@
         "score": 736.38,
         "charCount": 113
       },
+      "rank100": {
+        "score": 698.53,
+        "charCount": 147
+      },
       "p50": {
         "score": 701.39,
         "charCount": 144
@@ -695,6 +839,10 @@
       "top10Avg": {
         "score": 737.92,
         "charCount": 111.8
+      },
+      "rank100": {
+        "score": 681.43,
+        "charCount": 167
       },
       "p50": {
         "score": 696.67,
@@ -715,6 +863,10 @@
         "score": 748.96,
         "charCount": 103.8
       },
+      "rank100": {
+        "score": 723.86,
+        "charCount": 123
+      },
       "p50": {
         "score": 729.91,
         "charCount": 118
@@ -733,6 +885,10 @@
       "top10Avg": {
         "score": 717.03,
         "charCount": 129.1
+      },
+      "rank100": {
+        "score": 667.3,
+        "charCount": 187
       },
       "p50": {
         "score": 672.63,
@@ -753,6 +909,10 @@
         "score": 743.17,
         "charCount": 107.8
       },
+      "rank100": {
+        "score": 712.6,
+        "charCount": 133
+      },
       "p50": {
         "score": 726.24,
         "charCount": 121
@@ -771,6 +931,10 @@
       "top10Avg": {
         "score": 703.24,
         "charCount": 142.1
+      },
+      "rank100": {
+        "score": 652.03,
+        "charCount": 214
       },
       "p50": {
         "score": 671.94,
@@ -791,6 +955,10 @@
         "score": 672.05,
         "charCount": 181.4
       },
+      "rank100": {
+        "score": 623.59,
+        "charCount": 297
+      },
       "p50": {
         "score": 637.99,
         "charCount": 247
@@ -809,6 +977,10 @@
       "top10Avg": {
         "score": 722.27,
         "charCount": 124.9
+      },
+      "rank100": {
+        "score": 693.95,
+        "charCount": 152
       },
       "p50": {
         "score": 698.53,
@@ -829,6 +1001,10 @@
         "score": 742.83,
         "charCount": 108.4
       },
+      "rank100": {
+        "score": 688.73,
+        "charCount": 158
+      },
       "p50": {
         "score": 708.39,
         "charCount": 137
@@ -847,6 +1023,10 @@
       "top10Avg": {
         "score": 698.64,
         "charCount": 147
+      },
+      "rank100": {
+        "score": 653.54,
+        "charCount": 211
       },
       "p50": {
         "score": 674.03,
@@ -867,6 +1047,10 @@
         "score": 756.48,
         "charCount": 98.5
       },
+      "rank100": {
+        "score": 674.03,
+        "charCount": 177
+      },
       "p50": {
         "score": 696.67,
         "charCount": 149
@@ -885,6 +1069,10 @@
       "top10Avg": {
         "score": 655.06,
         "charCount": 209.8
+      },
+      "rank100": {
+        "score": 613.96,
+        "charCount": 352
       },
       "p50": {
         "score": 619.68,
@@ -905,6 +1093,10 @@
         "score": 720.72,
         "charCount": 125.7
       },
+      "rank100": {
+        "score": 691.3,
+        "charCount": 155
+      },
       "p50": {
         "score": 705.33,
         "charCount": 140
@@ -923,6 +1115,10 @@
       "top10Avg": {
         "score": 677.27,
         "charCount": 172.8
+      },
+      "rank100": {
+        "score": 619.49,
+        "charCount": 317
       },
       "p50": {
         "score": 625.7,
@@ -943,6 +1139,10 @@
         "score": 624.4,
         "charCount": 294.5
       },
+      "rank100": {
+        "score": 604.62,
+        "charCount": 468
+      },
       "p50": {
         "score": 610.1,
         "charCount": 386
@@ -961,6 +1161,10 @@
       "top10Avg": {
         "score": 654.36,
         "charCount": 209.8
+      },
+      "rank100": {
+        "score": 619.31,
+        "charCount": 318
       },
       "p50": {
         "score": 625.7,
@@ -981,6 +1185,10 @@
         "score": 671.63,
         "charCount": 183.9
       },
+      "rank100": {
+        "score": 620.45,
+        "charCount": 312
+      },
       "p50": {
         "score": 643.41,
         "charCount": 233
@@ -999,6 +1207,10 @@
       "top10Avg": {
         "score": 723.51,
         "charCount": 123.3
+      },
+      "rank100": {
+        "score": 680.66,
+        "charCount": 168
       },
       "p50": {
         "score": 698.53,
@@ -1019,6 +1231,10 @@
         "score": 649.11,
         "charCount": 221.2
       },
+      "rank100": {
+        "score": 609.27,
+        "charCount": 395
+      },
       "p50": {
         "score": 613.7,
         "charCount": 354
@@ -1037,6 +1253,10 @@
       "top10Avg": {
         "score": 705.17,
         "charCount": 140.4
+      },
+      "rank100": {
+        "score": 652.53,
+        "charCount": 213
       },
       "p50": {
         "score": 667.3,
@@ -1057,6 +1277,10 @@
         "score": 675.19,
         "charCount": 175.4
       },
+      "rank100": {
+        "score": 612.1,
+        "charCount": 367
+      },
       "p50": {
         "score": 618.24,
         "charCount": 324
@@ -1075,6 +1299,10 @@
       "top10Avg": {
         "score": 664.29,
         "charCount": 191.9
+      },
+      "rank100": {
+        "score": 626.2,
+        "charCount": 286
       },
       "p50": {
         "score": 639.09,
@@ -1095,6 +1323,10 @@
         "score": 644.07,
         "charCount": 232
       },
+      "rank100": {
+        "score": 608.75,
+        "charCount": 401
+      },
       "p50": {
         "score": 619.13,
         "charCount": 319
@@ -1113,6 +1345,10 @@
       "top10Avg": {
         "score": 682.26,
         "charCount": 167
+      },
+      "rank100": {
+        "score": 621.44,
+        "charCount": 307
       },
       "p50": {
         "score": 636.22,
@@ -1133,6 +1369,10 @@
         "score": 755.69,
         "charCount": 99
       },
+      "rank100": {
+        "score": 653.03,
+        "charCount": 212
+      },
       "p50": {
         "score": 674.03,
         "charCount": 177
@@ -1151,6 +1391,10 @@
       "top10Avg": {
         "score": 667.55,
         "charCount": 186.7
+      },
+      "rank100": {
+        "score": 604.85,
+        "charCount": 463
       },
       "p50": {
         "score": 615.96,
@@ -1171,6 +1415,10 @@
         "score": 685.74,
         "charCount": 161.6
       },
+      "rank100": {
+        "score": 684.6,
+        "charCount": 163
+      },
       "p50": {
         "score": 684.6,
         "charCount": 163
@@ -1189,6 +1437,10 @@
       "top10Avg": {
         "score": 687.76,
         "charCount": 159.3
+      },
+      "rank100": {
+        "score": 650.56,
+        "charCount": 217
       },
       "p50": {
         "score": 673.33,
@@ -1209,6 +1461,10 @@
         "score": 694.43,
         "charCount": 151.5
       },
+      "rank100": {
+        "score": 631.4,
+        "charCount": 267
+      },
       "p50": {
         "score": 655.62,
         "charCount": 207
@@ -1227,6 +1483,10 @@
       "top10Avg": {
         "score": 656.69,
         "charCount": 205
+      },
+      "rank100": {
+        "score": 612.57,
+        "charCount": 363
       },
       "p50": {
         "score": 628,
@@ -1247,6 +1507,10 @@
         "score": 695.49,
         "charCount": 150.3
       },
+      "rank100": {
+        "score": 610.49,
+        "charCount": 382
+      },
       "p50": {
         "score": 627.21,
         "charCount": 282
@@ -1265,6 +1529,10 @@
       "top10Avg": {
         "score": 735.73,
         "charCount": 113.4
+      },
+      "rank100": {
+        "score": 671.94,
+        "charCount": 180
       },
       "p50": {
         "score": 693.95,
@@ -1285,6 +1553,10 @@
         "score": 702.6,
         "charCount": 142.8
       },
+      "rank100": {
+        "score": 663.56,
+        "charCount": 193
+      },
       "p50": {
         "score": 679.9,
         "charCount": 169
@@ -1301,6 +1573,10 @@
         "charCount": 206
       },
       "top10Avg": {
+        "score": 656.15,
+        "charCount": 206
+      },
+      "rank100": {
         "score": 656.15,
         "charCount": 206
       },
@@ -1323,6 +1599,10 @@
         "score": 648.13,
         "charCount": 222.8
       },
+      "rank100": {
+        "score": 612.7,
+        "charCount": 362
+      },
       "p50": {
         "score": 626.7,
         "charCount": 284
@@ -1339,6 +1619,10 @@
         "charCount": 344
       },
       "top10Avg": {
+        "score": 615.07,
+        "charCount": 344
+      },
+      "rank100": {
         "score": 615.07,
         "charCount": 344
       },
@@ -1361,6 +1645,10 @@
         "score": 666.39,
         "charCount": 188.5
       },
+      "rank100": {
+        "score": 604.89,
+        "charCount": 462
+      },
       "p50": {
         "score": 615.22,
         "charCount": 343
@@ -1379,6 +1667,10 @@
       "top10Avg": {
         "score": 619.13,
         "charCount": 319
+      },
+      "rank100": {
+        "score": 618.59,
+        "charCount": 322
       },
       "p50": {
         "score": 618.94,
@@ -1399,6 +1691,10 @@
         "score": 616.27,
         "charCount": 336.7
       },
+      "rank100": {
+        "score": 600.45,
+        "charCount": 713
+      },
       "p50": {
         "score": 605.33,
         "charCount": 453
@@ -1417,6 +1713,10 @@
       "top10Avg": {
         "score": 627.05,
         "charCount": 282.8
+      },
+      "rank100": {
+        "score": 602.61,
+        "charCount": 528
       },
       "p50": {
         "score": 605.04,
@@ -1437,6 +1737,10 @@
         "score": 671.24,
         "charCount": 186.6
       },
+      "rank100": {
+        "score": 615.22,
+        "charCount": 343
+      },
       "p50": {
         "score": 625.22,
         "charCount": 290
@@ -1455,6 +1759,10 @@
       "top10Avg": {
         "score": 666.56,
         "charCount": 188.3
+      },
+      "rank100": {
+        "score": 628,
+        "charCount": 279
       },
       "p50": {
         "score": 654.57,
@@ -1475,6 +1783,10 @@
         "score": 634.67,
         "charCount": 257.1
       },
+      "rank100": {
+        "score": 607.96,
+        "charCount": 411
+      },
       "p50": {
         "score": 614.37,
         "charCount": 349
@@ -1493,6 +1805,10 @@
       "top10Avg": {
         "score": 646.57,
         "charCount": 226.9
+      },
+      "rank100": {
+        "score": 605.87,
+        "charCount": 443
       },
       "p50": {
         "score": 617.39,
@@ -1513,6 +1829,10 @@
         "score": 677.79,
         "charCount": 174
       },
+      "rank100": {
+        "score": 621.44,
+        "charCount": 307
+      },
       "p50": {
         "score": 632,
         "charCount": 265
@@ -1531,6 +1851,10 @@
       "top10Avg": {
         "score": 715.52,
         "charCount": 132.3
+      },
+      "rank100": {
+        "score": 646.41,
+        "charCount": 226
       },
       "p50": {
         "score": 658.33,
@@ -1551,6 +1875,10 @@
         "score": 714.06,
         "charCount": 131.7
       },
+      "rank100": {
+        "score": 672.63,
+        "charCount": 179
+      },
       "p50": {
         "score": 694.85,
         "charCount": 151
@@ -1569,6 +1897,10 @@
       "top10Avg": {
         "score": 710.43,
         "charCount": 135.1
+      },
+      "rank100": {
+        "score": 636.22,
+        "charCount": 252
       },
       "p50": {
         "score": 651.54,
@@ -1589,6 +1921,10 @@
         "score": 760.21,
         "charCount": 96
       },
+      "rank100": {
+        "score": 758.69,
+        "charCount": 97
+      },
       "p50": {
         "score": 760.21,
         "charCount": 96
@@ -1607,6 +1943,10 @@
       "top10Avg": {
         "score": 716.32,
         "charCount": 129.7
+      },
+      "rank100": {
+        "score": 661.18,
+        "charCount": 197
       },
       "p50": {
         "score": 676.91,
@@ -1627,6 +1967,10 @@
         "score": 718.27,
         "charCount": 128
       },
+      "rank100": {
+        "score": 659.46,
+        "charCount": 200
+      },
       "p50": {
         "score": 674.74,
         "charCount": 176
@@ -1645,6 +1989,10 @@
       "top10Avg": {
         "score": 705.07,
         "charCount": 140.4
+      },
+      "rank100": {
+        "score": 629.37,
+        "charCount": 274
       },
       "p50": {
         "score": 643.41,
@@ -1665,6 +2013,10 @@
         "score": 765.69,
         "charCount": 93.3
       },
+      "rank100": {
+        "score": 655.62,
+        "charCount": 207
+      },
       "p50": {
         "score": 683.8,
         "charCount": 164
@@ -1683,6 +2035,10 @@
       "top10Avg": {
         "score": 717.48,
         "charCount": 128.6
+      },
+      "rank100": {
+        "score": 667.94,
+        "charCount": 186
       },
       "p50": {
         "score": 690.43,
@@ -1703,6 +2059,10 @@
         "score": 716.68,
         "charCount": 129.3
       },
+      "rank100": {
+        "score": 687.05,
+        "charCount": 160
+      },
       "p50": {
         "score": 700.43,
         "charCount": 145
@@ -1719,6 +2079,10 @@
         "charCount": 125
       },
       "top10Avg": {
+        "score": 721.52,
+        "charCount": 125
+      },
+      "rank100": {
         "score": 721.52,
         "charCount": 125
       },
@@ -1741,6 +2105,10 @@
         "score": 739.28,
         "charCount": 110.7
       },
+      "rank100": {
+        "score": 643,
+        "charCount": 234
+      },
       "p50": {
         "score": 676.91,
         "charCount": 173
@@ -1759,6 +2127,10 @@
       "top10Avg": {
         "score": 652.81,
         "charCount": 214
+      },
+      "rank100": {
+        "score": 607.59,
+        "charCount": 416
       },
       "p50": {
         "score": 615.81,
@@ -1779,6 +2151,10 @@
         "score": 691.66,
         "charCount": 154.6
       },
+      "rank100": {
+        "score": 675.45,
+        "charCount": 175
+      },
       "p50": {
         "score": 679.14,
         "charCount": 170
@@ -1797,6 +2173,10 @@
       "top10Avg": {
         "score": 698.92,
         "charCount": 146.6
+      },
+      "rank100": {
+        "score": 655.09,
+        "charCount": 208
       },
       "p50": {
         "score": 675.45,
@@ -1817,6 +2197,10 @@
         "score": 706.34,
         "charCount": 139
       },
+      "rank100": {
+        "score": 624.98,
+        "charCount": 291
+      },
       "p50": {
         "score": 680.66,
         "charCount": 168
@@ -1835,6 +2219,10 @@
       "top10Avg": {
         "score": 641.75,
         "charCount": 237.6
+      },
+      "rank100": {
+        "score": 605.98,
+        "charCount": 441
       },
       "p50": {
         "score": 608.51,
@@ -1855,6 +2243,10 @@
         "score": 677.43,
         "charCount": 172.8
       },
+      "rank100": {
+        "score": 622.07,
+        "charCount": 304
+      },
       "p50": {
         "score": 631.7,
         "charCount": 266
@@ -1873,6 +2265,10 @@
       "top10Avg": {
         "score": 690.28,
         "charCount": 156.2
+      },
+      "rank100": {
+        "score": 647.3,
+        "charCount": 224
       },
       "p50": {
         "score": 672.63,
@@ -1893,6 +2289,10 @@
         "score": 640.04,
         "charCount": 241.5
       },
+      "rank100": {
+        "score": 639.84,
+        "charCount": 242
+      },
       "p50": {
         "score": 639.84,
         "charCount": 242
@@ -1911,6 +2311,10 @@
       "top10Avg": {
         "score": 685.63,
         "charCount": 162.1
+      },
+      "rank100": {
+        "score": 617.06,
+        "charCount": 331
       },
       "p50": {
         "score": 653.54,
@@ -1931,6 +2335,10 @@
         "score": 649.16,
         "charCount": 221
       },
+      "rank100": {
+        "score": 600.9,
+        "charCount": 640
+      },
       "p50": {
         "score": 601.98,
         "charCount": 557
@@ -1949,6 +2357,10 @@
       "top10Avg": {
         "score": 639.3,
         "charCount": 243.6
+      },
+      "rank100": {
+        "score": 600.64,
+        "charCount": 675
       },
       "p50": {
         "score": 605.38,
@@ -1969,6 +2381,10 @@
         "score": 647.77,
         "charCount": 226.7
       },
+      "rank100": {
+        "score": 606.04,
+        "charCount": 440
+      },
       "p50": {
         "score": 611.65,
         "charCount": 371
@@ -1987,6 +2403,10 @@
       "top10Avg": {
         "score": 631.92,
         "charCount": 265.3
+      },
+      "rank100": {
+        "score": 603.47,
+        "charCount": 498
       },
       "p50": {
         "score": 607.23,
@@ -2007,6 +2427,10 @@
         "score": 714.12,
         "charCount": 131.6
       },
+      "rank100": {
+        "score": 713.68,
+        "charCount": 132
+      },
       "p50": {
         "score": 713.68,
         "charCount": 132
@@ -2025,6 +2449,10 @@
       "top10Avg": {
         "score": 626.03,
         "charCount": 287
+      },
+      "rank100": {
+        "score": 601.7,
+        "charCount": 573
       },
       "p50": {
         "score": 603.16,
@@ -2045,6 +2473,10 @@
         "score": 624.49,
         "charCount": 293.1
       },
+      "rank100": {
+        "score": 604.08,
+        "charCount": 481
+      },
       "p50": {
         "score": 610.9,
         "charCount": 378
@@ -2063,6 +2495,10 @@
       "top10Avg": {
         "score": 803.32,
         "charCount": 71
+      },
+      "rank100": {
+        "score": 727.45,
+        "charCount": 120
       },
       "p50": {
         "score": 771.26,
@@ -2083,6 +2519,10 @@
         "score": 735.36,
         "charCount": 113.7
       },
+      "rank100": {
+        "score": 659.46,
+        "charCount": 200
+      },
       "p50": {
         "score": 679.9,
         "charCount": 169
@@ -2099,6 +2539,10 @@
         "charCount": 114
       },
       "top10Avg": {
+        "score": 734.95,
+        "charCount": 114
+      },
+      "rank100": {
         "score": 734.95,
         "charCount": 114
       },
@@ -2121,6 +2565,10 @@
         "score": 788.39,
         "charCount": 79
       },
+      "rank100": {
+        "score": 671.94,
+        "charCount": 180
+      },
       "p50": {
         "score": 690.43,
         "charCount": 156
@@ -2139,6 +2587,10 @@
       "top10Avg": {
         "score": 825.79,
         "charCount": 60
+      },
+      "rank100": {
+        "score": 768.03,
+        "charCount": 91
       },
       "p50": {
         "score": 792.02,
@@ -2159,6 +2611,10 @@
         "score": 779.62,
         "charCount": 84
       },
+      "rank100": {
+        "score": 729.91,
+        "charCount": 118
+      },
       "p50": {
         "score": 742.9,
         "charCount": 108
@@ -2177,6 +2633,10 @@
       "top10Avg": {
         "score": 719.46,
         "charCount": 126.8
+      },
+      "rank100": {
+        "score": 643,
+        "charCount": 234
       },
       "p50": {
         "score": 652.53,
@@ -2197,6 +2657,10 @@
         "score": 698.19,
         "charCount": 147.4
       },
+      "rank100": {
+        "score": 637.27,
+        "charCount": 249
+      },
       "p50": {
         "score": 652.53,
         "charCount": 213
@@ -2215,6 +2679,10 @@
       "top10Avg": {
         "score": 676.45,
         "charCount": 176.7
+      },
+      "rank100": {
+        "score": 608.43,
+        "charCount": 405
       },
       "p50": {
         "score": 619.68,
@@ -2235,6 +2703,10 @@
         "score": 695.69,
         "charCount": 150.2
       },
+      "rank100": {
+        "score": 632,
+        "charCount": 265
+      },
       "p50": {
         "score": 647.75,
         "charCount": 223
@@ -2253,6 +2725,10 @@
       "top10Avg": {
         "score": 687.93,
         "charCount": 161.3
+      },
+      "rank100": {
+        "score": 611.76,
+        "charCount": 370
       },
       "p50": {
         "score": 620.06,
@@ -2273,6 +2749,10 @@
         "score": 650.56,
         "charCount": 217
       },
+      "rank100": {
+        "score": 648.67,
+        "charCount": 221
+      },
       "p50": {
         "score": 650.08,
         "charCount": 218
@@ -2291,6 +2771,10 @@
       "top10Avg": {
         "score": 679.71,
         "charCount": 170.3
+      },
+      "rank100": {
+        "score": 625.7,
+        "charCount": 288
       },
       "p50": {
         "score": 635.88,
@@ -2311,6 +2795,10 @@
         "score": 658.81,
         "charCount": 201.2
       },
+      "rank100": {
+        "score": 613.96,
+        "charCount": 352
+      },
       "p50": {
         "score": 619.13,
         "charCount": 319
@@ -2329,6 +2817,10 @@
       "top10Avg": {
         "score": 710.22,
         "charCount": 135.3
+      },
+      "rank100": {
+        "score": 623.36,
+        "charCount": 298
       },
       "p50": {
         "score": 633.24,
@@ -2349,6 +2841,10 @@
         "score": 647.66,
         "charCount": 224.6
       },
+      "rank100": {
+        "score": 605.76,
+        "charCount": 445
+      },
       "p50": {
         "score": 616.42,
         "charCount": 335
@@ -2367,6 +2863,10 @@
       "top10Avg": {
         "score": 683.9,
         "charCount": 163.9
+      },
+      "rank100": {
+        "score": 613.06,
+        "charCount": 359
       },
       "p50": {
         "score": 642.19,
@@ -2387,6 +2887,10 @@
         "score": 691.33,
         "charCount": 155.3
       },
+      "rank100": {
+        "score": 620.06,
+        "charCount": 314
+      },
       "p50": {
         "score": 626.2,
         "charCount": 286
@@ -2405,6 +2909,10 @@
       "top10Avg": {
         "score": 701.45,
         "charCount": 145
+      },
+      "rank100": {
+        "score": 621.44,
+        "charCount": 307
       },
       "p50": {
         "score": 633.88,
@@ -2425,6 +2933,10 @@
         "score": 759.21,
         "charCount": 97.2
       },
+      "rank100": {
+        "score": 656.15,
+        "charCount": 206
+      },
       "p50": {
         "score": 669.25,
         "charCount": 184
@@ -2444,6 +2956,10 @@
         "score": 701.55,
         "charCount": 143.9
       },
+      "rank100": {
+        "score": 666.03,
+        "charCount": 189
+      },
       "p50": {
         "score": 673.33,
         "charCount": 178
@@ -2460,6 +2976,10 @@
         "charCount": 119
       },
       "top10Avg": {
+        "score": 728.67,
+        "charCount": 119
+      },
+      "rank100": {
         "score": 728.67,
         "charCount": 119
       },
@@ -2482,6 +3002,10 @@
         "score": 680.47,
         "charCount": 168.3
       },
+      "rank100": {
+        "score": 646.85,
+        "charCount": 225
+      },
       "p50": {
         "score": 664.78,
         "charCount": 191
@@ -2500,6 +3024,10 @@
       "top10Avg": {
         "score": 692.04,
         "charCount": 154.2
+      },
+      "rank100": {
+        "score": 633.56,
+        "charCount": 260
       },
       "p50": {
         "score": 642.59,
@@ -2520,6 +3048,10 @@
         "score": 687.05,
         "charCount": 160
       },
+      "rank100": {
+        "score": 612.34,
+        "charCount": 365
+      },
       "p50": {
         "score": 622.92,
         "charCount": 300
@@ -2538,6 +3070,10 @@
       "top10Avg": {
         "score": 755.57,
         "charCount": 99.4
+      },
+      "rank100": {
+        "score": 723.86,
+        "charCount": 123
       },
       "p50": {
         "score": 727.45,
@@ -2558,6 +3094,10 @@
         "score": 742.98,
         "charCount": 108.5
       },
+      "rank100": {
+        "score": 644.25,
+        "charCount": 231
+      },
       "p50": {
         "score": 666.03,
         "charCount": 189
@@ -2577,6 +3117,10 @@
         "score": 721.92,
         "charCount": 124.7
       },
+      "rank100": {
+        "score": 689.58,
+        "charCount": 157
+      },
       "p50": {
         "score": 715.87,
         "charCount": 130
@@ -2593,6 +3137,10 @@
         "charCount": 82
       },
       "top10Avg": {
+        "score": 783.08,
+        "charCount": 82
+      },
+      "rank100": {
         "score": 783.08,
         "charCount": 82
       },
@@ -2615,6 +3163,10 @@
         "score": 697.85,
         "charCount": 147.9
       },
+      "rank100": {
+        "score": 654.57,
+        "charCount": 209
+      },
       "p50": {
         "score": 664.78,
         "charCount": 191
@@ -2633,6 +3185,10 @@
       "top10Avg": {
         "score": 753.77,
         "charCount": 100.5
+      },
+      "rank100": {
+        "score": 674.03,
+        "charCount": 177
       },
       "p50": {
         "score": 698.53,
@@ -2653,6 +3209,10 @@
         "score": 775.41,
         "charCount": 86.5
       },
+      "rank100": {
+        "score": 675.45,
+        "charCount": 175
+      },
       "p50": {
         "score": 699.48,
         "charCount": 146
@@ -2672,6 +3232,10 @@
         "score": 724.33,
         "charCount": 123.3
       },
+      "rank100": {
+        "score": 654.57,
+        "charCount": 209
+      },
       "p50": {
         "score": 665.4,
         "charCount": 190
@@ -2688,6 +3252,10 @@
         "charCount": 99
       },
       "top10Avg": {
+        "score": 755.69,
+        "charCount": 99
+      },
+      "rank100": {
         "score": 755.69,
         "charCount": 99
       },
@@ -2710,6 +3278,10 @@
         "score": 836.81,
         "charCount": 55
       },
+      "rank100": {
+        "score": 805.26,
+        "charCount": 70
+      },
       "p50": {
         "score": 819.42,
         "charCount": 63
@@ -2728,6 +3300,10 @@
       "top10Avg": {
         "score": 744.72,
         "charCount": 107.6
+      },
+      "rank100": {
+        "score": 652.53,
+        "charCount": 213
       },
       "p50": {
         "score": 696.67,
@@ -2748,6 +3324,10 @@
         "score": 760.48,
         "charCount": 96.6
       },
+      "rank100": {
+        "score": 698.53,
+        "charCount": 147
+      },
       "p50": {
         "score": 707.36,
         "charCount": 138
@@ -2766,6 +3346,10 @@
       "top10Avg": {
         "score": 759.61,
         "charCount": 96.4
+      },
+      "rank100": {
+        "score": 706.34,
+        "charCount": 139
       },
       "p50": {
         "score": 711.53,
@@ -2786,6 +3370,10 @@
         "score": 737.17,
         "charCount": 112.4
       },
+      "rank100": {
+        "score": 683.8,
+        "charCount": 164
+      },
       "p50": {
         "score": 690.43,
         "charCount": 156
@@ -2802,6 +3390,10 @@
         "charCount": 100
       },
       "top10Avg": {
+        "score": 754.22,
+        "charCount": 100
+      },
+      "rank100": {
         "score": 754.22,
         "charCount": 100
       },
@@ -2824,6 +3416,10 @@
         "score": 690.57,
         "charCount": 156.2
       },
+      "rank100": {
+        "score": 620.06,
+        "charCount": 314
+      },
       "p50": {
         "score": 641.79,
         "charCount": 237
@@ -2842,6 +3438,10 @@
       "top10Avg": {
         "score": 758.39,
         "charCount": 98.1
+      },
+      "rank100": {
+        "score": 675.45,
+        "charCount": 175
       },
       "p50": {
         "score": 697.6,
@@ -2862,6 +3462,10 @@
         "score": 653.07,
         "charCount": 214.6
       },
+      "rank100": {
+        "score": 610.49,
+        "charCount": 382
+      },
       "p50": {
         "score": 622.92,
         "charCount": 300
@@ -2880,6 +3484,10 @@
       "top10Avg": {
         "score": 629.8,
         "charCount": 280.1
+      },
+      "rank100": {
+        "score": 601.14,
+        "charCount": 615
       },
       "p50": {
         "score": 608.35,
@@ -2900,6 +3508,10 @@
         "score": 690.82,
         "charCount": 156
       },
+      "rank100": {
+        "score": 632.62,
+        "charCount": 263
+      },
       "p50": {
         "score": 652.53,
         "charCount": 213
@@ -2918,6 +3530,10 @@
       "top10Avg": {
         "score": 681.06,
         "charCount": 167.5
+      },
+      "rank100": {
+        "score": 616.27,
+        "charCount": 336
       },
       "p50": {
         "score": 618.77,
@@ -2938,6 +3554,10 @@
         "score": 748.95,
         "charCount": 103.8
       },
+      "rank100": {
+        "score": 659.46,
+        "charCount": 200
+      },
       "p50": {
         "score": 682.21,
         "charCount": 166
@@ -2956,6 +3576,10 @@
       "top10Avg": {
         "score": 722.72,
         "charCount": 124
+      },
+      "rank100": {
+        "score": 624.5,
+        "charCount": 293
       },
       "p50": {
         "score": 652.53,
@@ -2976,6 +3600,10 @@
         "score": 643.39,
         "charCount": 237
       },
+      "rank100": {
+        "score": 606.51,
+        "charCount": 432
+      },
       "p50": {
         "score": 614.1,
         "charCount": 351
@@ -2994,6 +3622,10 @@
       "top10Avg": {
         "score": 709.41,
         "charCount": 136.1
+      },
+      "rank100": {
+        "score": 644.67,
+        "charCount": 230
       },
       "p50": {
         "score": 668.6,
@@ -3014,6 +3646,10 @@
         "score": 793.85,
         "charCount": 76
       },
+      "rank100": {
+        "score": 748.45,
+        "charCount": 104
+      },
       "p50": {
         "score": 774.56,
         "charCount": 87
@@ -3032,6 +3668,10 @@
       "top10Avg": {
         "score": 741.54,
         "charCount": 109
+      },
+      "rank100": {
+        "score": 729.91,
+        "charCount": 118
       },
       "p50": {
         "score": 741.54,
@@ -3052,6 +3692,10 @@
         "score": 769.64,
         "charCount": 90
       },
+      "rank100": {
+        "score": 683.8,
+        "charCount": 164
+      },
       "p50": {
         "score": 731.15,
         "charCount": 117
@@ -3070,6 +3714,10 @@
       "top10Avg": {
         "score": 752.75,
         "charCount": 101
+      },
+      "rank100": {
+        "score": 718.1,
+        "charCount": 128
       },
       "p50": {
         "score": 744.26,
@@ -3090,6 +3738,10 @@
         "score": 704.34,
         "charCount": 141
       },
+      "rank100": {
+        "score": 652.03,
+        "charCount": 214
+      },
       "p50": {
         "score": 675.45,
         "charCount": 175
@@ -3108,6 +3760,10 @@
       "top10Avg": {
         "score": 652.1,
         "charCount": 213.9
+      },
+      "rank100": {
+        "score": 618.77,
+        "charCount": 321
       },
       "p50": {
         "score": 634.54,
@@ -3128,6 +3784,10 @@
         "score": 674.63,
         "charCount": 177
       },
+      "rank100": {
+        "score": 624.74,
+        "charCount": 292
+      },
       "p50": {
         "score": 643.83,
         "charCount": 232
@@ -3146,6 +3806,10 @@
       "top10Avg": {
         "score": 648.5,
         "charCount": 221.6
+      },
+      "rank100": {
+        "score": 610.2,
+        "charCount": 385
       },
       "p50": {
         "score": 621.65,
@@ -3166,6 +3830,10 @@
         "score": 668.31,
         "charCount": 185.6
       },
+      "rank100": {
+        "score": 639.47,
+        "charCount": 243
+      },
       "p50": {
         "score": 651.05,
         "charCount": 216
@@ -3184,6 +3852,10 @@
       "top10Avg": {
         "score": 743.72,
         "charCount": 107.4
+      },
+      "rank100": {
+        "score": 690.43,
+        "charCount": 156
       },
       "p50": {
         "score": 701.39,
@@ -3204,6 +3876,10 @@
         "score": 635.03,
         "charCount": 256.2
       },
+      "rank100": {
+        "score": 610.9,
+        "charCount": 378
+      },
       "p50": {
         "score": 613.83,
         "charCount": 353
@@ -3222,6 +3898,10 @@
       "top10Avg": {
         "score": 685.11,
         "charCount": 162.5
+      },
+      "rank100": {
+        "score": 649.61,
+        "charCount": 219
       },
       "p50": {
         "score": 666.03,
@@ -3242,6 +3922,10 @@
         "score": 673.66,
         "charCount": 181.3
       },
+      "rank100": {
+        "score": 624.74,
+        "charCount": 292
+      },
       "p50": {
         "score": 633.88,
         "charCount": 259
@@ -3260,6 +3944,10 @@
       "top10Avg": {
         "score": 691.24,
         "charCount": 156.1
+      },
+      "rank100": {
+        "score": 625.22,
+        "charCount": 290
       },
       "p50": {
         "score": 636.22,
@@ -3280,6 +3968,10 @@
         "score": 692.93,
         "charCount": 153.5
       },
+      "rank100": {
+        "score": 627.21,
+        "charCount": 282
+      },
       "p50": {
         "score": 639.47,
         "charCount": 243
@@ -3298,6 +3990,10 @@
       "top10Avg": {
         "score": 647.3,
         "charCount": 225.1
+      },
+      "rank100": {
+        "score": 609.81,
+        "charCount": 389
       },
       "p50": {
         "score": 619.87,
@@ -3318,6 +4014,10 @@
         "score": 619.68,
         "charCount": 326.4
       },
+      "rank100": {
+        "score": 601.47,
+        "charCount": 588
+      },
       "p50": {
         "score": 603.57,
         "charCount": 495
@@ -3336,6 +4036,10 @@
       "top10Avg": {
         "score": 638.11,
         "charCount": 247.9
+      },
+      "rank100": {
+        "score": 604.54,
+        "charCount": 470
       },
       "p50": {
         "score": 609.09,
@@ -3356,6 +4060,10 @@
         "score": 616.94,
         "charCount": 338.2
       },
+      "rank100": {
+        "score": 600.55,
+        "charCount": 692
+      },
       "p50": {
         "score": 601.68,
         "charCount": 574
@@ -3374,6 +4082,10 @@
       "top10Avg": {
         "score": 664.69,
         "charCount": 191.4
+      },
+      "rank100": {
+        "score": 612.46,
+        "charCount": 364
       },
       "p50": {
         "score": 624.74,
@@ -3394,6 +4106,10 @@
         "score": 760.29,
         "charCount": 96
       },
+      "rank100": {
+        "score": 744.26,
+        "charCount": 107
+      },
       "p50": {
         "score": 744.26,
         "charCount": 107
@@ -3412,6 +4128,10 @@
       "top10Avg": {
         "score": 792.02,
         "charCount": 77
+      },
+      "rank100": {
+        "score": 788.39,
+        "charCount": 79
       },
       "p50": {
         "score": 792.02,
@@ -3432,6 +4152,10 @@
         "score": 771.26,
         "charCount": 89
       },
+      "rank100": {
+        "score": 689.58,
+        "charCount": 157
+      },
       "p50": {
         "score": 714.77,
         "charCount": 131
@@ -3450,6 +4174,10 @@
       "top10Avg": {
         "score": 792.02,
         "charCount": 77
+      },
+      "rank100": {
+        "score": 737.55,
+        "charCount": 112
       },
       "p50": {
         "score": 774.56,
@@ -3470,6 +4198,10 @@
         "score": 683.6,
         "charCount": 164.6
       },
+      "rank100": {
+        "score": 626.45,
+        "charCount": 285
+      },
       "p50": {
         "score": 650.08,
         "charCount": 218
@@ -3488,6 +4220,10 @@
       "top10Avg": {
         "score": 668.67,
         "charCount": 185.2
+      },
+      "rank100": {
+        "score": 625.95,
+        "charCount": 287
       },
       "p50": {
         "score": 640.61,
@@ -3508,6 +4244,10 @@
         "score": 613.24,
         "charCount": 360.6
       },
+      "rank100": {
+        "score": 601.89,
+        "charCount": 562
+      },
       "p50": {
         "score": 607.37,
         "charCount": 419
@@ -3526,6 +4266,10 @@
       "top10Avg": {
         "score": 677.08,
         "charCount": 173.7
+      },
+      "rank100": {
+        "score": 624.27,
+        "charCount": 294
       },
       "p50": {
         "score": 641.39,
@@ -3546,6 +4290,10 @@
         "score": 702.42,
         "charCount": 143.2
       },
+      "rank100": {
+        "score": 634.21,
+        "charCount": 258
+      },
       "p50": {
         "score": 661.18,
         "charCount": 197
@@ -3564,6 +4312,10 @@
       "top10Avg": {
         "score": 684.42,
         "charCount": 163.3
+      },
+      "rank100": {
+        "score": 634.54,
+        "charCount": 257
       },
       "p50": {
         "score": 652.03,
@@ -3584,6 +4336,10 @@
         "score": 684.94,
         "charCount": 162.6
       },
+      "rank100": {
+        "score": 625.46,
+        "charCount": 289
+      },
       "p50": {
         "score": 646.41,
         "charCount": 226
@@ -3602,6 +4358,10 @@
       "top10Avg": {
         "score": 677.34,
         "charCount": 172.7
+      },
+      "rank100": {
+        "score": 633.56,
+        "charCount": 260
       },
       "p50": {
         "score": 647.3,
@@ -3622,6 +4382,10 @@
         "score": 679.98,
         "charCount": 169.3
       },
+      "rank100": {
+        "score": 638.72,
+        "charCount": 245
+      },
       "p50": {
         "score": 649.14,
         "charCount": 220
@@ -3640,6 +4404,10 @@
       "top10Avg": {
         "score": 702.48,
         "charCount": 142.9
+      },
+      "rank100": {
+        "score": 674.03,
+        "charCount": 177
       },
       "p50": {
         "score": 685.41,
@@ -3660,6 +4428,10 @@
         "score": 642.53,
         "charCount": 237.3
       },
+      "rank100": {
+        "score": 605.98,
+        "charCount": 441
+      },
       "p50": {
         "score": 612.46,
         "charCount": 364
@@ -3678,6 +4450,10 @@
       "top10Avg": {
         "score": 659.65,
         "charCount": 200.1
+      },
+      "rank100": {
+        "score": 611,
+        "charCount": 377
       },
       "p50": {
         "score": 620.45,
@@ -3698,6 +4474,10 @@
         "score": 616.96,
         "charCount": 339.2
       },
+      "rank100": {
+        "score": 597.14,
+        "charCount": 530
+      },
       "p50": {
         "score": 597.26,
         "charCount": 470
@@ -3716,6 +4496,10 @@
       "top10Avg": {
         "score": 679.14,
         "charCount": 170
+      },
+      "rank100": {
+        "score": 623.36,
+        "charCount": 298
       },
       "p50": {
         "score": 636.22,
@@ -3736,6 +4520,10 @@
         "score": 648.92,
         "charCount": 221.5
       },
+      "rank100": {
+        "score": 597.51,
+        "charCount": 346
+      },
       "p50": {
         "score": 604.85,
         "charCount": 463
@@ -3754,6 +4542,10 @@
       "top10Avg": {
         "score": 678.9,
         "charCount": 170.4
+      },
+      "rank100": {
+        "score": 625.46,
+        "charCount": 289
       },
       "p50": {
         "score": 638.35,
@@ -3774,6 +4566,10 @@
         "score": 648.88,
         "charCount": 222.5
       },
+      "rank100": {
+        "score": 607.37,
+        "charCount": 419
+      },
       "p50": {
         "score": 614.93,
         "charCount": 345
@@ -3792,6 +4588,10 @@
       "top10Avg": {
         "score": 743.76,
         "charCount": 108.1
+      },
+      "rank100": {
+        "score": 657.78,
+        "charCount": 203
       },
       "p50": {
         "score": 671.26,
@@ -3812,6 +4612,10 @@
         "score": 683.71,
         "charCount": 164.9
       },
+      "rank100": {
+        "score": 631.4,
+        "charCount": 267
+      },
       "p50": {
         "score": 643.83,
         "charCount": 232
@@ -3830,6 +4634,10 @@
       "top10Avg": {
         "score": 656.75,
         "charCount": 206.7
+      },
+      "rank100": {
+        "score": 608.59,
+        "charCount": 403
       },
       "p50": {
         "score": 616.27,
@@ -3850,6 +4658,10 @@
         "score": 624.5,
         "charCount": 296
       },
+      "rank100": {
+        "score": 602.79,
+        "charCount": 521
+      },
       "p50": {
         "score": 607.66,
         "charCount": 415
@@ -3868,6 +4680,10 @@
       "top10Avg": {
         "score": 673.92,
         "charCount": 177.6
+      },
+      "rank100": {
+        "score": 619.31,
+        "charCount": 318
       },
       "p50": {
         "score": 627.74,
@@ -3888,6 +4704,10 @@
         "score": 656.08,
         "charCount": 207
       },
+      "rank100": {
+        "score": 607.03,
+        "charCount": 424
+      },
       "p50": {
         "score": 618.94,
         "charCount": 320
@@ -3906,6 +4726,10 @@
       "top10Avg": {
         "score": 632.74,
         "charCount": 267.7
+      },
+      "rank100": {
+        "score": 603.68,
+        "charCount": 492
       },
       "p50": {
         "score": 607.73,
@@ -3926,6 +4750,10 @@
         "score": 714.35,
         "charCount": 131.4
       },
+      "rank100": {
+        "score": 671.94,
+        "charCount": 180
+      },
       "p50": {
         "score": 688.73,
         "charCount": 158
@@ -3944,6 +4772,10 @@
       "top10Avg": {
         "score": 646.59,
         "charCount": 228
+      },
+      "rank100": {
+        "score": 612.94,
+        "charCount": 360
       },
       "p50": {
         "score": 620.45,
@@ -3964,6 +4796,10 @@
         "score": 632.83,
         "charCount": 264.1
       },
+      "rank100": {
+        "score": 602.63,
+        "charCount": 527
+      },
       "p50": {
         "score": 609.63,
         "charCount": 391
@@ -3982,6 +4818,10 @@
       "top10Avg": {
         "score": 708.08,
         "charCount": 137.3
+      },
+      "rank100": {
+        "score": 664.17,
+        "charCount": 192
       },
       "p50": {
         "score": 680.66,
@@ -4002,6 +4842,10 @@
         "score": 639.83,
         "charCount": 243.4
       },
+      "rank100": {
+        "score": 613.31,
+        "charCount": 357
+      },
       "p50": {
         "score": 620.25,
         "charCount": 313
@@ -4020,6 +4864,10 @@
       "top10Avg": {
         "score": 670.46,
         "charCount": 182.2
+      },
+      "rank100": {
+        "score": 614.37,
+        "charCount": 349
       },
       "p50": {
         "score": 623.14,
@@ -4040,6 +4888,10 @@
         "score": 672.08,
         "charCount": 179.8
       },
+      "rank100": {
+        "score": 612.82,
+        "charCount": 361
+      },
       "p50": {
         "score": 625.46,
         "charCount": 289
@@ -4058,6 +4910,10 @@
       "top10Avg": {
         "score": 656.18,
         "charCount": 207.2
+      },
+      "rank100": {
+        "score": 614.37,
+        "charCount": 349
       },
       "p50": {
         "score": 618.06,
@@ -4078,6 +4934,10 @@
         "score": 691.82,
         "charCount": 154.8
       },
+      "rank100": {
+        "score": 630.22,
+        "charCount": 271
+      },
       "p50": {
         "score": 646.85,
         "charCount": 225
@@ -4096,6 +4956,10 @@
       "top10Avg": {
         "score": 655.15,
         "charCount": 209.2
+      },
+      "rank100": {
+        "score": 616.74,
+        "charCount": 333
       },
       "p50": {
         "score": 624.27,
@@ -4116,6 +4980,10 @@
         "score": 725.8,
         "charCount": 121.4
       },
+      "rank100": {
+        "score": 671.94,
+        "charCount": 180
+      },
       "p50": {
         "score": 693.95,
         "charCount": 152
@@ -4134,6 +5002,10 @@
       "top10Avg": {
         "score": 674.8,
         "charCount": 176.6
+      },
+      "rank100": {
+        "score": 621.04,
+        "charCount": 309
       },
       "p50": {
         "score": 636.57,
@@ -4154,6 +5026,10 @@
         "score": 684.1,
         "charCount": 163.7
       },
+      "rank100": {
+        "score": 618.06,
+        "charCount": 325
+      },
       "p50": {
         "score": 629.09,
         "charCount": 275
@@ -4172,6 +5048,10 @@
       "top10Avg": {
         "score": 702.9,
         "charCount": 143
+      },
+      "rank100": {
+        "score": 616.74,
+        "charCount": 333
       },
       "p50": {
         "score": 635.54,
@@ -4192,6 +5072,10 @@
         "score": 713.7,
         "charCount": 132.1
       },
+      "rank100": {
+        "score": 657.78,
+        "charCount": 203
+      },
       "p50": {
         "score": 670.59,
         "charCount": 182
@@ -4210,6 +5094,10 @@
       "top10Avg": {
         "score": 664.05,
         "charCount": 192.7
+      },
+      "rank100": {
+        "score": 628.82,
+        "charCount": 276
       },
       "p50": {
         "score": 635.88,
@@ -4230,6 +5118,10 @@
         "score": 684.56,
         "charCount": 163.8
       },
+      "rank100": {
+        "score": 623.59,
+        "charCount": 297
+      },
       "p50": {
         "score": 631.1,
         "charCount": 268
@@ -4248,6 +5140,10 @@
       "top10Avg": {
         "score": 696.46,
         "charCount": 149.7
+      },
+      "rank100": {
+        "score": 628.82,
+        "charCount": 276
       },
       "p50": {
         "score": 643.83,
@@ -4268,6 +5164,10 @@
         "score": 677.32,
         "charCount": 172.9
       },
+      "rank100": {
+        "score": 631.1,
+        "charCount": 268
+      },
       "p50": {
         "score": 641.79,
         "charCount": 237
@@ -4286,6 +5186,10 @@
       "top10Avg": {
         "score": 737.28,
         "charCount": 112.4
+      },
+      "rank100": {
+        "score": 669.92,
+        "charCount": 183
       },
       "p50": {
         "score": 684.6,
@@ -4306,6 +5210,10 @@
         "score": 686.05,
         "charCount": 161.3
       },
+      "rank100": {
+        "score": 643,
+        "charCount": 234
+      },
       "p50": {
         "score": 656.69,
         "charCount": 205
@@ -4324,6 +5232,10 @@
       "top10Avg": {
         "score": 701.34,
         "charCount": 144.4
+      },
+      "rank100": {
+        "score": 622.71,
+        "charCount": 301
       },
       "p50": {
         "score": 633.24,
@@ -4344,6 +5256,10 @@
         "score": 690.74,
         "charCount": 155.9
       },
+      "rank100": {
+        "score": 649.61,
+        "charCount": 219
+      },
       "p50": {
         "score": 666.03,
         "charCount": 189
@@ -4362,6 +5278,10 @@
       "top10Avg": {
         "score": 680.53,
         "charCount": 168.4
+      },
+      "rank100": {
+        "score": 625.95,
+        "charCount": 287
       },
       "p50": {
         "score": 648.67,
@@ -4382,6 +5302,10 @@
         "score": 699.46,
         "charCount": 146.4
       },
+      "rank100": {
+        "score": 623.36,
+        "charCount": 298
+      },
       "p50": {
         "score": 637.27,
         "charCount": 249
@@ -4400,6 +5324,10 @@
       "top10Avg": {
         "score": 646.88,
         "charCount": 225.8
+      },
+      "rank100": {
+        "score": 610.2,
+        "charCount": 385
       },
       "p50": {
         "score": 616.74,
@@ -4420,6 +5348,10 @@
         "score": 677.59,
         "charCount": 173.4
       },
+      "rank100": {
+        "score": 615.96,
+        "charCount": 338
+      },
       "p50": {
         "score": 628.27,
         "charCount": 278
@@ -4438,6 +5370,10 @@
       "top10Avg": {
         "score": 657.71,
         "charCount": 204.7
+      },
+      "rank100": {
+        "score": 607.17,
+        "charCount": 422
       },
       "p50": {
         "score": 613.44,
@@ -4458,6 +5394,10 @@
         "score": 657.67,
         "charCount": 204.1
       },
+      "rank100": {
+        "score": 613.83,
+        "charCount": 353
+      },
       "p50": {
         "score": 623.59,
         "charCount": 297
@@ -4476,6 +5416,10 @@
       "top10Avg": {
         "score": 719.32,
         "charCount": 127
+      },
+      "rank100": {
+        "score": 655.62,
+        "charCount": 207
       },
       "p50": {
         "score": 674.03,
@@ -4496,6 +5440,10 @@
         "score": 679.05,
         "charCount": 170.2
       },
+      "rank100": {
+        "score": 626.2,
+        "charCount": 286
+      },
       "p50": {
         "score": 637.63,
         "charCount": 248
@@ -4514,6 +5462,10 @@
       "top10Avg": {
         "score": 695.21,
         "charCount": 150.8
+      },
+      "rank100": {
+        "score": 633.88,
+        "charCount": 259
       },
       "p50": {
         "score": 658.33,
@@ -4534,6 +5486,10 @@
         "score": 685.76,
         "charCount": 162.8
       },
+      "rank100": {
+        "score": 620.64,
+        "charCount": 311
+      },
       "p50": {
         "score": 632.93,
         "charCount": 262
@@ -4552,6 +5508,10 @@
       "top10Avg": {
         "score": 654.46,
         "charCount": 213.3
+      },
+      "rank100": {
+        "score": 607.96,
+        "charCount": 411
       },
       "p50": {
         "score": 619.13,
@@ -4572,6 +5532,10 @@
         "score": 677.65,
         "charCount": 172.4
       },
+      "rank100": {
+        "score": 625.46,
+        "charCount": 289
+      },
       "p50": {
         "score": 636.92,
         "charCount": 250
@@ -4590,6 +5554,10 @@
       "top10Avg": {
         "score": 684.93,
         "charCount": 162.6
+      },
+      "rank100": {
+        "score": 597.57,
+        "charCount": 316
       },
       "p50": {
         "score": 597.72,
@@ -4610,6 +5578,10 @@
         "score": 637.22,
         "charCount": 250.6
       },
+      "rank100": {
+        "score": 604.49,
+        "charCount": 471
+      },
       "p50": {
         "score": 610.49,
         "charCount": 382
@@ -4628,6 +5600,10 @@
       "top10Avg": {
         "score": 639.76,
         "charCount": 242.9
+      },
+      "rank100": {
+        "score": 606.7,
+        "charCount": 429
       },
       "p50": {
         "score": 611.32,
@@ -4648,6 +5624,10 @@
         "score": 737.14,
         "charCount": 113.7
       },
+      "rank100": {
+        "score": 641.79,
+        "charCount": 237
+      },
       "p50": {
         "score": 660.6,
         "charCount": 198
@@ -4666,6 +5646,10 @@
       "top10Avg": {
         "score": 688.61,
         "charCount": 158.4
+      },
+      "rank100": {
+        "score": 625.95,
+        "charCount": 287
       },
       "p50": {
         "score": 641.39,
@@ -4686,6 +5670,10 @@
         "score": 736.79,
         "charCount": 112.7
       },
+      "rank100": {
+        "score": 616.27,
+        "charCount": 336
+      },
       "p50": {
         "score": 626.96,
         "charCount": 283
@@ -4704,6 +5692,10 @@
       "top10Avg": {
         "score": 664.09,
         "charCount": 192.7
+      },
+      "rank100": {
+        "score": 607.81,
+        "charCount": 413
       },
       "p50": {
         "score": 620.84,
@@ -4724,6 +5716,10 @@
         "score": 676.48,
         "charCount": 174.9
       },
+      "rank100": {
+        "score": 617.22,
+        "charCount": 330
+      },
       "p50": {
         "score": 627.47,
         "charCount": 281
@@ -4742,6 +5738,10 @@
       "top10Avg": {
         "score": 687.13,
         "charCount": 160.9
+      },
+      "rank100": {
+        "score": 614.79,
+        "charCount": 346
       },
       "p50": {
         "score": 632.31,
@@ -4762,6 +5762,10 @@
         "score": 692.38,
         "charCount": 153.8
       },
+      "rank100": {
+        "score": 624.98,
+        "charCount": 291
+      },
       "p50": {
         "score": 636.22,
         "charCount": 252
@@ -4780,6 +5784,10 @@
       "top10Avg": {
         "score": 731.15,
         "charCount": 117
+      },
+      "rank100": {
+        "score": 659.46,
+        "charCount": 200
       },
       "p50": {
         "score": 688.73,
@@ -4800,6 +5808,10 @@
         "score": 722.34,
         "charCount": 124.3
       },
+      "rank100": {
+        "score": 622.92,
+        "charCount": 300
+      },
       "p50": {
         "score": 643.41,
         "charCount": 233
@@ -4818,6 +5830,10 @@
       "top10Avg": {
         "score": 702.72,
         "charCount": 142.7
+      },
+      "rank100": {
+        "score": 641.79,
+        "charCount": 237
       },
       "p50": {
         "score": 661.18,
@@ -4838,6 +5854,10 @@
         "score": 673.46,
         "charCount": 178.2
       },
+      "rank100": {
+        "score": 610.8,
+        "charCount": 379
+      },
       "p50": {
         "score": 620.64,
         "charCount": 311
@@ -4856,6 +5876,10 @@
       "top10Avg": {
         "score": 666.28,
         "charCount": 189.1
+      },
+      "rank100": {
+        "score": 604.24,
+        "charCount": 477
       },
       "p50": {
         "score": 610.9,
@@ -4876,6 +5900,10 @@
         "score": 703.91,
         "charCount": 141.5
       },
+      "rank100": {
+        "score": 634.54,
+        "charCount": 257
+      },
       "p50": {
         "score": 656.69,
         "charCount": 205
@@ -4894,6 +5922,10 @@
       "top10Avg": {
         "score": 711.74,
         "charCount": 134.1
+      },
+      "rank100": {
+        "score": 625.95,
+        "charCount": 287
       },
       "p50": {
         "score": 652.03,
@@ -4914,6 +5946,10 @@
         "score": 669.7,
         "charCount": 184.6
       },
+      "rank100": {
+        "score": 610.59,
+        "charCount": 381
+      },
       "p50": {
         "score": 620.64,
         "charCount": 311
@@ -4933,6 +5969,10 @@
         "score": 702.53,
         "charCount": 143.5
       },
+      "rank100": {
+        "score": 621.24,
+        "charCount": 308
+      },
       "p50": {
         "score": 637.27,
         "charCount": 249
@@ -4951,6 +5991,10 @@
       "top10Avg": {
         "score": 687.55,
         "charCount": 160.2
+      },
+      "rank100": {
+        "score": 617.55,
+        "charCount": 328
       },
       "p50": {
         "score": 639.09,

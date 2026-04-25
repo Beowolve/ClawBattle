@@ -6,6 +6,16 @@ import ReasoningBadge, { modelReasoningTitle, reasoningFilterLabel } from './Rea
 
 const EMPTY_REASONING_FILTER = '__empty__';
 
+const HUMAN_BASELINE_TITLES = {
+  'human/top1': 'Human top1: average of the best known human leaderboard score per target.',
+  'human/top10': 'Human top10: average of the top 10 human leaderboard entries per target.',
+  'human/rank100': 'Human rank100: average score of the 100th-ranked human leaderboard entry per target; approximates the Top 100 entry threshold.',
+  'human/expert-player': 'Human expert-player: p90 human leaderboard score per target, representing a strong expert-level player.',
+  'human/avg-player': 'Human avg-player: p50 human leaderboard score per target, representing the median listed human player.',
+};
+
+const SHOW_HUMAN_STORAGE_KEY = 'clawbattle.leaderboard.showHuman';
+
 const COLS = [
   { key: 'rank', label: '#' },
   { key: 'model', label: 'Model', style: { width: '100%' } },
@@ -50,12 +60,15 @@ export default function Leaderboard({ rows, onModelSelect }) {
   const [filterProvider, setFilterProvider] = useState('');
   const [filterReasoning, setFilterReasoning] = useState('');
   const [filterModel, setFilterModel] = useState('');
+  const [showHuman, setShowHuman] = useState(
+    () => localStorage.getItem(SHOW_HUMAN_STORAGE_KEY) === 'true',
+  );
   const [deleteDialog, setDeleteDialog] = useState(null);
   const [deletingKey, setDeletingKey] = useState(null);
   const queryClient = useQueryClient();
 
   function getRowDeleteKey(row) {
-    return `${row.model}__${row.reasoningEffort ?? ''}__${row.promptVersions?.join(',') ?? ''}`;
+    return `${row.isBaseline ? 'baseline' : 'run'}__${row.model}__${row.reasoningEffort ?? ''}__${row.promptVersions?.join(',') ?? ''}`;
   }
 
   function openDeleteDialog(row) {
@@ -122,18 +135,23 @@ export default function Leaderboard({ rows, onModelSelect }) {
     }
   }
 
-  const providers = useMemo(() => [...new Set(rows.map(r => r.provider).filter(Boolean))].sort(), [rows]);
+  const filterOptionRows = useMemo(
+    () => showHuman ? rows : rows.filter(r => !r.isBaseline),
+    [rows, showHuman],
+  );
+  const providers = useMemo(() => [...new Set(filterOptionRows.map(r => r.provider).filter(Boolean))].sort(), [filterOptionRows]);
   const reasoningOptions = useMemo(() => {
-    const values = [...new Set(rows.map(r => r.reasoningEffort ?? ''))];
+    const values = [...new Set(filterOptionRows.map(r => r.reasoningEffort ?? ''))];
     return values.sort((a, b) => {
       if (!a) return 1;
       if (!b) return -1;
       return a.localeCompare(b);
     });
-  }, [rows]);
+  }, [filterOptionRows]);
 
   const sorted = useMemo(() => {
-    let filtered = filterProvider ? rows.filter(r => r.provider === filterProvider) : rows;
+    let filtered = showHuman ? rows : rows.filter(r => !r.isBaseline);
+    if (filterProvider) filtered = filtered.filter(r => r.provider === filterProvider);
     if (filterReasoning !== '') {
       const reasoningValue = filterReasoning === EMPTY_REASONING_FILTER ? '' : filterReasoning;
       filtered = filtered.filter(r => (r.reasoningEffort ?? '') === reasoningValue);
@@ -150,7 +168,7 @@ export default function Leaderboard({ rows, onModelSelect }) {
       const cmp = compareSortValues(left, right);
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [rows, sortKey, sortDir, filterProvider, filterReasoning, filterModel]);
+  }, [rows, sortKey, sortDir, filterProvider, filterReasoning, filterModel, showHuman]);
 
   function handleSort(key) {
     if (key === sortKey) {
@@ -159,6 +177,11 @@ export default function Leaderboard({ rows, onModelSelect }) {
       setSortKey(key);
       setSortDir(getColumn(key)?.numeric ? 'desc' : 'asc');
     }
+  }
+
+  function handleShowHumanChange(checked) {
+    setShowHuman(checked);
+    localStorage.setItem(SHOW_HUMAN_STORAGE_KEY, String(checked));
   }
 
   if (!rows.length) return <div className="stateBox">No results yet.</div>;
@@ -188,6 +211,14 @@ export default function Leaderboard({ rows, onModelSelect }) {
           value={filterModel}
           onChange={e => setFilterModel(e.target.value)}
         />
+        <label className="filterCheckbox filterCheckbox--right">
+          <input
+            type="checkbox"
+            checked={showHuman}
+            onChange={e => handleShowHumanChange(e.target.checked)}
+          />
+          <span>Human Scores</span>
+        </label>
       </div>
       <div className="tableWrap">
         <table>
@@ -211,15 +242,28 @@ export default function Leaderboard({ rows, onModelSelect }) {
           </thead>
           <tbody>
             {sorted.map((row, i) => (
-              <tr key={getRowDeleteKey(row)}>
+              <tr key={getRowDeleteKey(row)} className={row.isBaseline ? 'baselineRow baselineRow--human' : undefined}>
                 <td className="rank">{i + 1}</td>
-                <td className="modelName" title={modelReasoningTitle(row.model, row.reasoningEffort)}>
-                  <button className="modelLink" onClick={() => onModelSelect?.(row.model, row.reasoningEffort)}>
-                    {row.model}
-                  </button>
+                <td
+                  className="modelName"
+                  title={row.isBaseline
+                    ? HUMAN_BASELINE_TITLES[row.model] ?? 'Human baseline from human_stats.json.'
+                    : modelReasoningTitle(row.model, row.reasoningEffort)}
+                >
+                  {row.isBaseline ? (
+                    <span className="baselineModel" title={HUMAN_BASELINE_TITLES[row.model] ?? 'Human baseline from human_stats.json.'}>{row.model}</span>
+                  ) : (
+                    <button className="modelLink" onClick={() => onModelSelect?.(row.model, row.reasoningEffort)}>
+                      {row.model}
+                    </button>
+                  )}
                 </td>
                 <td><ReasoningBadge value={row.reasoningEffort} showEmpty /></td>
-                <td className="muted">{row.promptVersions?.length ? row.promptVersions.join(', ') : '-'}</td>
+                <td className="muted">
+                  {row.isBaseline
+                    ? `targets 1-${row.baselineTargetMax ?? row.targets}`
+                    : row.promptVersions?.length ? row.promptVersions.join(', ') : '-'}
+                </td>
                 <td className="numeric">{row.targets}</td>
                 <td className={`numeric ${row.avgScore >= 990 ? 'perfect' : ''}`}>
                   {row.avgScore != null ? row.avgScore.toFixed(2) : '-'}
@@ -232,13 +276,15 @@ export default function Leaderboard({ rows, onModelSelect }) {
                 <td className="numeric muted">{row.avgDuration != null ? (row.avgDuration / 1000).toFixed(1) + 's' : '-'}</td>
                 {!IS_PUBLIC && (
                   <td>
-                    <button
-                      className="deleteButton"
-                      disabled={deletingKey === getRowDeleteKey(row)}
-                      onClick={() => openDeleteDialog(row)}
-                    >
-                      {deletingKey === getRowDeleteKey(row) ? '...' : 'Delete'}
-                    </button>
+                    {row.isBaseline ? '-' : (
+                      <button
+                        className="deleteButton"
+                        disabled={deletingKey === getRowDeleteKey(row)}
+                        onClick={() => openDeleteDialog(row)}
+                      >
+                        {deletingKey === getRowDeleteKey(row) ? '...' : 'Delete'}
+                      </button>
+                    )}
                   </td>
                 )}
               </tr>

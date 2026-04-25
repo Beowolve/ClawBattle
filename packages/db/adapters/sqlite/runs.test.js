@@ -347,6 +347,45 @@ test('getLeaderboard totals are scoped to the selected prompt version', () => {
   assert.deepEqual(board.promptVersions, ['v1', 'v2']);
 });
 
+test('getLeaderboard appends human baselines up to max battle target id', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-v1-t1',
+    targetId: '1',
+    promptVersion: 'v1',
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-v1-t25',
+    targetId: '25',
+    promptVersion: 'v1',
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-v2-t26',
+    targetId: '26',
+    promptVersion: 'v2',
+  });
+
+  const board = getLeaderboard(db, 'v1');
+  const humanRows = board.rows.filter(row => row.isBaseline);
+
+  assert.deepEqual(humanRows.map(row => row.model), [
+    'human/top1',
+    'human/top10',
+    'human/rank100',
+    'human/expert-player',
+    'human/avg-player',
+  ]);
+  assert.equal(humanRows[0].targets, 25);
+  assert.equal(humanRows[0].baselineTargetMax, 25);
+  assert.equal(humanRows[0].provider, 'human');
+  assert.equal(humanRows[0].reasoningEffort, 'baseline');
+  assert.equal(humanRows[0].perfectRate, 1);
+  assert.equal(humanRows[0].totalCost, null);
+});
+
 test('match_distribution view excludes non-done attempts', () => {
   const db = makeDb();
   saveAttempt(db, { ...baseAttempt, runId: 'r-done', targetId: '1', match: 95 });

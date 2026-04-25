@@ -42,7 +42,7 @@ Last updated: 2026-04-25
 - [x] Per-attempt logging — server logs `attempt_start`, completion, and error events with `[targetId]` prefix
 
 ### Dashboard
-- [x] Leaderboard — avg score, 100% rate, 100% count, avg cost, sortable
+- [x] Leaderboard — avg score, 100% rate, 100% count, avg cost, sortable; optional Human Scores rows compare against `baselines/human_stats.json`
 - [x] Run tab — live queue with per-attempt status badges (waiting/pending/running/paused/error/done); Resume, Cancel, Retry, Reset-errors, Delete-run, and per-attempt Delete buttons (with confirmation)
 - [x] Run Queue sorting — target numbers sorted numerically
 - [x] Run History — clickable list of completed runs only; click filters the attempt table
@@ -69,7 +69,7 @@ Last updated: 2026-04-25
 - [x] `scripts/audit-reasoning-runs.js` — reports invalid/legacy reasoning groups and applies safe `medium -> default` corrections on request
 - [x] `scripts/upload-targets.js` — seeds battle_targets / daily_targets in Supabase
 - [x] `scripts/sync-targets.js` — syncs targets + images from Supabase into local SQLite
-- [x] `scripts/export-human-stats.js` — exports compact `baselines/human_stats.json` from Supabase target leaderboard rows (`top1`, `top10Avg`, `p50`, `p90`, each as score+charCount pairs)
+- [x] `scripts/export-human-stats.js` — exports compact `baselines/human_stats.json` from Supabase target leaderboard rows (`top1`, `top10Avg`, `rank100`, `p50`, `p90`, each as score+charCount pairs)
 - [x] Supabase DB adapter — `packages/db/adapters/supabase.js` (read-only for the public dashboard; writes are local-only by design)
 - [x] Supabase schema (`packages/db/schema.sql`) — idempotent, RLS, `run_state` dropped
 - [x] Bidirectional sync UI (Sync tab) — Upload Targets, Upload Results, Download from Supabase
@@ -79,11 +79,11 @@ Last updated: 2026-04-25
 
 ### Baselines
 - [x] `baselines/human.json` — top1 scores for battle targets 1–12
-- [x] `baselines/human_stats.json` — enriched per-target human leaderboard stats from scraped Supabase data (`n`, `top1`, `top10Avg`, `p50`, `p90` with score+charCount pairs)
+- [x] `baselines/human_stats.json` — enriched per-target human leaderboard stats from scraped Supabase data (`n`, `top1`, `top10Avg`, `rank100`, `p50`, `p90` with score+charCount pairs)
+- [x] Leaderboard human comparison rows — optional `human/top1`, `human/top10`, `human/rank100`, `human/expert-player`, and `human/avg-player` rows aggregated over battle targets `1..MAX(target_id)` in the current local prompt scope
 
 ## Backlog / TODOs
 
-- [ ] Compare benchmark results against the enriched human baseline (`baselines/human_stats.json`)
 - [ ] Daily targets — code paths exist but untested end-to-end.
 - [ ] Linting + CI — no ESLint or GitHub Actions yet.
 

@@ -459,6 +459,20 @@ td.modelName {
   text-decoration: underline;
 }
 
+.baselineRow--human td {
+  color: color-mix(in srgb, var(--font-color) 82%, #23897d);
+}
+
+.baselineModel {
+  display: inline-block;
+  width: 100%;
+  overflow: hidden;
+  color: #156f65;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .modelFilterBadge {
   display: inline-flex;
   align-items: center;
@@ -491,6 +505,12 @@ td.modelName {
 
 [data-theme="dark"] .modelLink:hover {
   color: #e05555;
+}
+[data-theme="dark"] .baselineRow--human td {
+  color: color-mix(in srgb, var(--font-color) 82%, #70dfd1);
+}
+[data-theme="dark"] .baselineModel {
+  color: #70dfd1;
 }
 [data-theme="dark"] .modelFilterBadge {
   background: #aa1e2240;
@@ -582,6 +602,26 @@ td.muted {
 .filterLabel {
   font-size: 0.85rem;
   color: var(--muted-color);
+}
+
+.filterCheckbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  color: var(--muted-color);
+  cursor: pointer;
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.filterCheckbox input {
+  margin: 0;
+  accent-color: var(--primary-color);
+}
+
+.filterCheckbox--right {
+  margin-left: auto;
 }
 
 /* ─── Grid layouts ─────────────────────────────────────────────── */

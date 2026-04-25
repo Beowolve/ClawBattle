@@ -60,7 +60,7 @@ function sortTargetIds(a, b) {
 }
 
 export function buildHumanStats(rows, {
-  schemaVersion = '2.1.0',
+  schemaVersion = '2.2.0',
   updatedAt = new Date().toISOString(),
   targetIdField = 'target_id',
   scoreField = 'score',
@@ -94,11 +94,13 @@ export function buildHumanStats(rows, {
     const asc = sortAscByScoreThenChars(desc);
     const topSlice = desc.slice(0, Math.min(topN, desc.length));
     const top1 = desc[0];
+    const rank100 = desc[Math.min(maxPerTarget, desc.length) - 1];
 
     targets[targetId] = {
       n: desc.length,
       top1: { score: round(top1.score, 2), charCount: round(top1.charCount, 1) },
       top10Avg: avgPair(topSlice),
+      rank100: { score: round(rank100.score, 2), charCount: round(rank100.charCount, 1) },
       p50: percentilePair(asc, 0.5),
       p90: percentilePair(asc, 0.9),
     };

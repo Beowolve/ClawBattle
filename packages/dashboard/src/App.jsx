@@ -46,11 +46,12 @@ function computeKpisFromLeaderboard(data, promptFilter) {
     };
   }
 
-  const modelCount = new Set(data.rows.map(r => r.model)).size;
-  const configCount = new Set(data.rows.map(r => `${r.model}__${r.reasoningEffort ?? ''}`)).size;
+  const benchmarkRows = data.rows.filter(r => !r.isBaseline);
+  const modelCount = new Set(benchmarkRows.map(r => r.model)).size;
+  const configCount = new Set(benchmarkRows.map(r => `${r.model}__${r.reasoningEffort ?? ''}`)).size;
 
-  const totalTargets = data.rows.reduce((a, r) => a + r.targets, 0);
-  const weightedScore = data.rows.reduce((a, r) => a + (r.avgScore ?? 0) * r.targets, 0);
+  const totalTargets = benchmarkRows.reduce((a, r) => a + r.targets, 0);
+  const weightedScore = benchmarkRows.reduce((a, r) => a + (r.avgScore ?? 0) * r.targets, 0);
   const avgBestScore = totalTargets > 0 ? (weightedScore / totalTargets).toFixed(2) : '-';
   return {
     totalRuns: data.totalAttempts,
@@ -58,7 +59,7 @@ function computeKpisFromLeaderboard(data, promptFilter) {
     totalCost: data.totalCost > 0 ? '$' + data.totalCost.toFixed(4) : '-',
     totalCostSub: `${data.totalAttempts} attempts | ${promptScope}`,
     models: modelCount,
-    modelSub: `${configCount} configs | ${data.rows.length} entries | ${promptScope}`,
+    modelSub: `${configCount} configs | ${benchmarkRows.length} entries | ${promptScope}`,
   };
 }
 
@@ -114,7 +115,9 @@ export default function App() {
   );
 
   const models = useMemo(
-    () => [...new Set(leaderboardQ.data?.rows?.map(r => r.model) ?? [])].sort(),
+    () => [...new Set(
+      leaderboardQ.data?.rows?.filter(r => !r.isBaseline).map(r => r.model) ?? [],
+    )].sort(),
     [leaderboardQ.data],
   );
 

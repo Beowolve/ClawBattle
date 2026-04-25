@@ -17,12 +17,13 @@ test('buildHumanStats: computes compact stats per target with deterministic sort
     maxPerTarget: 100,
   });
 
-  assert.equal(out.schemaVersion, '2.1.0');
+  assert.equal(out.schemaVersion, '2.2.0');
   assert.equal(out.updatedAt, '2026-04-23T00:00:00.000Z');
   assert.deepEqual(out.targets['1'], {
     n: 5,
     top1: { score: 840, charCount: 50 },
     top10Avg: { score: 815, charCount: 70 },
+    rank100: { score: 780, charCount: 90 },
     p50: { score: 820, charCount: 70 },
     p90: { score: 840, charCount: 50 },
   });
@@ -39,6 +40,7 @@ test('buildHumanStats: keeps only top rows per target when maxPerTarget is small
   assert.deepEqual(out.targets['2'].top1, { score: 900, charCount: 50 });
   assert.equal(out.targets['2'].top10Avg.score, 895.5);
   assert.equal(out.targets['2'].top10Avg.charCount, 54.5);
+  assert.deepEqual(out.targets['2'].rank100, { score: 801, charCount: 149 });
 });
 
 test('buildHumanStats: skips rows missing required numeric fields', () => {
