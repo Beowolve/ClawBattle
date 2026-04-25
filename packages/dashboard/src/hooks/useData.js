@@ -1,14 +1,39 @@
 import { useQuery } from '@tanstack/react-query';
 import humanStats from '../../../../baselines/human_stats.json';
+import modelAliases from '../../../../config/model-aliases.json';
 
 // ─── Local API (default) ──────────────────────────────────────────────────────
 
 const API = '/api';
+const MODEL_ALIASES_BY_PROVIDER = modelAliases?.aliases ?? {};
 
 async function fetchJson(path) {
   const res = await fetch(`${API}${path}`);
   if (!res.ok) throw new Error(`${path}: ${res.status}`);
   return res.json();
+}
+
+function canonicalModel(provider, model) {
+  const modelName = String(model ?? '').trim();
+  if (!modelName) return modelName;
+  const providerName = String(provider ?? '').trim();
+  return MODEL_ALIASES_BY_PROVIDER[providerName]?.[modelName] ?? modelName;
+}
+
+function normalizeRunRow(row) {
+  const rawModel = String(row.raw_model ?? row.model ?? '').trim();
+  const normalizedModel = String(
+    row.canonical_model
+      ?? row.model_key
+      ?? canonicalModel(row.provider, rawModel),
+  ).trim();
+
+  return {
+    ...row,
+    raw_model: rawModel || null,
+    canonical_model: normalizedModel || rawModel,
+    model: normalizedModel || rawModel,
+  };
 }
 
 // ─── Public mode (Supabase REST, read-only) ───────────────────────────────────
@@ -346,8 +371,8 @@ export function useResults({ enabled = true } = {}) {
   return useQuery({
     queryKey: ['results'],
     queryFn: IS_PUBLIC
-      ? () => fetchAllFromSupabase('runs', 'created_at.asc')
-      : () => fetchJson('/results'),
+      ? async () => (await fetchAllFromSupabase('runs', 'created_at.asc')).map(normalizeRunRow)
+      : async () => (await fetchJson('/results')).map(normalizeRunRow),
     enabled,
   });
 }
