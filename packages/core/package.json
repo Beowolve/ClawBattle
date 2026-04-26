@@ -1,5 +1,6 @@
 {
   "type": "module",
+  "license": "MIT",
   "dependencies": {
     "puppeteer": "^24.40.0",
     "pixelmatch": "^7.1.0",

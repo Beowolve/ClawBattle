@@ -1,5 +1,6 @@
 {
   "type": "module",
+  "license": "MIT",
   "scripts": {
     "start": "node --env-file=../../.env server.js"
   },
@@ -7,4 +8,3 @@
     "express": "^5.1.0"
   }
 }
-

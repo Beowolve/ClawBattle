@@ -3,7 +3,7 @@ name: Deploy Public Dashboard
 on:
   push:
     branches:
-      - main
+      - '**'
     tags:
       - 'v*.*.*'
   workflow_dispatch:
@@ -18,8 +18,45 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            packages/api/package-lock.json
+            packages/core/package-lock.json
+            packages/dashboard/package-lock.json
+            packages/runner/package-lock.json
+
+      - name: Install API dependencies
+        working-directory: packages/api
+        run: npm ci
+
+      - name: Install core dependencies
+        working-directory: packages/core
+        run: npm ci
+
+      - name: Install dashboard dependencies
+        working-directory: packages/dashboard
+        run: npm ci
+
+      - name: Install runner dependencies
+        working-directory: packages/runner
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
   generate-release-notes:
     if: startsWith(github.ref, 'refs/tags/')
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -58,6 +95,7 @@ jobs:
 
   build:
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

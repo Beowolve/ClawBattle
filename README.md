@@ -179,9 +179,9 @@ Configure `SUPABASE_RESULTS_URL` and `SUPABASE_RESULTS_KEY` in `.env`. Run `pack
 
 ## Public Dashboard
 
-A read-only public variant (Leaderboard, Targets, Insights, About) is automatically built and deployed to **GitHub Pages** on every version tag (`v*.*.*`).
+A read-only public variant (Leaderboard, Targets, Insights, About) is automatically built and deployed to **GitHub Pages** after pushes to `main`. Version tags (`v*.*.*`) publish GitHub releases. Both paths are gated by the `npm test` GitHub Actions job, so failed tests block releases and deployments.
 
-To trigger a deployment, push a tag:
+To publish a version release, push a tag:
 
 ```bash
 git tag v1.0.0

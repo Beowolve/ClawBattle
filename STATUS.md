@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-25
+Last updated: 2026-04-26
 
 ## What's Done
 
@@ -77,6 +77,8 @@ Last updated: 2026-04-25
 - [x] localStorage persistence for active run IDs + mount reconnect via `GET /api/runs/active`
 - [x] Public dashboard mode — `VITE_PUBLIC_MODE=true` builds a read-only variant (Leaderboard/Targets/Insights only, no delete buttons, data fetched from Supabase via anon key)
 
+- [x] GitHub Actions CI - installs package dependencies and runs `npm test` on every push; release publishing and public dashboard deployment require passing tests
+
 ### Baselines
 - [x] `baselines/human.json` — top1 scores for battle targets 1–12
 - [x] `baselines/human_stats.json` — enriched per-target human leaderboard stats from scraped Supabase data (`n`, `top1`, `top10Avg`, `rank100`, `p50`, `p90` with score+charCount pairs)
@@ -85,7 +87,7 @@ Last updated: 2026-04-25
 ## Backlog / TODOs
 
 - [ ] Daily targets — code paths exist but untested end-to-end.
-- [ ] Linting + CI — no ESLint or GitHub Actions yet.
+- [ ] Linting - no ESLint or formatter check yet.
 
 ## Architecture Notes
 
