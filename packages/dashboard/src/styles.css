@@ -145,6 +145,35 @@ body {
   color: var(--primary-color);
 }
 
+.githubLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--font-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.githubLink:hover,
+.githubLink:focus-visible {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.githubLink:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.githubIcon {
+  width: 18px;
+  height: 18px;
+}
+
 /* ─── Tabs ─────────────────────────────────────────────────────── */
 .tabs {
   display: flex;
