@@ -11,6 +11,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 * **STATUS.md describes current capabilities, not history.** Only list what the project can do right now — features, components, behaviors. Do **not** record bugfixes, incident notes, or "we used to do X, now we do Y" entries; that belongs in git history. If a fix changes a capability, update the capability line itself instead of adding a fix entry.
 * **Always keep [README.md](README.md) up to date as well.**
 
+## Git
+
+* **Commit messages must follow the git-cliff Conventional Commit convention.** Use prefixes that match [cliff.toml](cliff.toml), especially `feat:`, `fix:`, and `perf:` for user-visible release notes. Use skipped prefixes such as `docs:`, `test:`, `refactor:`, `build:`, `ci:`, or `chore:` only for changes that should intentionally stay out of release notes. Example: `fix: show target details for legacy battle ids`.
+
 ### Key Design Rules
 
 - **Prompts are versioned and immutable** — never edit an existing prompt version; create a new directory (e.g., `prompts/v2/`) instead.
