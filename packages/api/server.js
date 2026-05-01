@@ -5,7 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import {
-  getResults, getResultsCount, getLeaderboard, getInsights,
+  getResults, getTargetResults, getTargetResultsSummary,
+  getResultsCount, getLeaderboard, getInsights,
   getBattleTargets, getDailyTargets, deleteRunGroup,
   upsertRuns,
   getRunQueue, getRunHistory, retryAttempt, resetErrors, pauseRun, resumeRun,
@@ -83,7 +84,20 @@ app.get('/api/insights', (req, res) => {
 });
 
 app.get('/api/results', (req, res) => {
-  const { limit, offset, sort, dir, run_id, model } = req.query;
+  const {
+    limit, offset, sort, dir, run_id, model,
+    target_id, target_type, prompt_version, reasoning_effort,
+  } = req.query;
+  if (target_id != null) {
+    res.json(getTargetResults({
+      targetId: target_id,
+      targetType: target_type || 'battle',
+      promptVersion: prompt_version || undefined,
+      model: model || undefined,
+      reasoningEffort: reasoning_effort === undefined ? undefined : String(reasoning_effort),
+    }));
+    return;
+  }
   res.json(getResults({
     limit: limit != null ? Number(limit) : undefined,
     offset: offset != null ? Number(offset) : undefined,
@@ -91,6 +105,13 @@ app.get('/api/results', (req, res) => {
     dir: dir || 'desc',
     runId: run_id || undefined,
     model: model || undefined,
+  }));
+});
+
+app.get('/api/results/target-summary', (req, res) => {
+  const { prompt_version } = req.query;
+  res.json(getTargetResultsSummary({
+    promptVersion: prompt_version || undefined,
   }));
 });
 

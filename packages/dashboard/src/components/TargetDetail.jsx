@@ -18,6 +18,7 @@ export default function TargetDetail({
   onBack,
   onPrev,
   onNext,
+  isLoading = false,
 }) {
   const [selected, setSelected] = useState(null);
 
@@ -155,7 +156,9 @@ export default function TargetDetail({
           <h2>Solutions</h2>
           <span>{solutions.length} attempts with code</span>
         </div>
-        {solutions.length === 0 ? (
+        {isLoading ? (
+          <div className="stateBox">Loading...</div>
+        ) : solutions.length === 0 ? (
           <div className="stateBox">No solutions recorded for this target yet.</div>
         ) : (
           <div className="tableWrap">

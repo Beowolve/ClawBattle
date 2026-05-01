@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import {
-  useResults, useBattleTargets, useDailyTargets,
+  useBattleTargets, useDailyTargets,
   useLeaderboard, useInsights,
+  useTargetResults, useTargetResultsSummary,
   IS_PUBLIC,
 } from './hooks/useData.js';
 import Header from './components/Header.jsx';
@@ -93,26 +94,38 @@ export default function App() {
     setTab('targets');
   }
 
-  // Leaderboard and Insights fetch their own aggregated data eagerly
+  // Leaderboard loads first; tab-specific datasets are enabled only when needed.
   const leaderboardQ = useLeaderboard(promptFilter);
-  const insightsQ = useInsights(promptFilter);
+  const insightsQ = useInsights(promptFilter, { enabled: tab === 'insights' });
 
   // Raw results loaded lazily — only when the Targets tab is open
-  const resultsQ = useResults({ enabled: tab === 'targets' });
-  const battleQ = useBattleTargets();
-  const dailyQ = useDailyTargets();
+  const selectedTargetId = selectedTarget
+    ? (targetType === 'battle' ? selectedTarget.id : selectedTarget.key)
+    : null;
+  const selectedReasoningFilter = reasoningFilter == null ? undefined : reasoningFilter;
 
-  const runs = resultsQ.data ?? [];
+  const targetSummaryQ = useTargetResultsSummary({
+    promptFilter,
+    enabled: tab === 'targets',
+  });
+  const targetRunsQ = useTargetResults({
+    targetId: selectedTargetId,
+    targetType,
+    promptFilter,
+    model: modelFilter ?? undefined,
+    reasoningEffort: selectedReasoningFilter,
+    enabled: tab === 'targets' && selectedTarget != null,
+  });
+  const battleQ = useBattleTargets({ enabled: tab === 'targets' && targetType === 'battle' });
+  const dailyQ = useDailyTargets({ enabled: tab === 'targets' && targetType === 'daily' });
+
+  const targetSummaries = targetSummaryQ.data ?? [];
+  const selectedTargetRuns = targetRunsQ.data ?? [];
   const battleTargets = battleQ.data ?? [];
   const dailyTargets = dailyQ.data ?? [];
 
   // Prompt versions come from the leaderboard response (always available)
   const promptVersions = leaderboardQ.data?.promptVersions ?? [];
-
-  const filteredRuns = useMemo(
-    () => promptFilter === 'all' ? runs : runs.filter(r => r.prompt_version === promptFilter),
-    [runs, promptFilter],
-  );
 
   const models = useMemo(
     () => [...new Set(
@@ -123,7 +136,7 @@ export default function App() {
 
   const reasoningOptions = useMemo(() => {
     const values = new Set(
-      filteredRuns
+      targetSummaries
         .filter(r => r.target_type === targetType)
         .map(r => r.reasoning_effort ?? ''),
     );
@@ -132,7 +145,7 @@ export default function App() {
       if (!b) return -1;
       return a.localeCompare(b);
     });
-  }, [filteredRuns, targetType]);
+  }, [targetSummaries, targetType]);
 
   // KPIs derived from leaderboard aggregation — available without loading raw runs
   const kpis = computeKpisFromLeaderboard(leaderboardQ.data, promptFilter);
@@ -142,12 +155,12 @@ export default function App() {
     const sorted = [...list].sort((a, b) => (a.target_number ?? a.id) - (b.target_number ?? b.id));
     if (IS_PUBLIC && targetType === 'battle') {
       const targetIdsWithRuns = new Set(
-        filteredRuns.filter(r => r.target_type === 'battle').map(r => Number(r.target_id))
+        targetSummaries.filter(r => r.target_type === 'battle').map(r => Number(r.target_id))
       );
       return sorted.filter(t => targetIdsWithRuns.has(Number(t.id)));
     }
     return sorted;
-  }, [targetType, battleTargets, dailyTargets, filteredRuns]);
+  }, [targetType, battleTargets, dailyTargets, targetSummaries]);
 
   return (
     <div className="appRoot">
@@ -200,7 +213,7 @@ export default function App() {
                   target={selectedTarget}
                   type={targetType}
                   targetCount={sortedTargets.length}
-                  runs={filteredRuns}
+                  runs={selectedTargetRuns}
                   modelFilter={modelFilter}
                   reasoningFilter={reasoningFilter}
                   models={models}
@@ -210,6 +223,7 @@ export default function App() {
                   onBack={() => setSelectedTarget(null)}
                   onPrev={selectedIdx > 0 ? () => setSelectedTarget(sortedTargets[selectedIdx - 1]) : null}
                   onNext={selectedIdx < sortedTargets.length - 1 ? () => setSelectedTarget(sortedTargets[selectedIdx + 1]) : null}
+                  isLoading={targetRunsQ.isLoading}
                 />
               );
             })() : (
@@ -260,13 +274,13 @@ export default function App() {
                   <div className="panelHeader">
                     <h2>Battle Targets</h2>
                   </div>
-                  {battleQ.isLoading || resultsQ.isLoading
+                  {battleQ.isLoading || targetSummaryQ.isLoading
                     ? <div className="stateBox">Loading...</div>
                     : targetView === 'table'
                       ? <TargetTable
                           targets={sortedTargets}
                           type={targetType}
-                          runs={filteredRuns}
+                          summaries={targetSummaries}
                           modelFilter={modelFilter}
                           reasoningFilter={reasoningFilter}
                           onSelect={setSelectedTarget}

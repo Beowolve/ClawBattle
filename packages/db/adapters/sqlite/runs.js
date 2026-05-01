@@ -146,6 +146,57 @@ export function getResults(db, { limit, offset, sort = 'created_at', dir = 'desc
   }));
 }
 
+export function getTargetResultsSummary(db, { promptVersion } = {}) {
+  const rows = promptVersion
+    ? db.prepare('SELECT * FROM target_results_summary WHERE prompt_version = ?').all(promptVersion)
+    : db.prepare('SELECT * FROM target_results_summary').all();
+
+  return rows.map(row => ({
+    ...row,
+    attempts: Number(row.attempts ?? 0),
+    best_attempt: row.best_attempt != null ? Number(row.best_attempt) : null,
+    best_score: row.best_score != null ? Number(row.best_score) : null,
+    best_match: row.best_match != null ? Number(row.best_match) : null,
+    best_code_length: row.best_code_length != null ? Number(row.best_code_length) : null,
+    best_cost: row.best_cost != null ? Number(row.best_cost) : null,
+  }));
+}
+
+export function getTargetResults(db, { targetId, targetType = 'battle', promptVersion, model, reasoningEffort } = {}) {
+  if (targetId == null || targetId === '') return [];
+
+  const params = [String(targetType), String(targetId)];
+  const where = ['target_type = ?', 'target_id = ?'];
+  if (promptVersion) {
+    where.push('prompt_version = ?');
+    params.push(promptVersion);
+  }
+  if (model) {
+    where.push('model_key = ?');
+    params.push(model);
+  }
+  if (reasoningEffort !== undefined) {
+    if (reasoningEffort === null || reasoningEffort === '') {
+      where.push('reasoning_effort IS NULL');
+    } else {
+      where.push('reasoning_effort = ?');
+      params.push(reasoningEffort);
+    }
+  }
+
+  return db.prepare(`
+    SELECT *
+    FROM attempt_results
+    WHERE ${where.join(' AND ')}
+    ORDER BY score DESC NULLS LAST, match DESC NULLS LAST, created_at DESC
+  `).all(...params).map(row => ({
+    ...row,
+    raw_model: row.raw_model ?? row.model,
+    canonical_model: row.model_key ?? row.canonical_model ?? row.model,
+    model: row.model_key ?? row.canonical_model ?? row.model,
+  }));
+}
+
 export function getResultsCount(db, { runId, model } = {}) {
   const params = [];
   const where = [];

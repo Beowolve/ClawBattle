@@ -41,11 +41,14 @@ create table if not exists public.runs (
 );
 
 alter table public.runs add column if not exists canonical_model text;
+alter table public.runs add column if not exists model_key text
+  generated always as (coalesce(canonical_model, model)) stored;
 
 create unique index if not exists idx_runs_unique on public.runs (run_id, target_id, attempt);
 create        index if not exists idx_runs_run_id on public.runs (run_id);
 create        index if not exists idx_runs_model  on public.runs (model);
 create        index if not exists idx_runs_canonical_model on public.runs (canonical_model);
+create        index if not exists idx_runs_model_key on public.runs (model_key);
 
 alter table public.runs enable row level security;
 drop policy if exists "allow_all" on public.runs;
@@ -113,6 +116,8 @@ create policy "allow_select" on public.daily_targets for select using (true);
 create index if not exists idx_runs_target     on public.runs (target_id, target_type);
 create index if not exists idx_runs_created_at on public.runs (created_at);
 create index if not exists idx_runs_prompt     on public.runs (prompt_version);
+create index if not exists idx_runs_target_summary_rank on public.runs
+  (target_id, target_type, prompt_version, model_key, reasoning_effort, score desc nulls last);
 
 drop view if exists public.leaderboard cascade;
 drop view if exists public.leaderboard_by_version cascade;
@@ -120,6 +125,7 @@ drop view if exists public.target_difficulty cascade;
 drop view if exists public.model_consistency cascade;
 drop view if exists public.cost_efficiency cascade;
 drop view if exists public.match_distribution cascade;
+drop view if exists public.target_results_summary cascade;
 alter table public.runs drop column if exists reasoning_max_tokens;
 
 -- ─── Leaderboard views ────────────────────────────────────────────────────────
@@ -128,22 +134,22 @@ alter table public.runs drop column if exists reasoning_max_tokens;
 create or replace view public.leaderboard with (security_invoker = true) as
 with best_per_target as (
   -- Pick the single highest-scoring attempt per model+reasoning+prompt+target combination.
-  select distinct on (coalesce(canonical_model, model), reasoning_effort, target_id, target_type, prompt_version)
-    coalesce(canonical_model, model) as model, model as raw_model,
+  select distinct on (model_key, reasoning_effort, target_id, target_type, prompt_version)
+    model_key as model, model as raw_model,
     reasoning_effort, target_id, target_type, prompt_version, provider,
     score, match, duration_ms
   from public.runs
-  order by coalesce(canonical_model, model), reasoning_effort, target_id, target_type, prompt_version, score desc nulls last
+  order by model_key, reasoning_effort, target_id, target_type, prompt_version, score desc nulls last
 ),
 model_costs as (
   select
-    coalesce(canonical_model, model) as model,
+    model_key as model,
     reasoning_effort,
     prompt_version,
     sum(cost)  filter (where cost           is not null) as total_cost,
     count(*)                                             as attempt_count
   from public.runs
-  group by coalesce(canonical_model, model), reasoning_effort, prompt_version
+  group by model_key, reasoning_effort, prompt_version
 )
 select
   b.model,
@@ -177,22 +183,22 @@ grant select on public.leaderboard to anon, authenticated;
 -- Used when the UI filters to a specific prompt version.
 create or replace view public.leaderboard_by_version with (security_invoker = true) as
 with best_per_target as (
-  select distinct on (coalesce(canonical_model, model), reasoning_effort, target_id, target_type, prompt_version)
-    coalesce(canonical_model, model) as model, model as raw_model,
+  select distinct on (model_key, reasoning_effort, target_id, target_type, prompt_version)
+    model_key as model, model as raw_model,
     reasoning_effort, target_id, target_type, prompt_version, provider,
     score, match, duration_ms
   from public.runs
-  order by coalesce(canonical_model, model), reasoning_effort, target_id, target_type, prompt_version, score desc nulls last
+  order by model_key, reasoning_effort, target_id, target_type, prompt_version, score desc nulls last
 ),
 model_version_costs as (
   select
-    coalesce(canonical_model, model) as model,
+    model_key as model,
     reasoning_effort,
     prompt_version,
     sum(cost) filter (where cost is not null) as total_cost,
     count(*)                                  as attempt_count
   from public.runs
-  group by coalesce(canonical_model, model), reasoning_effort, prompt_version
+  group by model_key, reasoning_effort, prompt_version
 )
 select
   b.model,
@@ -229,10 +235,10 @@ grant select on public.leaderboard_by_version to anon, authenticated;
 -- doesn't need a separate targets fetch.
 create or replace view public.target_difficulty with (security_invoker = true) as
 with best_per_model as (
-  select distinct on (coalesce(canonical_model, model), target_id, target_type, prompt_version)
-    coalesce(canonical_model, model) as model, target_id, target_type, prompt_version, match
+  select distinct on (model_key, target_id, target_type, prompt_version)
+    model_key as model, target_id, target_type, prompt_version, match
   from public.runs
-  order by coalesce(canonical_model, model), target_id, target_type, prompt_version, match desc nulls last
+  order by model_key, target_id, target_type, prompt_version, match desc nulls last
 )
 select
   d.target_id,
@@ -255,7 +261,7 @@ grant select on public.target_difficulty to anon, authenticated;
 -- stddev_pop is native PostgreSQL — no client-side computation needed.
 create or replace view public.model_consistency with (security_invoker = true) as
 select
-  coalesce(canonical_model, model) as model,
+  model_key as model,
   reasoning_effort,
   prompt_version,
   avg(match)        as avg_match,
@@ -263,7 +269,7 @@ select
   count(*)          as n
 from public.runs
 where match is not null
-group by coalesce(canonical_model, model), reasoning_effort, prompt_version;
+group by model_key, reasoning_effort, prompt_version;
 
 grant select on public.model_consistency to anon, authenticated;
 
@@ -271,10 +277,10 @@ grant select on public.model_consistency to anon, authenticated;
 -- alongside average cost per attempt.
 create or replace view public.cost_efficiency with (security_invoker = true) as
 with best_per_target as (
-  select distinct on (coalesce(canonical_model, model), reasoning_effort, target_id, target_type, prompt_version)
-    coalesce(canonical_model, model) as model, reasoning_effort, target_id, target_type, prompt_version, score, cost
+  select distinct on (model_key, reasoning_effort, target_id, target_type, prompt_version)
+    model_key as model, reasoning_effort, target_id, target_type, prompt_version, score, cost
   from public.runs
-  order by coalesce(canonical_model, model), reasoning_effort, target_id, target_type, prompt_version, score desc nulls last
+  order by model_key, reasoning_effort, target_id, target_type, prompt_version, score desc nulls last
 )
 select
   model,
@@ -291,7 +297,7 @@ grant select on public.cost_efficiency to anon, authenticated;
 -- Bucket labels use an en-dash (–) to match the existing JS range strings.
 create or replace view public.match_distribution with (security_invoker = true) as
 select
-  coalesce(canonical_model, model) as model,
+  model_key as model,
   prompt_version,
   case
     when match >= 100 then '100'
@@ -309,6 +315,43 @@ select
   count(*) as count
 from public.runs
 where match is not null
-group by coalesce(canonical_model, model), prompt_version, bucket;
+group by model_key, prompt_version, bucket;
 
 grant select on public.match_distribution to anon, authenticated;
+
+-- target_results_summary: compact target/table data without solution code.
+-- The public UI uses this instead of downloading every run row on Targets.
+create or replace view public.target_results_summary with (security_invoker = true) as
+with ranked as (
+  select
+    r.*,
+    row_number() over (
+      partition by r.target_id, r.target_type, r.prompt_version,
+                   r.model_key, r.reasoning_effort
+      order by r.score desc nulls last
+    ) as rn,
+    count(*) over (
+      partition by r.target_id, r.target_type, r.prompt_version,
+                   r.model_key, r.reasoning_effort
+    ) as attempts
+  from public.runs r
+)
+select
+  target_id,
+  target_type,
+  prompt_version,
+  model_key as model,
+  model as raw_model,
+  provider,
+  reasoning_effort,
+  attempts,
+  run_id as best_run_id,
+  attempt as best_attempt,
+  score as best_score,
+  match as best_match,
+  code_length as best_code_length,
+  cost as best_cost
+from ranked
+where rn = 1;
+
+grant select on public.target_results_summary to anon, authenticated;

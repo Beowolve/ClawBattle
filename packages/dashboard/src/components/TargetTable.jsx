@@ -15,24 +15,25 @@ const COLS = [
   { key: 'attempts',      label: 'Attempts',   numeric: true },
 ];
 
-export default function TargetTable({ targets, type, runs, modelFilter, reasoningFilter, onSelect }) {
+export default function TargetTable({ targets, type, summaries, modelFilter, reasoningFilter, onSelect }) {
   const [sortKey, setSortKey] = useState('num');
   const [sortDir, setSortDir] = useState('asc');
   const rows = useMemo(() => {
     return targets.map(t => {
       const targetId = type === 'battle' ? t.id : t.key;
-      let targetRuns = runs.filter(r =>
+      let targetRows = summaries.filter(r =>
         Number(r.target_id) === Number(targetId) && r.target_type === type,
       );
-      if (modelFilter) targetRuns = targetRuns.filter(r => r.model === modelFilter);
+      if (modelFilter) targetRows = targetRows.filter(r => r.model === modelFilter);
       if (reasoningFilter != null) {
-        targetRuns = targetRuns.filter(r => (r.reasoning_effort ?? '') === reasoningFilter);
+        targetRows = targetRows.filter(r => (r.reasoning_effort ?? '') === reasoningFilter);
       }
 
       let best = null;
-      for (const r of targetRuns) {
-        if (!best || (r.score ?? -Infinity) > (best.score ?? -Infinity)) best = r;
+      for (const r of targetRows) {
+        if (!best || (r.best_score ?? -Infinity) > (best.best_score ?? -Infinity)) best = r;
       }
+      const attempts = targetRows.reduce((sum, r) => sum + Number(r.attempts ?? 0), 0);
 
       const human = type === 'battle' ? humanStats.targets?.[String(targetId)] : null;
 
@@ -43,14 +44,14 @@ export default function TargetTable({ targets, type, runs, modelFilter, reasonin
         bestModel: modelFilter ? null : (best?.model ?? null),
         bestPrompt: best?.prompt_version ?? null,
         bestReasoning: best?.reasoning_effort ?? null,
-        bestScore: best?.score ?? null,
+        bestScore: best?.best_score ?? null,
         humanRank1: human?.top1?.score ?? null,
         humanRank10: human?.top10Avg?.score ?? null,
-        bestMatch: best?.match ?? null,
-        attempts: targetRuns.length,
+        bestMatch: best?.best_match ?? null,
+        attempts,
       };
     });
-  }, [targets, type, runs, modelFilter, reasoningFilter]);
+  }, [targets, type, summaries, modelFilter, reasoningFilter]);
 
   const sorted = useMemo(() => {
     return [...rows].sort((a, b) => {

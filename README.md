@@ -179,7 +179,7 @@ Configure `SUPABASE_RESULTS_URL` and `SUPABASE_RESULTS_KEY` in `.env`. Run `pack
 
 ## Public Dashboard
 
-A read-only public variant (Leaderboard, Targets, Insights, About) is automatically built and deployed to **GitHub Pages** after pushes to `main`. Version tags (`v*.*.*`) publish GitHub releases. Both paths are gated by the `npm test` GitHub Actions job, so failed tests block releases and deployments.
+A read-only public variant (Leaderboard, Targets, Insights, About) is automatically built and deployed to **GitHub Pages** after pushes to `main`. Version tags (`v*.*.*`) publish GitHub releases. Both paths are gated by the `npm test` GitHub Actions job, so failed tests block releases and deployments. The initial public view loads leaderboard aggregates only; Targets and Insights fetch their own compact Supabase views when opened, and raw solution rows are fetched only for the selected target detail.
 
 To publish a version release, push a tag:
 
@@ -221,10 +221,6 @@ is pre-inserted before any work starts and moves through these statuses:
   a Retry button per attempt, plus Reset-all-errors per run.
 - **`paused`** — set by Cancel. The original status is saved in
   `paused_from` so Resume restores the row exactly.
-
-A `runs_summary` view aggregates per-run status with priority
-`paused > running > error > queued > done` and powers the Queue / History
-split in the dashboard.
 
 Workers claim the next `pending` row atomically with `BEGIN IMMEDIATE` +
 `UPDATE ... RETURNING`. Ordering is FIFO over `(enqueued_at, id)` across

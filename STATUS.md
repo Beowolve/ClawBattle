@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-26
+Last updated: 2026-05-01
 
 ## What's Done
 
@@ -76,7 +76,6 @@ Last updated: 2026-04-26
 - [x] Persistent DB-backed attempt queue — one row per `(run_id, target_id, attempt)` with status `waiting | pending | running | done | error | paused`; survives process restarts, `runs_summary` view aggregates per-run status
 - [x] localStorage persistence for active run IDs + mount reconnect via `GET /api/runs/active`
 - [x] Public dashboard mode — `VITE_PUBLIC_MODE=true` builds a read-only variant (Leaderboard/Targets/Insights only, no delete buttons, data fetched from Supabase via anon key)
-
 - [x] GitHub Actions CI - installs package dependencies and runs `npm test` on every push; release publishing and public dashboard deployment require passing tests
 
 ### Baselines
@@ -115,6 +114,9 @@ persistent attempt queue. One row per `(run_id, target_id, attempt)`.
   `paused > running > error > queued > done`; counts per status; run-level
   metadata (model, provider, prompt_version, reasoning_effort, started_at,
   finished_at)
+- `target_results_summary` - one compact best-attempt row per
+  target/model/reasoning/prompt group; powers the Targets table without
+  loading solution code for every run
 
 **Core DB API (`packages/db/adapters/sqlite/queue.js`):**
 

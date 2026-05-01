@@ -119,6 +119,8 @@ export async function deleteRunGroup({ model, reasoningEffort = null, promptVers
 
 // Local-only operations — not applicable for the read-only Supabase adapter.
 export async function getResultsCount() { return 0; }
+export async function getTargetResults() { return []; }
+export async function getTargetResultsSummary() { return []; }
 export async function getLeaderboard() { return { rows: [], totalAttempts: 0, totalCost: 0, models: 0, promptVersions: [] }; }
 export async function getInsights() { return { difficulty: [], consistency: [], costEfficiency: [], distributions: { '': [] }, models: [] }; }
 export async function upsertRuns(_rows) { return 0; }

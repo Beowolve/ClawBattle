@@ -314,7 +314,7 @@ export function useLeaderboard(promptFilter) {
   });
 }
 
-export function useInsights(promptFilter) {
+export function useInsights(promptFilter, { enabled = true } = {}) {
   const pv = promptFilter && promptFilter !== 'all' ? promptFilter : null;
   const pvFilter = pv ? `prompt_version=eq.${encodeURIComponent(pv)}` : '';
   return useQuery({
@@ -330,6 +330,7 @@ export function useInsights(promptFilter) {
           return transformInsights(diffRows, consistRows, costRows, distRows);
         }
       : () => fetchJson(`/insights${pv ? `?prompt_version=${encodeURIComponent(pv)}` : ''}`),
+    enabled,
   });
 }
 
@@ -367,6 +368,27 @@ export function useResultsCount({ runId = '', model = '' } = {}) {
   });
 }
 
+function buildRunFilters({ targetId, targetType = 'battle', promptFilter, model, reasoningEffort } = {}) {
+  const filters = [];
+  if (targetId != null && targetId !== '') {
+    filters.push(`target_id=eq.${encodeURIComponent(String(targetId))}`);
+    filters.push(`target_type=eq.${encodeURIComponent(targetType)}`);
+  }
+  if (promptFilter && promptFilter !== 'all') {
+    filters.push(`prompt_version=eq.${encodeURIComponent(promptFilter)}`);
+  }
+  if (model) {
+    const encodedModel = encodeURIComponent(model);
+    filters.push(`or=(canonical_model.eq.${encodedModel},model.eq.${encodedModel})`);
+  }
+  if (reasoningEffort !== undefined) {
+    filters.push(reasoningEffort === ''
+      ? 'reasoning_effort=is.null'
+      : `reasoning_effort=eq.${encodeURIComponent(reasoningEffort)}`);
+  }
+  return filters.join('&');
+}
+
 export function useResults({ enabled = true } = {}) {
   return useQuery({
     queryKey: ['results'],
@@ -374,6 +396,53 @@ export function useResults({ enabled = true } = {}) {
       ? async () => (await fetchAllFromSupabase('runs', 'created_at.asc')).map(normalizeRunRow)
       : async () => (await fetchJson('/results')).map(normalizeRunRow),
     enabled,
+  });
+}
+
+export function useTargetResultsSummary({ promptFilter, enabled = true } = {}) {
+  const pv = promptFilter && promptFilter !== 'all' ? promptFilter : null;
+  return useQuery({
+    queryKey: ['results', 'target-summary', pv ?? ''],
+    queryFn: IS_PUBLIC
+      ? async () => {
+          const filter = pv ? `prompt_version=eq.${encodeURIComponent(pv)}` : '';
+          return fetchAllFromSupabase('target_results_summary', 'target_id.asc', filter);
+        }
+      : () => fetchJson(`/results/target-summary${pv ? `?prompt_version=${encodeURIComponent(pv)}` : ''}`),
+    enabled,
+  });
+}
+
+export function useTargetResults({
+  targetId,
+  targetType = 'battle',
+  promptFilter,
+  model,
+  reasoningEffort,
+  enabled = true,
+} = {}) {
+  return useQuery({
+    queryKey: [
+      'results', 'target', targetType, targetId ?? '',
+      promptFilter ?? 'all', model ?? '', reasoningEffort ?? null,
+    ],
+    queryFn: IS_PUBLIC
+      ? async () => {
+          const filter = buildRunFilters({ targetId, targetType, promptFilter, model, reasoningEffort });
+          const rows = await fetchAllFromSupabase('runs', 'score.desc', filter);
+          return rows.map(normalizeRunRow);
+        }
+      : () => {
+          const params = new URLSearchParams({
+            target_id: String(targetId),
+            target_type: targetType,
+          });
+          if (promptFilter && promptFilter !== 'all') params.set('prompt_version', promptFilter);
+          if (model) params.set('model', model);
+          if (reasoningEffort !== undefined) params.set('reasoning_effort', reasoningEffort);
+          return fetchJson(`/results?${params}`).then(rows => rows.map(normalizeRunRow));
+        },
+    enabled: enabled && targetId != null && targetId !== '',
   });
 }
 
@@ -427,21 +496,23 @@ export function useRunHistory() {
   });
 }
 
-export function useBattleTargets() {
+export function useBattleTargets({ enabled = true } = {}) {
   return useQuery({
     queryKey: ['targets', 'battle'],
     queryFn: IS_PUBLIC
       ? () => fetchAllFromSupabase('battle_targets', 'battle_number.asc')
       : () => fetchJson('/targets/battle'),
+    enabled,
   });
 }
 
-export function useDailyTargets() {
+export function useDailyTargets({ enabled = true } = {}) {
   return useQuery({
     queryKey: ['targets', 'daily'],
     queryFn: IS_PUBLIC
       ? () => fetchAllFromSupabase('daily_targets', 'date.desc')
       : () => fetchJson('/targets/daily'),
+    enabled,
   });
 }
 

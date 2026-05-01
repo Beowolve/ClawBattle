@@ -1,7 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openDb } from './connection.js';
-import { saveAttempt, getResults, getInsights, getLeaderboard, deleteRunGroup } from './runs.js';
+import {
+  saveAttempt,
+  getResults,
+  getTargetResults,
+  getTargetResultsSummary,
+  getInsights,
+  getLeaderboard,
+  deleteRunGroup,
+} from './runs.js';
 
 function makeDb() {
   return openDb(':memory:');
@@ -462,4 +470,80 @@ test('attempt_results view returns exactly status=done rows', () => {
   assert.equal(rows.length, 1);
   assert.equal(rows[0].run_id, 'r-done');
   assert.equal(rows[0].status, 'done');
+});
+
+test('target_results_summary returns compact best rows without code', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-low',
+    targetId: '1',
+    reasoningEffort: 'low',
+    attempt: 1,
+    score: 700,
+    match: 90,
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-low',
+    targetId: '1',
+    reasoningEffort: 'low',
+    attempt: 2,
+    score: 800,
+    match: 95,
+  });
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-high',
+    targetId: '1',
+    reasoningEffort: 'high',
+    attempt: 1,
+    score: 900,
+    match: 98,
+  });
+
+  const rows = getTargetResultsSummary(db, { promptVersion: 'v1' })
+    .sort((a, b) => String(a.reasoning_effort).localeCompare(String(b.reasoning_effort)));
+
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows.map(r => ({
+    target_id: r.target_id,
+    reasoning_effort: r.reasoning_effort,
+    attempts: r.attempts,
+    best_attempt: r.best_attempt,
+    best_score: r.best_score,
+    best_match: r.best_match,
+    code: r.code,
+  })), [
+    {
+      target_id: '1',
+      reasoning_effort: 'high',
+      attempts: 1,
+      best_attempt: 1,
+      best_score: 900,
+      best_match: 98,
+      code: undefined,
+    },
+    {
+      target_id: '1',
+      reasoning_effort: 'low',
+      attempts: 2,
+      best_attempt: 2,
+      best_score: 800,
+      best_match: 95,
+      code: undefined,
+    },
+  ]);
+});
+
+test('getTargetResults returns only the selected target rows with code', () => {
+  const db = makeDb();
+  saveAttempt(db, { ...baseAttempt, runId: 'run-1', targetId: '1', score: 700 });
+  saveAttempt(db, { ...baseAttempt, runId: 'run-2', targetId: '2', score: 900 });
+
+  const rows = getTargetResults(db, { targetId: '1', targetType: 'battle', promptVersion: 'v1' });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].target_id, '1');
+  assert.equal(rows[0].code, baseAttempt.code);
 });

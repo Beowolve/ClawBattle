@@ -56,7 +56,7 @@ const LEGACY_REUSABLE_COLUMNS = [
 const RUNS_VIEWS = [
   'attempt_results', 'leaderboard', 'leaderboard_by_version',
   'target_difficulty', 'model_consistency', 'cost_efficiency',
-  'match_distribution', 'runs_summary',
+  'match_distribution', 'target_results_summary', 'runs_summary',
 ];
 
 // Must be called before CREATE TABLE IF NOT EXISTS runs so that an orphaned
@@ -343,6 +343,36 @@ export function initSchema(db) {
       COUNT(*) AS count
     FROM attempt_results WHERE match IS NOT NULL
     GROUP BY model_key, prompt_version, bucket;
+
+    DROP VIEW IF EXISTS target_results_summary;
+    CREATE VIEW target_results_summary AS
+    WITH ranked AS (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY target_id, target_type, prompt_version, model_key, reasoning_effort
+        ORDER BY score DESC NULLS LAST
+      ) AS rn,
+      COUNT(*) OVER (
+        PARTITION BY target_id, target_type, prompt_version, model_key, reasoning_effort
+      ) AS attempts
+      FROM attempt_results
+    )
+    SELECT
+      target_id,
+      target_type,
+      prompt_version,
+      model_key AS model,
+      raw_model,
+      provider,
+      reasoning_effort,
+      attempts,
+      run_id AS best_run_id,
+      attempt AS best_attempt,
+      score AS best_score,
+      match AS best_match,
+      code_length AS best_code_length,
+      cost AS best_cost
+    FROM ranked
+    WHERE rn = 1;
 
     DROP VIEW IF EXISTS runs_summary;
     CREATE VIEW runs_summary AS

@@ -4,6 +4,8 @@
 import { getDb } from './connection.js';
 import {
   getResults as _getResults,
+  getTargetResults as _getTargetResults,
+  getTargetResultsSummary as _getTargetResultsSummary,
   getResultsCount as _getResultsCount,
   getLeaderboard as _getLeaderboard,
   getInsights as _getInsights,
@@ -36,6 +38,8 @@ import {
 export const getCompletedTargetIds = (runId)         => _getCompletedTargetIds(getDb(), runId);
 export const getExistingAttempts   = (opts)          => _getExistingAttempts(getDb(), opts);
 export const getResults            = (opts)          => _getResults(getDb(), opts);
+export const getTargetResults      = (opts)          => _getTargetResults(getDb(), opts);
+export const getTargetResultsSummary = (opts)        => _getTargetResultsSummary(getDb(), opts);
 export const getResultsCount       = (opts)          => _getResultsCount(getDb(), opts);
 export const getLeaderboard        = (promptVersion) => _getLeaderboard(getDb(), promptVersion);
 export const getInsights           = (promptVersion) => _getInsights(getDb(), promptVersion);
