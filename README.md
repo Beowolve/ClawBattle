@@ -1,5 +1,10 @@
+<p align="center">
+  <img src="images/social_media_preview.png" alt="ClawBattle - LLM vs CSS benchmark" width="100%">
+</p>
+
 # ClawBattle
-**AI CSS Battle Benchmark**
+
+**LLM CSS Battle Benchmark**
 
 Measures how well LLMs can reproduce pixel-perfect CSS targets from [CSS Battle](https://cssbattle.dev). Run multiple models against the same targets and compare scores, match rates, and cost on the dashboard.
 
