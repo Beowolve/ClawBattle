@@ -165,8 +165,16 @@ export function getTargetResultsSummary(db, { promptVersion } = {}) {
 export function getTargetResults(db, { targetId, targetType = 'battle', promptVersion, model, reasoningEffort } = {}) {
   if (targetId == null || targetId === '') return [];
 
-  const params = [String(targetType), String(targetId)];
-  const where = ['target_type = ?', 'target_id = ?'];
+  const params = [String(targetType)];
+  const where = ['target_type = ?'];
+  const numericBattleTargetId = targetType === 'battle' ? Number(targetId) : NaN;
+  if (Number.isFinite(numericBattleTargetId)) {
+    where.push('CAST(ROUND(CAST(target_id AS REAL)) AS INTEGER) = ?');
+    params.push(Math.round(numericBattleTargetId));
+  } else {
+    where.push('target_id = ?');
+    params.push(String(targetId));
+  }
   if (promptVersion) {
     where.push('prompt_version = ?');
     params.push(promptVersion);

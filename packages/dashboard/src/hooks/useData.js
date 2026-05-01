@@ -371,7 +371,16 @@ export function useResultsCount({ runId = '', model = '' } = {}) {
 function buildRunFilters({ targetId, targetType = 'battle', promptFilter, model, reasoningEffort } = {}) {
   const filters = [];
   if (targetId != null && targetId !== '') {
-    filters.push(`target_id=eq.${encodeURIComponent(String(targetId))}`);
+    const numericBattleTargetId = targetType === 'battle' ? Number(targetId) : NaN;
+    if (Number.isFinite(numericBattleTargetId)) {
+      const normalized = String(Math.round(numericBattleTargetId));
+      const legacyDecimal = `${normalized}.0`;
+      filters.push(
+        `or=(target_id.eq.${encodeURIComponent(normalized)},target_id.eq.${encodeURIComponent(legacyDecimal)})`,
+      );
+    } else {
+      filters.push(`target_id=eq.${encodeURIComponent(String(targetId))}`);
+    }
     filters.push(`target_type=eq.${encodeURIComponent(targetType)}`);
   }
   if (promptFilter && promptFilter !== 'all') {

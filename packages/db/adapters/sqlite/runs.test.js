@@ -547,3 +547,50 @@ test('getTargetResults returns only the selected target rows with code', () => {
   assert.equal(rows[0].target_id, '1');
   assert.equal(rows[0].code, baseAttempt.code);
 });
+
+test('target_results_summary exposes legacy decimal battle target ids that still match the overview', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-legacy-target-id',
+    model: 'openai/gpt-4.1',
+    targetId: '1.0',
+    promptVersion: 'v2',
+    score: 812,
+    match: 96,
+  });
+
+  const rows = getTargetResultsSummary(db, { promptVersion: 'v2' })
+    .filter(row => Number(row.target_id) === 1 && row.model === 'openai/gpt-4.1');
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].target_id, '1.0');
+  assert.equal(rows[0].prompt_version, 'v2');
+  assert.equal(rows[0].best_score, 812);
+});
+
+test('getTargetResults returns target detail rows for legacy decimal battle target ids', () => {
+  const db = makeDb();
+  saveAttempt(db, {
+    ...baseAttempt,
+    runId: 'run-legacy-target-id',
+    model: 'openai/gpt-4.1',
+    targetId: '1.0',
+    promptVersion: 'v2',
+    score: 812,
+    match: 96,
+  });
+
+  const rows = getTargetResults(db, {
+    targetId: '1',
+    targetType: 'battle',
+    promptVersion: 'v2',
+    model: 'openai/gpt-4.1',
+  });
+
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].target_id, '1.0');
+  assert.equal(rows[0].model, 'openai/gpt-4.1');
+  assert.equal(rows[0].prompt_version, 'v2');
+  assert.equal(rows[0].code, baseAttempt.code);
+});
