@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/social_media_preview.png" alt="ClawBattle - LLM vs CSS benchmark" width="100%">
+  <img src="images/social_media_preview.webp" alt="ClawBattle - LLM vs CSS benchmark" width="100%">
 </p>
 
 # ClawBattle
