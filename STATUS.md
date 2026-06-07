@@ -10,7 +10,7 @@ Last updated: 2026-05-01
 - [x] Renderer integration tests — concurrent launch, disconnect recovery, parallel render coverage
 - [x] Scorer (`packages/core/scorer.js`) — pixelmatch threshold 0.01, CSS Battle formula; `computeMatch()` for match %, `computeScore()` for the scoring math
 - [x] SQLite adapter (`packages/db/`) — single `runs` table, acts as both attempt-log and persistent queue; uses Node 22's `node:sqlite`
-- [x] LLM adapters — OpenRouter, OpenAI, Ollama (all with AbortSignal support)
+- [x] LLM adapters — OpenRouter, OpenAI, Ollama, LM Studio (all with AbortSignal support)
 - [x] OpenRouter provider routing overrides — model-specific provider forcing via local JSON config (`config/openrouter.providers.json` or `OPENROUTER_PROVIDER_CONFIG_PATH`)
 - [x] LLM error handling — API-level errors detected even on HTTP 200, empty-response guard
 - [x] Code safety guard — generated HTML/CSS is sanitized; JS, SVG, external resources, and disallowed URL schemes (`data|blob|file|ftp`) rejected across `src`/`href`, `srcset`, `url(...)`, `@import` before render/score

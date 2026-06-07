@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useConfig, useRunHistory, useRunQueue } from '../hooks/useData.js';
 import RunQueue from './RunQueue.jsx';
 
-const PROVIDERS = ['openrouter', 'openai', 'ollama'];
+const PROVIDERS = ['openrouter', 'openai', 'ollama', 'lmstudio'];
 const DEFAULT_REASONING_OPTION = 'default';
 const FALLBACK_REASONING_CONFIG = {
   defaultOption: DEFAULT_REASONING_OPTION,
@@ -11,11 +11,18 @@ const FALLBACK_REASONING_CONFIG = {
     openrouter: ['default', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
     openai: ['default', 'low', 'medium', 'high', 'xhigh'],
     ollama: ['default'],
+    lmstudio: ['default'],
   },
   modelOverrides: {},
 };
 const ATTEMPT_OPTIONS = [1, 2, 3, 5];
 const CONCURRENCY_OPTIONS = [1, 2, 3, 4, 5, 8, 10];
+const PROVIDER_DEFAULT_CONCURRENCY = {
+  lmstudio: 1,
+  ollama: 1,
+  openai: 5,
+  openrouter: 5,
+};
 const RETRY_OPTIONS = [0, 1, 2, 3];
 const ACTIVE_RUN_IDS_KEY = 'clawbattle.activeRunIds';
 const LEGACY_ACTIVE_RUN_ID_KEY = 'clawbattle.activeRunId';
@@ -324,6 +331,11 @@ export default function StartRun({ onStatusChange }) {
     await fetch(`/api/runs/${runId}/cancel`, { method: 'POST' });
   }
 
+  function handleProviderChange(nextProvider) {
+    setProvider(nextProvider);
+    setConcurrency(PROVIDER_DEFAULT_CONCURRENCY[nextProvider] ?? 1);
+  }
+
   const canStart = model.trim().length > 0;
 
   return (
@@ -353,7 +365,7 @@ export default function StartRun({ onStatusChange }) {
           <select
             className="filterSelect"
             value={provider}
-            onChange={(e) => setProvider(e.target.value)}
+            onChange={(e) => handleProviderChange(e.target.value)}
             disabled={isStarting}
           >
             {PROVIDERS.map((p) => <option key={p} value={p}>{p}</option>)}

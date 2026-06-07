@@ -12,6 +12,7 @@ test('model reasoning returns provider defaults', () => {
     ['default', 'low', 'medium', 'high', 'xhigh'],
   );
   assert.deepEqual(getReasoningOptions('ollama', 'llama3'), ['default']);
+  assert.deepEqual(getReasoningOptions('lmstudio', 'google/gemma-4-e4b'), ['default']);
 });
 
 test('model reasoning overrides provider defaults for default-only OpenRouter models', () => {
@@ -26,6 +27,7 @@ test('model reasoning falls back for unknown providers and invalid values', () =
   assert.equal(normalizeReasoningEffort('openrouter', 'unknown/model', 'HIGH'), 'high');
   assert.equal(normalizeReasoningEffort('openrouter', 'qwen/qwen3.6-plus', 'medium'), 'default');
   assert.equal(normalizeReasoningEffort('ollama', 'llama3', 'medium'), 'default');
+  assert.equal(normalizeReasoningEffort('lmstudio', 'google/gemma-4-e4b', 'medium'), 'default');
 });
 
 test('default reasoning is not sent as provider effort', () => {

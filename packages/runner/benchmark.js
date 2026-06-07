@@ -382,5 +382,6 @@ export async function resumeWorkers({
 async function resolveAdapterModule(provider) {
   if (provider === 'openai') return import('../core/llm/openai.js');
   if (provider === 'ollama') return import('../core/llm/ollama.js');
+  if (provider === 'lmstudio') return import('../core/llm/lmstudio.js');
   return import('../core/llm/openrouter.js');
 }

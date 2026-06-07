@@ -11,7 +11,7 @@ Measures how well LLMs can reproduce pixel-perfect CSS targets from [CSS Battle]
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) (running, Linux containers mode)
-- API key for at least one provider (OpenRouter, OpenAI, or Ollama)
+- API key for at least one hosted provider (OpenRouter or OpenAI), or a local provider (Ollama or LM Studio)
 
 ## Quick Start
 
@@ -42,7 +42,7 @@ CLI options:
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--model` | — | Model ID (required), e.g. `openai/gpt-4o` |
-| `--provider` | `openrouter` | `openrouter` \| `openai` \| `ollama` |
+| `--provider` | `openrouter` | `openrouter` \| `openai` \| `ollama` \| `lmstudio` |
 | `--targets` | `battle` | `battle` \| `daily` |
 | `--target-id` | — | Run a single target by ID |
 | `--attempts` | `3` | Attempts per target (best score counts) |
@@ -54,6 +54,37 @@ CLI options:
 *Set `PROMPT_VERSION=v2` in `.env` to change the default.
 
 Resume and target-range controls are available in the dashboard (+ Run tab).
+
+### LM Studio
+
+LM Studio uses its local OpenAI-compatible server. Start the server in LM Studio,
+then select provider `lmstudio` and the installed model id. For native IDE or
+Node runs on Windows, use `http://localhost:1234/v1` or omit `LM_STUDIO_BASE_URL`
+to use that default:
+
+```powershell
+node packages\runner\cli.js `
+  --model google/gemma-4-e4b `
+  --provider lmstudio `
+  --target-id 1 `
+  --attempts 1
+```
+
+With Docker Desktop on Windows, enable LM Studio's network/host-address access
+for the local server and point the container at the host:
+
+```powershell
+docker compose run -e LM_STUDIO_BASE_URL=http://host.docker.internal:1234/v1 runner `
+  --model google/gemma-4-e4b `
+  --provider lmstudio `
+  --target-id 1 `
+  --attempts 1
+```
+
+`LM_STUDIO_API_KEY` is optional and only needed for auth-gated compatible
+endpoints. `LM_STUDIO_MAX_TOKENS` controls the completion budget sent to LM
+Studio; increase it when reasoning models stop with `finish_reason=length`
+before returning HTML/CSS.
 
 ## OpenRouter Provider Forcing
 

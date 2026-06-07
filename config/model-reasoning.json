@@ -5,6 +5,7 @@
   "providerDefaults": {
     "openai": ["default", "low", "medium", "high", "xhigh"],
     "ollama": ["default"],
+    "lmstudio": ["default"],
     "openrouter": ["default", "none", "minimal", "low", "medium", "high", "xhigh"]
   },
   "modelOverrides": {

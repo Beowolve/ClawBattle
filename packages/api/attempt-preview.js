@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { buildRequestBody as buildOpenRouterRequestBody } from '../core/llm/openrouter.js';
 import { buildRequestBody as buildOpenAiRequestBody } from '../core/llm/openai.js';
 import { buildRequestBody as buildOllamaRequestBody } from '../core/llm/ollama.js';
+import { buildRequestBody as buildLmStudioRequestBody } from '../core/llm/lmstudio.js';
 import { sanitizeCode } from '../core/utils/code.js';
 import { render, getChromeVersion } from '../core/renderer.js';
 import { getBattleTargets, getDailyTargets, getPreviousAttempt } from '../db/index.js';
@@ -29,6 +30,9 @@ function buildProviderRequestBody({ provider, model, prompt, images, reasoningEf
   }
   if (provider === 'ollama') {
     return buildOllamaRequestBody({ model, prompt, images });
+  }
+  if (provider === 'lmstudio') {
+    return buildLmStudioRequestBody({ model, prompt, images });
   }
   return buildOpenRouterRequestBody({ model, prompt, images, reasoningEffort });
 }
