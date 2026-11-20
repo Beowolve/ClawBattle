@@ -29,3 +29,13 @@ test('calculateTextCost returns null for unknown pricing', () => {
   assert.equal(cost, null);
 });
 
+test('Claude Haiku 5.5 switches all rates only above 100,000 input tokens, including cache hits', () => {
+  for (const [input, expected] of [[100_000, 0.0555], [100_001, 0.2775005]]) {
+    assert.equal(calculateTextCost({
+      provider: 'anthropic',
+      model: 'claude-haiku-5-5',
+      usage: { input_tokens: input, input_cached_tokens: 50_000, output_tokens: 100_000 },
+    }), expected);
+  }
+});
+

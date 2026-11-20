@@ -27,10 +27,12 @@ export function calculateTextCost({ provider, model, usage }) {
   if (!usage) return null;
 
   const canonical = canonicalModel(provider, model);
-  const prices = loadPrices()[canonical];
-  if (!prices) return null;
+  const modelPrices = loadPrices()[canonical];
+  if (!modelPrices) return null;
 
   const inputTokens = tokenCount(usage.prompt_tokens ?? usage.input_tokens);
+  const longContext = modelPrices.longContext;
+  const prices = longContext && inputTokens > longContext.aboveInputTokens ? longContext : modelPrices;
   const cachedInputTokens = tokenCount(
     usage.prompt_tokens_details?.cached_tokens
       ?? usage.input_tokens_details?.cached_tokens

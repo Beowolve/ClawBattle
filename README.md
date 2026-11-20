@@ -11,7 +11,7 @@ Measures how well LLMs can reproduce pixel-perfect CSS targets from [CSS Battle]
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) (running, Linux containers mode)
-- API key for at least one hosted provider (OpenRouter or OpenAI), or a local provider (Ollama or LM Studio)
+- API key for at least one hosted provider (OpenRouter, OpenAI, or Anthropic), or a local provider (Ollama or LM Studio)
 
 ## Quick Start
 
@@ -42,7 +42,7 @@ CLI options:
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--model` | — | Model ID (required), e.g. `openai/gpt-4o` |
-| `--provider` | `openrouter` | `openrouter` \| `openai` \| `ollama` \| `lmstudio` |
+| `--provider` | `openrouter` | `openrouter` \| `openai` \| `anthropic` \| `ollama` \| `lmstudio` |
 | `--targets` | `battle` | `battle` \| `daily` |
 | `--target-id` | — | Run a single target by ID |
 | `--attempts` | `3` | Attempts per target (best score counts) |
@@ -54,6 +54,23 @@ CLI options:
 *Set `PROMPT_VERSION=v2` in `.env` to change the default.
 
 Resume and target-range controls are available in the dashboard (+ Run tab).
+
+### Anthropic (Claude)
+
+Add `ANTHROPIC_API_KEY` to your local `.env`. If ClawBattle is already running in
+Docker, run `docker compose up -d --build api dashboard` to apply the configuration.
+In **+ Run**, select `anthropic` and enter a [Claude API model ID](https://platform.claude.com/docs/en/models/overview),
+such as `claude-sonnet-4-6`.
+
+```powershell
+docker compose run --build --rm runner --provider anthropic --model claude-sonnet-4-6 --target-id 1 --attempts 1
+```
+
+Claude runs use the model's default reasoning behavior. ClawBattle estimates
+cost when the model's rates are available in `config/model-pricing.json`.
+The leaderboard groups equivalent Claude API and OpenRouter IDs for models in
+the Claude model overview. Costs use Anthropic's standard API rates, including
+cache reads and the long-context rate for Claude Haiku 5.5.
 
 ### LM Studio
 

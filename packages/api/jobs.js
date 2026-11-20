@@ -39,7 +39,7 @@ function summarizeRequestBody(body) {
   const content = body.messages?.[0]?.content;
   const contentParts = Array.isArray(content) ? content.length : 1;
   const imageParts = Array.isArray(content)
-    ? content.filter((part) => part?.type === 'image_url').length
+    ? content.filter((part) => part?.type === 'image_url' || part?.type === 'image').length
     : 0;
   return {
     provider: body.provider ?? null,

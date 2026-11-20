@@ -140,14 +140,15 @@ app.use('/api/runs', createRunsQueueRouter({
   startResumedRun: (runId, concurrency = 1) => {
     const meta = getRunQueue().find(r => r.run_id === runId);
     if (!meta) return;
+    const model = meta.raw_model ?? meta.model;
     const signal = createJob(runId, {
-      model: meta.model,
+      model,
       provider: meta.provider,
       promptVersion: meta.prompt_version ?? null,
       reasoningEffort: meta.reasoning_effort ?? null,
     });
     console.log(
-      `[API] Resume run — runId=${runId} model=${meta.model}` +
+      `[API] Resume run — runId=${runId} model=${model}` +
       `${meta.reasoning_effort ? ` [${meta.reasoning_effort}]` : ''}` +
       ` provider=${meta.provider} prompt=${meta.prompt_version ?? '?'} concurrency=${concurrency}`,
     );
@@ -156,7 +157,7 @@ app.use('/api/runs', createRunsQueueRouter({
     // calling runBenchmark without target bounds would enqueue ALL battle targets.
     resumeWorkers({
       runId,
-      model: meta.model,
+      model,
       provider: meta.provider,
       promptVersion: meta.prompt_version ?? process.env.PROMPT_VERSION ?? 'v3',
       reasoningEffort: meta.reasoning_effort ?? undefined,

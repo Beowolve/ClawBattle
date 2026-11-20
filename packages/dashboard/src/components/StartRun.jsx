@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useConfig, useRunHistory, useRunQueue } from '../hooks/useData.js';
 import RunQueue from './RunQueue.jsx';
 
-const PROVIDERS = ['openrouter', 'openai', 'ollama', 'lmstudio'];
+const PROVIDERS = ['openrouter', 'openai', 'anthropic', 'ollama', 'lmstudio'];
 const DEFAULT_REASONING_OPTION = 'default';
 const FALLBACK_REASONING_CONFIG = {
   defaultOption: DEFAULT_REASONING_OPTION,
@@ -120,7 +120,7 @@ export default function StartRun({ onStatusChange }) {
     const rows = [...(runQueueQ.data ?? []), ...(runHistoryQ.data ?? [])];
     for (const row of rows) {
       if ((row.provider ?? '') !== provider) continue;
-      const name = String(row.model ?? '').trim();
+      const name = String(row.raw_model ?? row.model ?? '').trim();
       if (!name || seen.has(name)) continue;
       seen.add(name);
       suggestions.push(name);
@@ -353,7 +353,7 @@ export default function StartRun({ onStatusChange }) {
             value={model}
             onChange={(e) => setModel(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && canStart && startRun()}
-            placeholder="Model (e.g. openai/gpt-4o)"
+            placeholder={provider === 'anthropic' ? 'Model (e.g. claude-sonnet-4-6)' : 'Model (e.g. openai/gpt-4o)'}
             list={modelDatalistId}
             disabled={isStarting}
           />

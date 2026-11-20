@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildRequestBody as buildOpenRouterRequestBody } from '../core/llm/openrouter.js';
 import { buildRequestBody as buildOpenAiRequestBody } from '../core/llm/openai.js';
+import { buildRequestBody as buildAnthropicRequestBody } from '../core/llm/anthropic.js';
 import { buildRequestBody as buildOllamaRequestBody } from '../core/llm/ollama.js';
 import { buildRequestBody as buildLmStudioRequestBody } from '../core/llm/lmstudio.js';
 import { sanitizeCode } from '../core/utils/code.js';
@@ -25,6 +26,9 @@ function findTargetDefinition(targetType, targetId) {
 }
 
 function buildProviderRequestBody({ provider, model, prompt, images, reasoningEffort }) {
+  if (provider === 'anthropic') {
+    return buildAnthropicRequestBody({ model, prompt, images });
+  }
   if (provider === 'openai') {
     return buildOpenAiRequestBody({ model, prompt, images, reasoningEffort });
   }
