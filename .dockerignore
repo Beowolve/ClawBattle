@@ -1,0 +1,5 @@
+**/node_modules
+**/.env
+**/.env.*
+!packages/dashboard/.env.public
+.git

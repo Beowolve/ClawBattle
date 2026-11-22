@@ -26,6 +26,14 @@ Open `http://localhost:5173` for the dashboard.
 Use your browser's Back and Forward buttons to revisit dashboard tabs and target details.
 Target detail URLs can also be opened directly.
 
+## Dependency maintenance
+
+Dependabot checks npm, GitHub Actions, and Docker weekly and waits seven days before proposing version updates. GitHub security updates may arrive sooner. The test workflow checks every locked npm version against its publication timestamp before installing it, including indirect and platform-specific dependencies. Require the `test` check in branch protection to enforce this on merges.
+
+When updating an npm lockfile locally, use `npm install --min-release-age=7 --package-lock-only --ignore-scripts` with npm 11.10 or newer. For existing lockfiles, run `node scripts/check-npm-release-age.js` from the repository root before installing. API, runner, and dashboard images install with `npm ci`. The API and runner both use the dependencies in `packages/core`.
+
+Check publication dates when updating pinned Action commits, container digests, and the [Debian package snapshot](docker/debian-snapshot.sources). Review that snapshot regularly for Chromium and Debian security fixes. Keep pixelmatch on v7 until the scoring threshold and comparability with historical benchmarks have been evaluated against v8.
+
 ## Running a Benchmark
 
 The easiest way is the **+ Run** tab in the dashboard — pick a model, provider, and hit Start. You can launch multiple runs in parallel, and the model field autocompletes previously used models filtered by the selected provider.

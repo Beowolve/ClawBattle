@@ -6,12 +6,11 @@ on:
       - '**'
     tags:
       - 'v*.*.*'
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -20,39 +19,41 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      PUPPETEER_SKIP_DOWNLOAD: 'true'
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 22
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.23.5
           cache: npm
           cache-dependency-path: |
             packages/api/package-lock.json
             packages/core/package-lock.json
             packages/dashboard/package-lock.json
-            packages/runner/package-lock.json
+
+      - name: Check npm dependency release age
+        run: node scripts/check-npm-release-age.js
 
       - name: Install API dependencies
         working-directory: packages/api
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Install core dependencies
         working-directory: packages/core
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Install dashboard dependencies
         working-directory: packages/dashboard
-        run: npm ci
-
-      - name: Install runner dependencies
-        working-directory: packages/runner
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run tests
         run: npm test
+
+      - name: Build dashboard
+        working-directory: packages/dashboard
+        run: npm run build
 
   generate-release-notes:
     if: startsWith(github.ref, 'refs/tags/')
@@ -61,9 +62,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Generate release notes
         uses: ./.github/actions/generate-release-notes
@@ -72,7 +74,7 @@ jobs:
           output-file: RELEASE_NOTES.md
 
       - name: Upload release notes artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-notes
           path: RELEASE_NOTES.md
@@ -98,17 +100,19 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 22
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.23.5
           cache: npm
           cache-dependency-path: packages/dashboard/package-lock.json
 
       - name: Install dependencies
         working-directory: packages/dashboard
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Build public dashboard
         working-directory: packages/dashboard
@@ -118,7 +122,7 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build:public
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: packages/dashboard/dist-public
 
@@ -126,9 +130,12 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
         id: deployment

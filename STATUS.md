@@ -82,7 +82,8 @@ Last updated: 2026-11-22
 - [x] Persistent DB-backed attempt queue — one row per `(run_id, target_id, attempt)` with status `waiting | pending | running | done | error | paused`; survives process restarts, `runs_summary` view aggregates per-run status
 - [x] localStorage persistence for active run IDs + mount reconnect via `GET /api/runs/active`
 - [x] Public dashboard mode — `VITE_PUBLIC_MODE=true` builds a read-only variant (Leaderboard/Targets/Insights only, no delete buttons, data fetched from Supabase via anon key)
-- [x] GitHub Actions CI - installs package dependencies and runs `npm test` on every push; release publishing and public dashboard deployment require passing tests
+- [x] GitHub Actions CI checks the seven-day minimum age of locked npm versions and runs `npm test` on pushes and pull requests. Release publishing and public dashboard deployment require passing tests.
+- [x] Dependabot checks npm, GitHub Actions, and Docker weekly with a seven-day cooldown for version updates. Docker builds use pinned bases, lockfiles, and a dated Debian package snapshot.
 
 ### Baselines
 - [x] `baselines/human.json` — top1 scores for battle targets 1–12

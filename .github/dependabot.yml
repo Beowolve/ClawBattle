@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - /packages/api
+      - /packages/core
+      - /packages/dashboard
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    ignore:
+      # Pixelmatch 8 changes the color-distance metric used for scoring.
+      - dependency-name: pixelmatch
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: docker
+    directories:
+      - /packages/api
+      - /packages/runner
+      - /packages/dashboard
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
