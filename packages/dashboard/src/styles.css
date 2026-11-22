@@ -1645,7 +1645,32 @@ td.muted {
 
 @media (max-width: 640px) {
   .appHeader {
+    gap: 8px;
     padding: 10px 12px;
+  }
+  .appHeader .brand {
+    gap: 6px;
+  }
+  .appHeader .brandLogo {
+    width: 32px;
+    height: 32px;
+  }
+  .appHeader .brandText {
+    font-size: clamp(0.86rem, 4vw, 1.2rem);
+  }
+  .headerControls {
+    gap: 6px;
+    min-width: 0;
+  }
+  .headerControls .filterSelect {
+    min-width: 0;
+    padding-inline: 6px;
+  }
+  .headerControls .themeButton {
+    padding-inline: 8px;
+  }
+  .headerControls .githubLink {
+    flex: 0 0 32px;
   }
   .appContent {
     padding: 12px;

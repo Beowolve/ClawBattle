@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useDashboardRoute } from './hooks/useDashboardRoute.js';
 import {
   useBattleTargets, useDailyTargets,
   useLeaderboard, useInsights,
@@ -30,6 +31,8 @@ const TABS = [
 ];
 
 const EMPTY_REASONING_FILTER = '__empty__';
+const EMPTY_TARGET_RUNS = [];
+const TAB_IDS = TABS.map(({ id }) => id);
 
 function computeKpisFromLeaderboard(data, promptFilter) {
   const promptScope = promptFilter && promptFilter !== 'all'
@@ -65,18 +68,9 @@ function computeKpisFromLeaderboard(data, promptFilter) {
 }
 
 export default function App() {
-  const [tab, setTabState] = useState(() => {
-    const saved = localStorage.getItem('clawbattle.tab');
-    return TABS.some(t => t.id === saved) ? saved : 'leaderboard';
-  });
-  function setTab(next) {
-    setTabState(next);
-    localStorage.setItem('clawbattle.tab', next);
-  }
+  const [{ tab, targetId, targetView, modelFilter, reasoningFilter }, navigate] = useDashboardRoute(TAB_IDS);
   const [targetType] = useState('battle');
-  const [targetView, setTargetView] = useState('table');
   const [runStatus, setRunStatus] = useState('idle');
-  const [selectedTarget, setSelectedTarget] = useState(null);
   const [promptFilter, setPromptFilter] = useState(
     () => localStorage.getItem('clawbattle.promptFilter') ?? 'all',
   );
@@ -84,43 +78,34 @@ export default function App() {
     setPromptFilter(v);
     localStorage.setItem('clawbattle.promptFilter', v);
   }
-  const [modelFilter, setModelFilter] = useState(null);
-  const [reasoningFilter, setReasoningFilter] = useState(null);
-
   function handleModelSelect(model, reasoningEffort) {
-    setModelFilter(model);
-    setReasoningFilter(reasoningEffort ?? '');
-    setTargetView('table');
-    setTab('targets');
+    navigate({ tab: 'targets', targetId: null, targetView: 'table', modelFilter: model, reasoningFilter: reasoningEffort ?? '' });
+  }
+
+  function openTarget(target) {
+    navigate({ tab: 'targets', targetId: String(target.id) });
+  }
+
+  function setModelFilter(modelFilter) {
+    navigate({ modelFilter }, { replace: true });
+  }
+
+  function setReasoningFilter(reasoningFilter) {
+    navigate({ reasoningFilter }, { replace: true });
   }
 
   // Leaderboard loads first; tab-specific datasets are enabled only when needed.
   const leaderboardQ = useLeaderboard(promptFilter);
   const insightsQ = useInsights(promptFilter, { enabled: tab === 'insights' });
 
-  // Raw results loaded lazily — only when the Targets tab is open
-  const selectedTargetId = selectedTarget
-    ? (targetType === 'battle' ? selectedTarget.id : selectedTarget.key)
-    : null;
-  const selectedReasoningFilter = reasoningFilter == null ? undefined : reasoningFilter;
-
   const targetSummaryQ = useTargetResultsSummary({
     promptFilter,
     enabled: tab === 'targets',
-  });
-  const targetRunsQ = useTargetResults({
-    targetId: selectedTargetId,
-    targetType,
-    promptFilter,
-    model: modelFilter ?? undefined,
-    reasoningEffort: selectedReasoningFilter,
-    enabled: tab === 'targets' && selectedTarget != null,
   });
   const battleQ = useBattleTargets({ enabled: tab === 'targets' && targetType === 'battle' });
   const dailyQ = useDailyTargets({ enabled: tab === 'targets' && targetType === 'daily' });
 
   const targetSummaries = targetSummaryQ.data ?? [];
-  const selectedTargetRuns = targetRunsQ.data ?? [];
   const battleTargets = battleQ.data ?? [];
   const dailyTargets = dailyQ.data ?? [];
 
@@ -162,6 +147,17 @@ export default function App() {
     return sorted;
   }, [targetType, battleTargets, dailyTargets, targetSummaries]);
 
+  const selectedIdx = targetId == null ? -1 : sortedTargets.findIndex(target => String(target.id) === targetId);
+  const selectedTarget = sortedTargets[selectedIdx];
+  const targetRunsQ = useTargetResults({
+    targetId: selectedTarget?.id,
+    targetType,
+    promptFilter,
+    model: modelFilter ?? undefined,
+    reasoningEffort: reasoningFilter ?? undefined,
+    enabled: tab === 'targets' && selectedTarget != null,
+  });
+
   return (
     <div className="appRoot">
       <div className="topBand" />
@@ -179,7 +175,7 @@ export default function App() {
             <button
               key={t.id}
               className={`tabButton ${tab === t.id ? 'active' : ''}`}
-              onClick={() => setTab(t.id)}
+              onClick={() => navigate({ tab: t.id, targetId: null })}
             >
               {t.label}
               {t.id === 'run' && runStatus === 'running' && (
@@ -204,29 +200,24 @@ export default function App() {
 
         {tab === 'targets' && (
           <div>
-            {selectedTarget ? (() => {
-              const selectedIdx = sortedTargets.findIndex(
-                t => (t.id ?? t.key) === (selectedTarget.id ?? selectedTarget.key),
-              );
-              return (
-                <TargetDetail
-                  target={selectedTarget}
-                  type={targetType}
-                  targetCount={sortedTargets.length}
-                  runs={selectedTargetRuns}
-                  modelFilter={modelFilter}
-                  reasoningFilter={reasoningFilter}
-                  models={models}
-                  reasoningOptions={reasoningOptions}
-                  onModelFilterChange={setModelFilter}
-                  onReasoningFilterChange={setReasoningFilter}
-                  onBack={() => setSelectedTarget(null)}
-                  onPrev={selectedIdx > 0 ? () => setSelectedTarget(sortedTargets[selectedIdx - 1]) : null}
-                  onNext={selectedIdx < sortedTargets.length - 1 ? () => setSelectedTarget(sortedTargets[selectedIdx + 1]) : null}
-                  isLoading={targetRunsQ.isLoading}
-                />
-              );
-            })() : (
+            {selectedTarget ? (
+              <TargetDetail
+                target={selectedTarget}
+                type={targetType}
+                targetCount={sortedTargets.length}
+                runs={targetRunsQ.data ?? EMPTY_TARGET_RUNS}
+                modelFilter={modelFilter}
+                reasoningFilter={reasoningFilter}
+                models={models}
+                reasoningOptions={reasoningOptions}
+                onModelFilterChange={setModelFilter}
+                onReasoningFilterChange={setReasoningFilter}
+                onBack={() => navigate({ targetId: null })}
+                onPrev={selectedIdx > 0 ? () => openTarget(sortedTargets[selectedIdx - 1]) : null}
+                onNext={selectedIdx < sortedTargets.length - 1 ? () => openTarget(sortedTargets[selectedIdx + 1]) : null}
+                isLoading={targetRunsQ.isLoading}
+              />
+            ) : (
               <>
                 <div className="filtersBar">
                   <button className="tabButton active">
@@ -258,13 +249,13 @@ export default function App() {
                   <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                     <button
                       className={`tabButton ${targetView === 'grid' ? 'active' : ''}`}
-                      onClick={() => setTargetView('grid')}
+                      onClick={() => navigate({ targetView: 'grid' }, { replace: true })}
                     >
                       Grid
                     </button>
                     <button
                       className={`tabButton ${targetView === 'table' ? 'active' : ''}`}
-                      onClick={() => setTargetView('table')}
+                      onClick={() => navigate({ targetView: 'table' }, { replace: true })}
                     >
                       Table
                     </button>
@@ -283,12 +274,12 @@ export default function App() {
                           summaries={targetSummaries}
                           modelFilter={modelFilter}
                           reasoningFilter={reasoningFilter}
-                          onSelect={setSelectedTarget}
+                          onSelect={openTarget}
                         />
                       : <TargetGrid
                           targets={sortedTargets}
                           type={targetType}
-                          onSelect={setSelectedTarget}
+                          onSelect={openTarget}
                         />
                   }
                 </div>
@@ -304,8 +295,7 @@ export default function App() {
               : <Insights
                   data={insightsQ.data}
                   onSelectTarget={(target, type) => {
-                    setSelectedTarget(target);
-                    setTab('targets');
+                    if (type === targetType) openTarget(target);
                   }}
                 />
             }

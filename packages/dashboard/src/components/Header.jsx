@@ -1,11 +1,22 @@
+import { useEffect, useState } from 'react';
 import { useTheme } from '../hooks/useTheme.js';
 
 const THEME_LABELS = { system: 'System', light: 'Light', dark: 'Dark' };
 const THEME_CYCLE = { system: 'light', light: 'dark', dark: 'system' };
 const GITHUB_REPOSITORY_URL = 'https://github.com/Beowolve/ClawBattle';
+const COMPACT_HEADER = '(max-width: 640px)';
 
 export default function Header({ promptVersions, promptFilter, onPromptChange }) {
   const [mode, setMode] = useTheme();
+  const [compact, setCompact] = useState(() => window.matchMedia(COMPACT_HEADER).matches);
+
+  useEffect(() => {
+    const media = window.matchMedia(COMPACT_HEADER);
+    const update = () => setCompact(media.matches);
+    media.addEventListener('change', update);
+    update();
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   return (
     <header className="appHeader">
@@ -18,8 +29,8 @@ export default function Header({ promptVersions, promptFilter, onPromptChange })
       </div>
       <div className="headerControls">
         {promptVersions?.length > 1 && (
-          <select className="filterSelect" value={promptFilter} onChange={e => onPromptChange(e.target.value)}>
-            <option value="all">All prompts</option>
+          <select aria-label="Prompt version" className="filterSelect" value={promptFilter} onChange={e => onPromptChange(e.target.value)}>
+            <option value="all">{compact ? 'All' : 'All prompts'}</option>
             {promptVersions.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
         )}

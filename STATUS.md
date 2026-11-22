@@ -51,6 +51,7 @@ Last updated: 2026-11-22
 - [x] Run History — clickable list of completed runs only; click filters the attempt table
 - [x] Target Grid — thumbnails, colors, best match per target
 - [x] Target Detail — sticky code/preview/target layout, Quirks Mode iframe, solutions table
+- [x] Browser history for dashboard tabs and target details, with direct URLs for target views
 - [x] Start Run tab — model, provider, config-driven reasoning effort, attempts, concurrency, retries, target range, Fill toggle, cancel button; supports launching multiple runs in parallel and provider-scoped model autocomplete from existing runs
 - [x] Start Run form defaults — five parallel targets and one retry for hosted providers, one target at a time and three retries for Ollama and LM Studio
 - [x] Leaderboard delete flow — targets a single leaderboard entry (`model + reasoning_effort`) and can limit deletion to selected prompt versions

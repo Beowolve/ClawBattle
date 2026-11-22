@@ -23,6 +23,8 @@ npm run dev
 ```
 
 Open `http://localhost:5173` for the dashboard.
+Use your browser's Back and Forward buttons to revisit dashboard tabs and target details.
+Target detail URLs can also be opened directly.
 
 ## Running a Benchmark
 
