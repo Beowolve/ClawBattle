@@ -2,10 +2,11 @@
 // attempts inlined. Refreshes every 2s via useRunQueue. Retry/reset/resume
 // controls land here in slices 3.3 / 3.4.
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRunQueue } from '../hooks/useData.js';
 import { ModelWithReasoning, modelReasoningTitle } from './ReasoningBadge.jsx';
+import AttemptRequestDialog from './AttemptRequestDialog.jsx';
 
 const RESUME_CONCURRENCY_OPTIONS = [1, 2, 3, 4, 5, 8, 10];
 
@@ -44,93 +45,6 @@ function StatusBadge({ status }) {
 function formatTs(ts) {
   if (!ts) return '';
   return ts.replace('T', ' ').slice(0, 16);
-}
-
-function AttemptRequestDialog({ attempt, data, loading, error, onClose }) {
-  if (!attempt) return null;
-  const targetLabel = attempt.target_type === 'battle'
-    ? parseInt(attempt.target_id, 10)
-    : attempt.target_id;
-  const capturedRequests = data?.capturedRequests ?? [];
-  const [activeTab, setActiveTab] = useState('prompt');
-
-  useEffect(() => {
-    setActiveTab('prompt');
-  }, [attempt?.id]);
-
-  return (
-    <div className="dialogOverlay" role="presentation" onClick={onClose}>
-      <div
-        className="dialogCard promptDialogCard"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="attempt-request-dialog-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="dialogHeader">
-          <h3 id="attempt-request-dialog-title">Computed prompt + request</h3>
-        </div>
-        <div className="dialogBody promptDialogBody">
-          <p className="promptDialogMeta">
-            Target {targetLabel} · Attempt {attempt.attempt}
-          </p>
-          {loading && <p className="muted">Loading request trace...</p>}
-          {!loading && error && <p className="queueActionError">{error}</p>}
-          {!loading && !error && data && (
-            <>
-              <div className="promptDialogTabs" role="tablist" aria-label="Preview type">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'prompt'}
-                  className={`promptDialogTab ${activeTab === 'prompt' ? 'promptDialogTab--active' : ''}`}
-                  onClick={() => setActiveTab('prompt')}
-                >
-                  Prompt
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'request'}
-                  className={`promptDialogTab ${activeTab === 'request' ? 'promptDialogTab--active' : ''}`}
-                  onClick={() => setActiveTab('request')}
-                >
-                  Request
-                </button>
-              </div>
-
-              {activeTab === 'prompt' && (
-                <div className="promptDialogPanel">
-                  <p className="promptDialogMeta">
-                    Computed prompt · {data?.promptVersion ?? '—'} · Chrome {data?.chromeVersion ?? '—'}
-                    {data?.isFollowup ? ' · follow-up' : ''}
-                  </p>
-                  <pre className="promptDialogText">{data?.computedPrompt ?? ''}</pre>
-                </div>
-              )}
-
-              {activeTab === 'request' && (
-                <div className="promptDialogPanel">
-                  <p className="promptDialogMeta">Computed request body</p>
-                  <pre className="promptDialogText">{JSON.stringify(data?.computedRequestBody ?? {}, null, 2)}</pre>
-                  <p className="promptDialogMeta">Captured live requests: {capturedRequests.length}</p>
-                  <pre className="promptDialogText">{JSON.stringify(capturedRequests, null, 2)}</pre>
-                </div>
-              )}
-            </>
-          )}
-          {!loading && !error && !data && (
-            <p className="muted">No preview available.</p>
-          )}
-        </div>
-        <div className="dialogActions">
-          <button type="button" className="dialogSecondaryButton" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function AttemptsTable({ attempts, onRetry, onDeleteAttempt, onViewRequest, busyIds, deletingIds }) {
@@ -335,9 +249,6 @@ export default function RunQueue() {
   const [deletingAttemptIds, setDeletingAttemptIds] = useState(new Set());
   const [resumeConcurrencyByRun, setResumeConcurrencyByRun] = useState({});
   const [requestAttempt, setRequestAttempt] = useState(null);
-  const [requestData, setRequestData] = useState(null);
-  const [requestLoading, setRequestLoading] = useState(false);
-  const [requestError, setRequestError] = useState(null);
   const [actionError, setActionError] = useState(null);
 
   function toggle(runId) {
@@ -355,28 +266,6 @@ export default function RunQueue() {
 
   function closeRequestDialog() {
     setRequestAttempt(null);
-    setRequestData(null);
-    setRequestLoading(false);
-    setRequestError(null);
-  }
-
-  async function handleViewRequest(attempt) {
-    setRequestAttempt(attempt);
-    setRequestData(null);
-    setRequestError(null);
-    setRequestLoading(true);
-    try {
-      const res = await fetch(`/api/runs/attempts/${attempt.id}/request`);
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(body.error ?? `request fetch failed: ${res.status}`);
-      }
-      setRequestData(body);
-    } catch (err) {
-      setRequestError(err.message);
-    } finally {
-      setRequestLoading(false);
-    }
   }
 
   async function handleRetry(attemptId) {
@@ -522,7 +411,7 @@ export default function RunQueue() {
               onCancel={handleCancel}
               onDeleteRun={handleDeleteRun}
               onDeleteAttempt={handleDeleteAttempt}
-              onViewRequest={handleViewRequest}
+              onViewRequest={setRequestAttempt}
               busyIds={busyIds}
               deletingIds={deletingAttemptIds}
               resetting={resettingRuns.has(run.run_id)}
@@ -533,13 +422,9 @@ export default function RunQueue() {
           ))}
         </div>
       </div>
-      <AttemptRequestDialog
-        attempt={requestAttempt}
-        data={requestData}
-        loading={requestLoading}
-        error={requestError}
-        onClose={closeRequestDialog}
-      />
+      {requestAttempt && (
+        <AttemptRequestDialog key={requestAttempt.id} attempt={requestAttempt} onClose={closeRequestDialog} />
+      )}
     </>
   );
 }

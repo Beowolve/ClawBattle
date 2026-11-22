@@ -1,10 +1,22 @@
 import { extractCode } from './extract-code.js';
 import { calculateTextCost } from '../model-pricing.js';
+import { normalizeReasoningEffort, shouldSendReasoningEffort } from '../model-reasoning.js';
 
 const ENDPOINT = 'https://api.anthropic.com/v1/messages';
-const MAX_TOKENS = 8192;
+const DEFAULT_MAX_TOKENS = 16384;
 
-export function buildRequestBody({ model, prompt, images = [] }) {
+function readMaxTokens() {
+  const configured = process.env.ANTHROPIC_MAX_TOKENS?.trim();
+  if (!configured) return DEFAULT_MAX_TOKENS;
+
+  const maxTokens = Number(configured);
+  if (!/^\d+$/.test(configured) || !Number.isSafeInteger(maxTokens) || maxTokens <= 0) {
+    throw Object.assign(new Error('Anthropic: ANTHROPIC_MAX_TOKENS must be a positive integer'), { permanent: true });
+  }
+  return maxTokens;
+}
+
+export function buildRequestBody({ model, prompt, images = [], reasoningEffort }) {
   const content = [
     { type: 'text', text: prompt },
     ...images.map(image => ({
@@ -12,16 +24,22 @@ export function buildRequestBody({ model, prompt, images = [] }) {
       source: { type: 'base64', media_type: 'image/png', data: image.toString('base64') },
     })),
   ];
-  return { model, max_tokens: MAX_TOKENS, messages: [{ role: 'user', content }] };
+  const effort = normalizeReasoningEffort('anthropic', model, reasoningEffort);
+  return {
+    model,
+    max_tokens: readMaxTokens(),
+    messages: [{ role: 'user', content }],
+    ...(shouldSendReasoningEffort(effort) ? { output_config: { effort } } : {}),
+  };
 }
 
-export async function generate({ model, prompt, images, signal, onBeforeRequest, requestAttempt }) {
+export async function generate({ model, prompt, images, reasoningEffort, signal, onBeforeRequest, requestAttempt }) {
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
     throw Object.assign(new Error('Anthropic: set ANTHROPIC_API_KEY to use this provider'), { permanent: true });
   }
 
-  const body = buildRequestBody({ model, prompt, images });
+  const body = buildRequestBody({ model, prompt, images, reasoningEffort });
   onBeforeRequest?.({ provider: 'anthropic', endpoint: ENDPOINT, method: 'POST', requestAttempt, body });
   const response = await fetch(ENDPOINT, {
     method: 'POST',

@@ -28,6 +28,10 @@ Open `http://localhost:5173` for the dashboard.
 
 The easiest way is the **+ Run** tab in the dashboard — pick a model, provider, and hit Start. You can launch multiple runs in parallel, and the model field autocompletes previously used models filtered by the selected provider.
 
+The form defaults to five parallel targets and one retry for OpenRouter, OpenAI,
+and Anthropic. Ollama and LM Studio default to one target at a time and three
+retries in the form. The runner currently uses its own retry count per request.
+
 Alternatively via CLI:
 
 ```bash
@@ -54,6 +58,9 @@ CLI options:
 *Set `PROMPT_VERSION=v2` in `.env` to change the default.
 
 Resume and target-range controls are available in the dashboard (+ Run tab).
+Open **Request** on a queued attempt to inspect the prompt, computed payload,
+or an individual captured request. The dialog keeps its controls visible while
+the content scrolls.
 
 ### Anthropic (Claude)
 
@@ -66,8 +73,11 @@ such as `claude-sonnet-4-6`.
 docker compose run --build --rm runner --provider anthropic --model claude-sonnet-4-6 --target-id 1 --attempts 1
 ```
 
-Claude runs use the model's default reasoning behavior. ClawBattle estimates
-cost when the model's rates are available in `config/model-pricing.json`.
+In the dashboard or with `--reasoning`, select an effort level supported by the
+Claude model. ClawBattle sends explicit levels as `output_config.effort`.
+The `default` option uses Anthropic's model defaults. `ANTHROPIC_MAX_TOKENS`
+sets the combined limit for thinking and response text and defaults to `16384`.
+ClawBattle estimates cost when the model's rates are available in `config/model-pricing.json`.
 The leaderboard groups equivalent Claude API and OpenRouter IDs for models in
 the Claude model overview. Costs use Anthropic's standard API rates, including
 cache reads and the long-context rate for Claude Haiku 5.5.

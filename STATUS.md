@@ -12,6 +12,8 @@ Last updated: 2026-11-20
 - [x] SQLite adapter (`packages/db/`) — single `runs` table, acts as both attempt-log and persistent queue; uses Node 22's `node:sqlite`
 - [x] LLM adapters — OpenRouter, OpenAI, Anthropic (Claude), Ollama, LM Studio (all with AbortSignal support)
 - [x] Claude model aliases and standard API pricing for the models in Anthropic's model overview
+- [x] Configurable Claude output token limit covering thinking and response text
+- [x] Model-specific Claude effort selection for dashboard and CLI runs
 - [x] OpenRouter provider routing overrides — model-specific provider forcing via local JSON config (`config/openrouter.providers.json` or `OPENROUTER_PROVIDER_CONFIG_PATH`)
 - [x] LLM error handling — API-level errors detected even on HTTP 200, empty-response guard
 - [x] Code safety guard — generated HTML/CSS is sanitized; JS, SVG, external resources, and disallowed URL schemes (`data|blob|file|ftp`) rejected across `src`/`href`, `srcset`, `url(...)`, `@import` before render/score
@@ -50,6 +52,7 @@ Last updated: 2026-11-20
 - [x] Target Grid — thumbnails, colors, best match per target
 - [x] Target Detail — sticky code/preview/target layout, Quirks Mode iframe, solutions table
 - [x] Start Run tab — model, provider, config-driven reasoning effort, attempts, concurrency, retries, target range, Fill toggle, cancel button; supports launching multiple runs in parallel and provider-scoped model autocomplete from existing runs
+- [x] Start Run form defaults — five parallel targets and one retry for hosted providers, one target at a time and three retries for Ollama and LM Studio
 - [x] Leaderboard delete flow — targets a single leaderboard entry (`model + reasoning_effort`) and can limit deletion to selected prompt versions
 - [x] Insights — model consistency and cost efficiency compare model reasoning configurations separately (`model + reasoning_effort`)
 - [x] Active run indicator (pulsing dot on tab)
@@ -58,6 +61,7 @@ Last updated: 2026-11-20
 - [x] About box "Prompt" shows both the selected base prompt (attempt 1) and the shared follow-up appendix (attempts 2-3)
 - [x] Scoring wording consistently uses "code length" (About + README) and the About intro states the benchmark also aims for short solutions
 - [x] Start Run log shows policy violations as "attempt rejected by policy" with structured error typing
+- [x] Attempt request viewer — viewport-sized modal with separate views for the prompt, computed payload, and individual captured requests
 
 ### Prompts
 - [x] v1 — original prompt

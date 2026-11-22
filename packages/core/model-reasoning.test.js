@@ -22,6 +22,14 @@ test('model reasoning overrides provider defaults for default-only OpenRouter mo
   assert.deepEqual(getReasoningOptions('openrouter', 'google/gemma-4-31b-it'), ['default']);
 });
 
+test('Anthropic reasoning options match each Claude model’s supported effort levels', () => {
+  assert.deepEqual(getReasoningOptions('anthropic', 'claude-fable-5-2'), ['default', 'low', 'medium', 'high', 'xhigh', 'max']);
+  assert.deepEqual(getReasoningOptions('anthropic', 'claude-sonnet-4-6'), ['default', 'low', 'medium', 'high', 'max']);
+  assert.deepEqual(getReasoningOptions('anthropic', 'claude-opus-4-5-20251101'), ['default', 'low', 'medium', 'high']);
+  assert.deepEqual(getReasoningOptions('anthropic', 'claude-haiku-4-5-20251001'), ['default']);
+  assert.deepEqual(getReasoningOptions('anthropic', 'unknown-model'), ['default']);
+});
+
 test('model reasoning falls back for unknown providers and invalid values', () => {
   assert.deepEqual(getReasoningOptions('unknown', 'm'), ['default']);
   assert.equal(normalizeReasoningEffort('openrouter', 'unknown/model', 'HIGH'), 'high');

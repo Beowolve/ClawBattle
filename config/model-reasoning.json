@@ -3,12 +3,32 @@
   "description": "Provider and model specific reasoning effort options. The value \"default\" means no reasoning parameter is sent and the provider/model default behavior applies.",
   "defaultOption": "default",
   "providerDefaults": {
+    "anthropic": ["default"],
     "openai": ["default", "low", "medium", "high", "xhigh"],
     "ollama": ["default"],
     "lmstudio": ["default"],
     "openrouter": ["default", "none", "minimal", "low", "medium", "high", "xhigh"]
   },
   "modelOverrides": {
+    "anthropic": {
+      "claude-fable-5": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-fable-5-1": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-fable-5-2": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-haiku-5-5": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-mythos-5": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-mythos-5-1": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-mythos-5-2": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-opus-4-5": ["default", "low", "medium", "high"],
+      "claude-opus-4-5-20251101": ["default", "low", "medium", "high"],
+      "claude-opus-4-6": ["default", "low", "medium", "high", "max"],
+      "claude-opus-4-7": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-opus-4-8": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-opus-5": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-opus-5-5": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-sonnet-4-6": ["default", "low", "medium", "high", "max"],
+      "claude-sonnet-5": ["default", "low", "medium", "high", "xhigh", "max"],
+      "claude-sonnet-5-5": ["default", "low", "medium", "high", "xhigh", "max"]
+    },
     "openrouter": {
       "google/gemma-4-31b-it": ["default"],
       "qwen/qwen3.6-plus": ["default"],

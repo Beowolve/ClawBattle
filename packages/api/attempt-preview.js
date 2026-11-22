@@ -27,7 +27,7 @@ function findTargetDefinition(targetType, targetId) {
 
 function buildProviderRequestBody({ provider, model, prompt, images, reasoningEffort }) {
   if (provider === 'anthropic') {
-    return buildAnthropicRequestBody({ model, prompt, images });
+    return buildAnthropicRequestBody({ model, prompt, images, reasoningEffort });
   }
   if (provider === 'openai') {
     return buildOpenAiRequestBody({ model, prompt, images, reasoningEffort });

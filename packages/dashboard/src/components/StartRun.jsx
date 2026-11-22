@@ -3,13 +3,22 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useConfig, useRunHistory, useRunQueue } from '../hooks/useData.js';
 import RunQueue from './RunQueue.jsx';
 
-const PROVIDERS = ['openrouter', 'openai', 'anthropic', 'ollama', 'lmstudio'];
+const DEFAULT_PROVIDER = 'openrouter';
+const PROVIDER_RUN_DEFAULTS = {
+  openrouter: { concurrency: 5, retries: 1 },
+  openai: { concurrency: 5, retries: 1 },
+  anthropic: { concurrency: 5, retries: 1 },
+  ollama: { concurrency: 1, retries: 3 },
+  lmstudio: { concurrency: 1, retries: 3 },
+};
+const PROVIDERS = Object.keys(PROVIDER_RUN_DEFAULTS);
 const DEFAULT_REASONING_OPTION = 'default';
 const FALLBACK_REASONING_CONFIG = {
   defaultOption: DEFAULT_REASONING_OPTION,
   providerDefaults: {
     openrouter: ['default', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
     openai: ['default', 'low', 'medium', 'high', 'xhigh'],
+    anthropic: ['default'],
     ollama: ['default'],
     lmstudio: ['default'],
   },
@@ -17,12 +26,6 @@ const FALLBACK_REASONING_CONFIG = {
 };
 const ATTEMPT_OPTIONS = [1, 2, 3, 5];
 const CONCURRENCY_OPTIONS = [1, 2, 3, 4, 5, 8, 10];
-const PROVIDER_DEFAULT_CONCURRENCY = {
-  lmstudio: 1,
-  ollama: 1,
-  openai: 5,
-  openrouter: 5,
-};
 const RETRY_OPTIONS = [0, 1, 2, 3];
 const ACTIVE_RUN_IDS_KEY = 'clawbattle.activeRunIds';
 const LEGACY_ACTIVE_RUN_ID_KEY = 'clawbattle.activeRunId';
@@ -87,11 +90,11 @@ export default function StartRun({ onStatusChange }) {
   const runHistoryQ = useRunHistory();
   const runQueueQ = useRunQueue();
   const [model, setModel] = useState('');
-  const [provider, setProvider] = useState('openrouter');
+  const [provider, setProvider] = useState(DEFAULT_PROVIDER);
   const [promptVersion, setPromptVersion] = useState('');
   const [attempts, setAttempts] = useState(3);
-  const [concurrency, setConcurrency] = useState(5);
-  const [retries, setRetries] = useState(1);
+  const [concurrency, setConcurrency] = useState(PROVIDER_RUN_DEFAULTS[DEFAULT_PROVIDER].concurrency);
+  const [retries, setRetries] = useState(PROVIDER_RUN_DEFAULTS[DEFAULT_PROVIDER].retries);
   const [reasoningEffort, setReasoningEffort] = useState(DEFAULT_REASONING_OPTION);
   const [targetFrom, setTargetFrom] = useState('1');
   const [targetTo, setTargetTo] = useState('25');
@@ -157,7 +160,7 @@ export default function StartRun({ onStatusChange }) {
           const found = byId.get(selectedId);
           setRunId(selectedId);
           setModel(found.model ?? '');
-          setProvider(found.provider ?? 'openrouter');
+          handleProviderChange(found.provider ?? DEFAULT_PROVIDER);
           updateStatus('running');
         }
       })
@@ -332,8 +335,10 @@ export default function StartRun({ onStatusChange }) {
   }
 
   function handleProviderChange(nextProvider) {
+    const defaults = PROVIDER_RUN_DEFAULTS[nextProvider];
     setProvider(nextProvider);
-    setConcurrency(PROVIDER_DEFAULT_CONCURRENCY[nextProvider] ?? 1);
+    setConcurrency(defaults?.concurrency ?? 1);
+    setRetries(defaults?.retries ?? 1);
   }
 
   const canStart = model.trim().length > 0;
