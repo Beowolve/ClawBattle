@@ -131,3 +131,10 @@ test('ollama request body does not include reasoning settings', () => {
   assert.equal(body.reasoning_effort, undefined);
   assert.equal(body.reasoning, undefined);
 });
+
+test('ollama adapter reports an output limit reached before any text', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({
+    message: { content: '' }, done: true, done_reason: 'length', eval_count: 8192,
+  }));
+  await assert.rejects(generate({ model: 'test-model', prompt: 'test' }), /done_reason=length/);
+});

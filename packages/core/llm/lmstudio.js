@@ -126,7 +126,7 @@ export async function generate({
 
   const data = await response.json();
   if (!response.ok || data.error) {
-    throw new Error(`LM Studio: ${formatError(data, response.status)}`);
+    throw Object.assign(new Error(`LM Studio: ${formatError(data, response.status)}`), { code: data.error?.code });
   }
 
   const choice = data.choices?.[0];

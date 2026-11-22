@@ -31,6 +31,7 @@ The easiest way is the **+ Run** tab in the dashboard — pick a model, provider
 The form defaults to five parallel targets and one retry for OpenRouter, OpenAI,
 and Anthropic. Ollama and LM Studio default to one target at a time and three
 retries in the form. The runner currently uses its own retry count per request.
+Content-filter errors and exhausted output token budgets skip automatic retries.
 
 Alternatively via CLI:
 

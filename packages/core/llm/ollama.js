@@ -25,6 +25,11 @@ export async function generate({ model, prompt, images, signal }) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Ollama error');
 
+  const content = data.message?.content;
+  if (!content?.trim() && ['length', 'max_tokens', 'content_filter'].includes(data.done_reason)) {
+    throw new Error(`Ollama: empty response (done_reason=${data.done_reason})`);
+  }
+
   return {
     code: extractCode(data.message.content),
     tokensUsed: data.eval_count ?? 0,

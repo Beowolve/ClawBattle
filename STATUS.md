@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-11-20
+Last updated: 2026-11-22
 
 ## What's Done
 
@@ -151,8 +151,8 @@ persistent attempt queue. One row per `(run_id, target_id, attempt)`.
   so orphaned waiting rows after errors don't keep workers spinning
 - Follow-up context (attempts 2+) is loaded from the previous `done` row of
   the same `(run_id, target_id)`
-- `processClaim` does a short internal retry for transient errors (default 2,
-  300 ms backoff); `AbortError` and `PolicyViolationError` bypass the retry
+- `processClaim` retries transient errors (default 2, 300 ms backoff).
+  Aborts, policy violations, content filters, and output token limits bypass automatic retries.
 - Progress events (`attempt_start`, `attempt`, `attempt_error`, `target_done`)
   flow through a shared `createProgressShim` so CLI logs and SSE stay in sync
 

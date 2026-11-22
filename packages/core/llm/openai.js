@@ -27,14 +27,17 @@ export async function generate({ model, prompt, images, reasoningEffort, signal 
   const data = await response.json();
   if (!response.ok || data.error) {
     const msg = data.error?.message ?? data.error?.code ?? `HTTP ${response.status}`;
-    throw new Error(`OpenAI: ${msg}`);
+    throw Object.assign(new Error(`OpenAI: ${msg}`), { code: data.error?.code });
   }
-  if (!data.choices?.[0]?.message?.content) {
-    throw new Error(`OpenAI: empty response (no choices)`);
+  const choice = data.choices?.[0];
+  const content = choice?.message?.content;
+  if (!content?.trim()) {
+    const reason = choice?.finish_reason ? ` (finish_reason=${choice.finish_reason})` : '';
+    throw new Error(`OpenAI: empty response${choice ? reason : ' (no choices)'}`);
   }
 
   return {
-    code: extractCode(data.choices[0].message.content),
+    code: extractCode(content),
     tokensUsed: data.usage?.total_tokens ?? 0,
     cost: calculateTextCost({ provider: 'openai', model, usage: data.usage }),
   };

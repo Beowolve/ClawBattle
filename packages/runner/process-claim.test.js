@@ -262,8 +262,9 @@ test('processClaim: gives up after N internal retries and marks attempt as error
   enqueueRun(db, baseOpts);
   const claim = claimNextPending(db);
   let calls = 0;
+  const message = 'HTTP 429: output tokens per minute limit exceeded';
   const adapter = {
-    generate: async () => { calls++; throw new Error('rate limit'); },
+    generate: async () => { calls++; throw new Error(message); },
   };
   const result = await processClaim(baseArgs(db, claim, {
     deps: { adapter },
@@ -274,7 +275,7 @@ test('processClaim: gives up after N internal retries and marks attempt as error
   assert.equal(calls, 3); // 1 initial + 2 retries
   const row = db.prepare('SELECT status, error_message, prompt_text FROM runs WHERE id = ?').get(claim.id);
   assert.equal(row.status, 'error');
-  assert.equal(row.error_message, 'rate limit');
+  assert.equal(row.error_message, message);
   assert.equal(row.prompt_text, null);
 });
 
@@ -319,6 +320,36 @@ test('processClaim: does NOT retry errors flagged as permanent (err.permanent = 
   }));
   assert.equal(result.status, 'error');
   assert.equal(calls, 1);
+});
+
+test('processClaim: content filters and output limits bypass automatic retries', async (t) => {
+  const failures = [
+    new Error('Provider: content_filter'),
+    Object.assign(new Error('The request was blocked'), { code: 'content_filter' }),
+    new Error('Anthropic: no text in response (stop reason: max_tokens)'),
+    new Error('OpenAI: empty response (finish_reason=length)'),
+    new Error('Gateway: raw={"native_finish_reason":"MAX_TOKENS"}'),
+    new Error('Model stopped because the output token limit was reached'),
+    new Error('Model exceeded the output token limit'),
+  ];
+  for (const failure of failures) {
+    await t.test(failure.message, async (t) => {
+      const db = openDb(':memory:');
+      t.after(() => db.close());
+      enqueueRun(db, baseOpts);
+      const claim = claimNextPending(db);
+      const generate = t.mock.fn(async () => { throw failure; });
+      const result = await processClaim(baseArgs(db, claim, {
+        deps: { adapter: { generate } },
+        internalRetries: 3,
+        internalRetryDelayMs: 0,
+      }));
+
+      assert.equal(generate.mock.callCount(), 1);
+      assert.deepEqual(result, { status: 'error', message: failure.message });
+      assert.equal(db.prepare('SELECT error_message FROM runs WHERE id = ?').get(claim.id).error_message, failure.message);
+    });
+  }
 });
 
 test('processClaim: does NOT retry AbortError (re-throws immediately)', async () => {

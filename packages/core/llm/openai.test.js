@@ -83,6 +83,20 @@ test('openai adapter omits reasoning_effort when reasoningEffort="default"', () 
   assert.equal(body.reasoning_effort, undefined);
 });
 
+test('openai adapter includes the finish reason when output is empty', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({
+    choices: [{ message: { content: '' }, finish_reason: 'length' }],
+  }));
+  await assert.rejects(generate({ model: 'gpt-5.4', prompt: 'test' }), /finish_reason=length/);
+});
+
+test('openai adapter preserves the content filter code on API errors', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({
+    error: { message: 'The request was blocked', code: 'content_filter' },
+  }, { status: 400 }));
+  await assert.rejects(generate({ model: 'gpt-5.4', prompt: 'test' }), { code: 'content_filter' });
+});
+
 test('openai adapter sends explicit reasoning_effort values', () => {
   const body = buildRequestBody({
     model: 'gpt-5.4',

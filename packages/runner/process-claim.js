@@ -6,6 +6,11 @@ import { completeAttempt, failAttempt } from '../db/adapters/sqlite/queue.js';
 import { getPreviousAttempt } from '../db/adapters/sqlite/previous-attempt.js';
 import { buildBasePrompt, buildFollowupPrompt } from './prompt-utils.js';
 
+const CONTENT_FILTER = /content_filter/i;
+const OUTPUT_LIMIT_CODE = /^(?:max_tokens|max_output_tokens|output_token_limit(?:_reached|_exceeded)?)$/i;
+const OUTPUT_LIMIT_REASON = /\b(?:native_finish_reason|finish_reason|stop[ _]reason|done_reason|code)["']?\s*[:=]\s*["']?(?:length|max_tokens|max_output_tokens|output_token_limit(?:_reached|_exceeded)?)\b/i;
+const OUTPUT_LIMIT_MESSAGE = /\b(?:(?:output|completion)[ _-]tokens?[ _-]limit (?:was |has been )?(?:reached|exceeded)|(?:reached|exceeded) (?:the )?(?:output|completion)[ _-]tokens?[ _-]limit)\b/i;
+
 function classifyError(err) {
   if (err?.name === 'PolicyViolationError') return 'policy_violation';
   return 'runtime_error';
@@ -13,7 +18,12 @@ function classifyError(err) {
 
 function isPermanent(err) {
   if (err?.name === 'AbortError' || err?.name === 'PolicyViolationError') return true;
-  return err?.permanent === true;
+  if (err?.permanent === true) return true;
+  const code = err?.code ?? '';
+  const message = err?.message ?? '';
+  return CONTENT_FILTER.test(code) || CONTENT_FILTER.test(message)
+    || OUTPUT_LIMIT_CODE.test(code) || OUTPUT_LIMIT_CODE.test(message)
+    || OUTPUT_LIMIT_REASON.test(message) || OUTPUT_LIMIT_MESSAGE.test(message);
 }
 
 function sleep(ms) {
@@ -21,7 +31,7 @@ function sleep(ms) {
 }
 
 // Short in-claim retry for transient LLM failures (network hiccup, rate limits,
-// flaky gateways). Permanent errors (policy, abort) bypass the loop.
+// flaky gateways). Content filters and exhausted output budgets bypass the loop.
 async function generateWithRetry(adapter, args, retries, delayMs) {
   let lastErr;
   for (let i = 0; i <= retries; i++) {
